@@ -332,6 +332,7 @@ function card(p, s) {
       h("span", { class: "card-edit" },
         h("button", { class: "icon-btn", title: "Move up", "aria-label": "Move up", onclick: () => move(p, s, -1) }, "↑"),
         h("button", { class: "icon-btn", title: "Move down", "aria-label": "Move down", onclick: () => move(p, s, 1) }, "↓"),
+        h("button", { class: "icon-btn", title: "Duplicate", "aria-label": `Duplicate ${s.title}`, onclick: () => duplicate(p, s) }, "⧉"),
         h("button", { class: "icon-btn", title: "Edit", "aria-label": `Edit ${s.title}`, onclick: () => openSectionEditor(p, s) }, "✎"))),
     vs.length ? h("div", { class: "viewers" + (vs.length > 1 ? " two" : "") }, vs.map(v => vtile(s, v))) : null,
     (notes.length || (s.materials || []).length || (s.links || []).length) ? h("div", { class: "body" },
@@ -354,6 +355,18 @@ function linkRow(l) {
   const inner = [h("span", { class: "ft", style: `background:${t.color}` }, t.label),
     h("span", { class: "lt" }, l.title, l.note || !l.url ? h("span", { class: "ln" }, !l.url ? "Link not added yet" : l.note) : null)];
   return h("li", {}, l.url ? h("a", { class: "link", href: l.url, target: "_blank", rel: "noopener" }, inner) : h("span", { class: "link missing" }, inner));
+}
+
+// Copy a piece as the starting point for a similar build: keeps notes, stock and link titles, drops models and addresses.
+function duplicate(p, s) {
+  const copy = structuredClone(s);
+  copy.id = uid(s.title);
+  copy.title = `${s.title} (copy)`;
+  copy.viewers = (copy.viewers || []).map(v => ({ label: v.label }));
+  copy.links = (copy.links || []).map(l => ({ title: l.title, url: "", type: l.type }));
+  p.sections.splice(p.sections.indexOf(s) + 1, 0, copy);
+  saveHub(); render();
+  openSectionEditor(p, copy);
 }
 
 function move(p, s, d) {
@@ -436,7 +449,7 @@ function field(label, input) { return h("label", { class: "field" }, h("span", {
 
 function openSectionEditor(p, s) {
   const isNew = !s;
-  const draft = structuredClone(s || { id: "", title: "", links: [], viewers: [] });
+  const draft = structuredClone(s || { id: "", title: "", viewers: [{ label: "" }], links: [{ title: "Build Packet Reference Page", url: "", type: "slides" }] });
   draft.viewers ||= []; draft.links ||= [];
   const title = h("input", { id: "f-title", value: draft.title, placeholder: "Curved Display Table" });
   const qty = h("input", { id: "f-qty", type: "number", min: "1", value: draft.qty || 1 });
@@ -519,7 +532,7 @@ function openProjectEditor(p) {
   const form = h("form", { class: "panel editor", onsubmit: e => {
     e.preventDefault();
     const vals = { name: name.value.trim() || "Untitled project", client: client.value.trim(), status: status.value.trim() };
-    if (isNew) { const np = { id: uid(vals.name), ...vals, sections: [] }; state.hub.projects.push(np); state.current = np.id; }
+    if (isNew) { const np = { id: uid(vals.name), ...vals, sections: projectTemplate() }; state.hub.projects.push(np); state.current = np.id; }
     else Object.assign(p, vals);
     saveHub(); close(); render();
   } },
@@ -531,6 +544,19 @@ function openProjectEditor(p) {
       h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
   const close = overlay(form);
   name.focus();
+}
+
+// Every new project starts with the groups FTB uses on every job; build pieces get added as they come in.
+function projectTemplate() {
+  return [
+    { id: uid("resources"), title: "Resources + Files", links: [
+      { title: "Project Packet", url: "", type: "slides" },
+      { title: "Internal Fabrication Models", url: "", type: "drive" },
+      { title: "Overview with Labels", url: "", type: "pdf" },
+    ] },
+    { id: uid("cheat-sheets"), title: "Cheat Sheets", links: [] },
+    { id: uid("signage"), title: "Signage Templates", links: [] },
+  ];
 }
 
 // Netscape bookmark HTML (start.me / browser export): top folders become projects, sub-folders become groups.
