@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--BUILD:HEAD-->
+<title>FTB Project Hub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: shop-drawing board. Project tabs across the top like start.me pages, build pieces as a masonry of
+   cut-sheet cards, each with its 3D viewer up front and the packet links underneath. */
+:root {
+  --paper: #eef0f2;
+  --sheet: #fbfbfa;
+  --ink: #1b1f24;
+  --ink-2: #545b66;
+  --rule: #d5d9de;
+  --layout: #2350c8;        /* machinist layout-dye blue: the one accent */
+  --layout-soft: #e3e9fa;
+  --ok: #1d7a4a;
+  --ok-soft: #e0f1e7;
+  --warn: #9a5b00;
+  --warn-soft: #fbefd9;
+  --grid: rgba(35, 80, 200, .07);
+  --shadow: 0 1px 0 rgba(20, 30, 50, .05), 0 6px 20px -12px rgba(20, 30, 50, .25);
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14171c; --sheet: #1c2027; --ink: #e7eaee; --ink-2: #9aa3af; --rule: #2d333c;
+    --layout: #7d9cff; --layout-soft: #222c47; --ok: #5cc98d; --ok-soft: #17301f; --warn: #f0b45a; --warn-soft: #33270f;
+    --grid: rgba(125, 156, 255, .06); --shadow: 0 1px 0 rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.8);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14171c; --sheet: #1c2027; --ink: #e7eaee; --ink-2: #9aa3af; --rule: #2d333c;
+  --layout: #7d9cff; --layout-soft: #222c47; --ok: #5cc98d; --ok-soft: #17301f; --warn: #f0b45a; --warn-soft: #33270f;
+  --grid: rgba(125, 156, 255, .06); --shadow: 0 1px 0 rgba(0,0,0,.3), 0 8px 24px -14px rgba(0,0,0,.8);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font: 14px/1.5 var(--f-body);
+  min-height: 100vh;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--sheet); }
+a { color: inherit; }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--layout); outline-offset: 2px; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* top bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--sheet); border-bottom: 1px solid var(--rule); }
+.bar-in { display: flex; align-items: center; gap: 16px; min-height: 56px; }
+.mark { font: 700 22px/1 var(--f-display); letter-spacing: .04em; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.mark small { font: 500 11px/1 var(--f-mono); color: var(--ink-2); letter-spacing: .08em; text-transform: uppercase; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { border: 0; background: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+  font: 600 15px/1 var(--f-display); letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.tab:hover { color: var(--ink); background: var(--paper); }
+.tab[aria-selected="true"] { color: var(--layout); background: var(--layout-soft); }
+.tools { display: flex; gap: 8px; align-items: center; }
+.search { width: 180px; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.btn { border: 1px solid var(--rule); background: var(--sheet); padding: 7px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight: 500; }
+.btn:hover { border-color: var(--ink-2); }
+.btn.primary { background: var(--layout); border-color: var(--layout); color: var(--sheet); }
+.btn.ghost { border-color: transparent; background: none; }
+.btn.danger { color: #c0392b; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+
+/* notice */
+.notice { margin-top: 16px; padding: 10px 14px; border: 1px dashed var(--layout); border-radius: 8px; background: var(--layout-soft); color: var(--ink); font-size: 13px; }
+
+/* project head */
+.head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; padding-block: 28px 18px; }
+.eyebrow { font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+h1 { font: 700 clamp(32px, 5vw, 52px)/.95 var(--f-display); letter-spacing: .01em; text-transform: uppercase; margin: 8px 0 0; text-wrap: balance; }
+.tally { display: flex; gap: 20px; font: 400 12px/1.3 var(--f-mono); color: var(--ink-2); }
+.tally b { display: block; font: 600 22px/1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* board */
+.board { columns: 340px; column-gap: 16px; padding-bottom: 48px; }
+.card { break-inside: avoid; margin-bottom: 16px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+.card-h { display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px; }
+.card-h h2 { font: 700 19px/1.1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; margin: 0; flex: 1; min-width: 0; text-wrap: balance; }
+.chip { font: 500 11px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; background: var(--paper); color: var(--ink-2); white-space: nowrap; }
+.chip.qty { background: var(--ink); color: var(--sheet); }
+.chip.shared { background: var(--layout-soft); color: var(--layout); }
+.card-edit { display: none; }
+body.editing .card-edit { display: inline-flex; }
+.icon-btn { border: 0; background: none; padding: 4px; border-radius: 4px; cursor: pointer; color: var(--ink-2); display: inline-flex; }
+.icon-btn:hover { color: var(--ink); background: var(--paper); }
+
+.viewers { display: grid; gap: 1px; background: var(--rule); border-block: 1px solid var(--rule); }
+.viewers.two { grid-template-columns: 1fr 1fr; }
+.vtile { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; padding: 0; cursor: pointer; background: var(--paper); overflow: hidden; text-align: left; }
+.vtile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vtile svg.iso { position: absolute; inset: 0; margin: auto; width: 46%; height: 70%; color: var(--layout); opacity: .85; transition: transform .25s ease; }
+.vtile:hover svg.iso { transform: translateY(-3px); }
+.vtile .vlabel { position: absolute; left: 10px; bottom: 8px; right: 10px; display: flex; justify-content: space-between; align-items: end; gap: 6px; }
+.vtile .vname { font: 600 13px/1.2 var(--f-body); background: var(--sheet); padding: 3px 7px; border-radius: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewers.two .vlabel { flex-direction: column; align-items: flex-start; left: 8px; right: 8px; }
+.viewers.two .vname { max-width: 100%; }
+.state { font: 500 10.5px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
+.state.saved { background: var(--ok-soft); color: var(--ok); }
+.state.expiring { background: var(--warn-soft); color: var(--warn); }
+.state.none { background: var(--sheet); color: var(--ink-2); }
+
+.body { padding: 12px 14px 14px; display: grid; gap: 12px; }
+.notes { margin: 0; padding-left: 16px; color: var(--ink); font-size: 13px; display: grid; gap: 3px; }
+.mats { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.mats .lbl { font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; color: var(--ink-2); text-transform: uppercase; }
+.mat { font: 500 12px/1 var(--f-mono); border: 1px solid var(--rule); padding: 5px 7px; border-radius: 4px; }
+.links { list-style: none; margin: 0; padding: 0; display: grid; }
+.links li + li { border-top: 1px solid var(--rule); }
+.link { display: flex; gap: 10px; align-items: center; padding: 8px 0; text-decoration: none; min-width: 0; }
+a.link:hover .lt { color: var(--layout); text-decoration: underline; }
+.ft { flex: none; width: 30px; height: 22px; border-radius: 4px; display: grid; place-items: center; font: 600 9.5px/1 var(--f-mono); letter-spacing: .03em; color: #fff; }
+.lt { font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.ln { display: block; font-size: 12px; color: var(--ink-2); }
+.link.missing .lt { color: var(--ink-2); }
+.link.missing .ln { font-style: italic; }
+.add-sec { display: none; width: 100%; padding: 28px 12px; border: 2px dashed var(--rule); border-radius: 10px; background: none; cursor: pointer; color: var(--ink-2); font: 600 16px var(--f-display); letter-spacing: .05em; text-transform: uppercase; break-inside: avoid; margin-bottom: 16px; }
+body.editing .add-sec { display: block; }
+.empty { padding: 48px 0; color: var(--ink-2); max-width: 46ch; }
+
+/* overlays */
+.scrim { position: fixed; inset: 0; background: rgba(10, 14, 20, .55); z-index: 20; display: flex; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.panel { background: var(--sheet); border-radius: 12px; margin: auto; width: 100%; max-height: 100%; overflow: auto; box-shadow: 0 30px 80px -20px rgba(0,0,0,.6); }
+.viewer-panel { max-width: 1400px; height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 320px; overflow: hidden; }
+.vstage { position: relative; background: var(--paper); min-height: 300px; }
+.vstage iframe, .vstage .adsk { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.vstage .placeholder { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 12px; padding: 24px; color: var(--ink-2); }
+.vstage .placeholder svg { width: 140px; height: 140px; margin: 0 auto; color: var(--layout); }
+.vside { border-left: 1px solid var(--rule); padding: 18px; overflow: auto; display: grid; align-content: start; gap: 16px; }
+.vside h3 { font: 700 24px/1 var(--f-display); text-transform: uppercase; margin: 6px 0 0; }
+.steps-box { border: 1px dashed var(--rule); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--ink-2); }
+.steps-box b { color: var(--ink); font-family: var(--f-display); text-transform: uppercase; letter-spacing: .05em; font-size: 15px; }
+.editor { max-width: 640px; padding: 20px; display: grid; gap: 16px; }
+.editor h3 { font: 700 26px/1 var(--f-display); text-transform: uppercase; margin: 0; }
+.field { display: grid; gap: 5px; }
+.field > span { font: 500 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.field input[type="checkbox"] { width: 20px; height: 20px; }
+.field input:not([type="checkbox"]), .field textarea, .field select { width: 100%; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.row > .field { flex: 1 1 140px; min-width: 0; }
+.sub { border: 1px solid var(--rule); border-radius: 8px; padding: 12px; display: grid; gap: 10px; }
+.sub-h { display: flex; justify-content: space-between; align-items: center; }
+.sub-h b { font: 600 15px var(--f-display); text-transform: uppercase; letter-spacing: .05em; }
+.item { display: grid; gap: 8px; padding: 10px; border-radius: 6px; background: var(--paper); }
+.foot { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.foot .r { display: flex; gap: 8px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--sheet); padding: 9px 16px; border-radius: 8px; z-index: 30; font-weight: 500; }
+.hint { font-size: 12px; color: var(--ink-2); }
+
+@media (max-width: 760px) {
+  .bar-in { flex-wrap: wrap; padding-block: 8px; gap: 8px; }
+  .tabs { order: 3; flex-basis: 100%; }
+  .tools { margin-left: auto; }
+  .search { width: 120px; }
+  .viewer-panel { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) auto; overflow: auto; }
+  .vside { border-left: 0; border-top: 1px solid var(--rule); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<!--/BUILD:HEAD-->
+</head>
+<body>
+<!--BUILD:BODY-->
+<header class="bar"><div class="wrap bar-in">
+  <div class="mark">FTB <small>Project Hub</small></div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Projects"></nav>
+  <div class="tools">
+    <input class="search" id="q" type="search" placeholder="Search" aria-label="Search this project">
+    <button class="btn" id="editBtn" aria-pressed="false">Edit</button>
+  </div>
+</div></header>
+<main class="wrap" id="main"></main>
+<div id="overlay"></div>
+<script type="application/json" id="seed">null</script>
+<script>
+"use strict";
+
+// ---------- state + storage ----------
+const API = "/api";
+const state = { hub: { projects: [] }, current: null, editing: false, query: "", mode: "live" };
+
+async function loadHub() {
+  try {
+    const res = await fetch(`${API}/hub`, { headers: { Accept: "application/json" } });
+    if (!res.ok || !(res.headers.get("content-type") || "").includes("json")) throw new Error("no api");
+    state.hub = await res.json();
+    state.mode = "live";
+  } catch {
+    // No backend (static preview): use the embedded seed, plus any edits saved in this browser.
+    state.mode = "preview";
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem("ftb-hub") || "null"); } catch {}
+    state.hub = local || JSON.parse(document.getElementById("seed").textContent) || { projects: [] };
+  }
+}
+
+async function saveHub() {
+  if (state.mode === "live") {
+    const res = await fetch(`${API}/hub`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state.hub) });
+    if (!res.ok) { toast("Couldn't save. Check your connection and try again."); return false; }
+  } else {
+    try { localStorage.setItem("ftb-hub", JSON.stringify(state.hub)); } catch {}
+  }
+  toast("Saved");
+  return true;
+}
+
+// ---------- helpers ----------
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else if (k === "html") el.innerHTML = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : String(kid));
+  return el;
+}
+const slug = s => (s || "untitled").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "untitled";
+const uid = s => `${slug(s)}-${Math.random().toString(36).slice(2, 6)}`;
+let toastTimer;
+function toast(msg) {
+  document.querySelector(".toast")?.remove();
+  const t = h("div", { class: "toast", role: "status" }, msg);
+  document.body.append(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.remove(), 2200);
+}
+
+const TYPES = {
+  slides: { label: "SLD", color: "#d69a00" }, docs: { label: "DOC", color: "#2f6fde" }, sheets: { label: "XLS", color: "#1e8e4e" },
+  drive: { label: "DRV", color: "#3a7d44" }, pdf: { label: "PDF", color: "#c4392f" }, autodesk: { label: "3D", color: "#1b1f24" },
+  "3dm": { label: "3DM", color: "#6b5bd6" }, skp: { label: "SKP", color: "#b5413a" }, dxf: { label: "DXF", color: "#0f7c8c" }, link: { label: "URL", color: "#6b7380" },
+};
+function linkType(l) {
+  if (l.type && TYPES[l.type]) return l.type;
+  const u = (l.url || "").toLowerCase(), t = (l.title || "").toLowerCase();
+  if (/\.3dm\b/.test(u + t)) return "3dm";
+  if (/\.skp\b|skp model/.test(u + t)) return "skp";
+  if (/\.dxf\b/.test(u + t)) return "dxf";
+  if (/\.pdf\b|acrobat\.adobe/.test(u + t)) return "pdf";
+  if (u.includes("docs.google.com/presentation")) return "slides";
+  if (u.includes("docs.google.com/spreadsheets")) return "sheets";
+  if (u.includes("docs.google.com/document")) return "docs";
+  if (u.includes("drive.google.com")) return "drive";
+  if (/viewer\.autodesk\.com|autode\.sk/.test(u)) return "autodesk";
+  return "link";
+}
+
+const ISO = `<svg class="iso" viewBox="0 0 120 100" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+  <path d="M60 8 L108 32 L108 72 L60 96 L12 72 L12 32 Z"/><path d="M12 32 L60 56 L108 32 M60 56 L60 96"/>
+  <path d="M36 20 L84 44 M84 44 L84 84" stroke-dasharray="3 4" opacity=".55"/></svg>`;
+
+function viewerState(v) {
+  if (v.urn) return { cls: "saved", text: v.progress && v.progress !== "complete" ? `Processing ${v.progress}` : "Saved in FTB storage" };
+  if (v.shareUrl) return { cls: "expiring", text: "Share link" };
+  return { cls: "none", text: "No model yet" };
+}
+
+// ---------- render ----------
+function project() { return state.hub.projects.find(p => p.id === state.current) || state.hub.projects[0]; }
+
+function render() {
+  document.body.classList.toggle("editing", state.editing);
+  const p = project();
+  if (p) state.current = p.id;
+  const tabs = document.getElementById("tabs");
+  tabs.replaceChildren(...state.hub.projects.map(pr =>
+    h("button", { class: "tab", role: "tab", "aria-selected": String(pr.id === state.current), onclick: () => { state.current = pr.id; location.hash = pr.id; render(); } }, pr.name)),
+    ...(state.editing ? [h("button", { class: "tab", onclick: () => openProjectEditor(null) }, "+ Project")] : []));
+
+  const main = document.getElementById("main");
+  main.replaceChildren();
+  if (state.mode === "preview") {
+    main.append(h("div", { class: "notice" },
+      "Preview with sample data from your start.me page. Link addresses are blank where the screenshot cut them off; turn on Edit to paste them in. Edits here stay in this browser. Once deployed, models upload straight into FTB's own Autodesk storage."));
+  }
+  if (!p) { main.append(h("p", { class: "empty" }, "No projects yet. Turn on Edit and add one, or import your start.me bookmarks.")); return; }
+
+  const sections = p.sections || [];
+  const viewers = sections.flatMap(s => s.viewers || []);
+  const files = sections.flatMap(s => s.links || []).length;
+  const builds = sections.filter(s => (s.viewers || []).length).reduce((n, s) => n + (s.qty || 1), 0);
+  main.append(h("div", { class: "head" },
+    h("div", {},
+      h("div", { class: "eyebrow" }, [p.client, p.status].filter(Boolean).join(" · ") || "Project"),
+      h("h1", {}, p.name)),
+    h("div", { class: "tally" },
+      h("div", {}, h("b", {}, builds), "units to build"),
+      h("div", {}, h("b", {}, viewers.filter(v => v.urn).length + "/" + viewers.length), "models saved"),
+      h("div", {}, h("b", {}, files), "files + links"),
+      state.editing ? h("button", { class: "btn", onclick: () => openProjectEditor(p) }, "Project settings") : null)));
+
+  const q = state.query.trim().toLowerCase();
+  const match = s => !q || JSON.stringify(s).toLowerCase().includes(q);
+  const board = h("div", { class: "board" });
+  sections.filter(match).forEach(s => board.append(card(p, s)));
+  board.append(h("button", { class: "add-sec", onclick: () => openSectionEditor(p, null) }, "+ Add piece or link group"));
+  main.append(board);
+}
+
+function card(p, s) {
+  const vs = s.viewers || [];
+  const notes = (s.notes || "").split("\n").map(x => x.trim()).filter(Boolean);
+  return h("article", { class: "card" },
+    h("div", { class: "card-h" },
+      h("h2", {}, s.title),
+      s.shared ? h("span", { class: "chip shared" }, "Shared") : null,
+      s.qty > 1 ? h("span", { class: "chip qty", title: `Build ${s.qty}` }, `×${s.qty}`) : null,
+      h("span", { class: "card-edit" },
+        h("button", { class: "icon-btn", title: "Move up", "aria-label": "Move up", onclick: () => move(p, s, -1) }, "↑"),
+        h("button", { class: "icon-btn", title: "Move down", "aria-label": "Move down", onclick: () => move(p, s, 1) }, "↓"),
+        h("button", { class: "icon-btn", title: "Edit", "aria-label": `Edit ${s.title}`, onclick: () => openSectionEditor(p, s) }, "✎"))),
+    vs.length ? h("div", { class: "viewers" + (vs.length > 1 ? " two" : "") }, vs.map(v => vtile(s, v))) : null,
+    (notes.length || (s.materials || []).length || (s.links || []).length) ? h("div", { class: "body" },
+      notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
+      (s.materials || []).length ? h("div", { class: "mats" }, h("span", { class: "lbl" }, "Stock"), s.materials.map(m => h("span", { class: "mat" }, m))) : null,
+      (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null) : null);
+}
+
+function vtile(s, v) {
+  const st = viewerState(v);
+  const tile = h("button", { class: "vtile", onclick: () => openViewer(s, v), "aria-label": `Open 3D viewer: ${v.label || s.title}` });
+  if (v.urn && state.mode === "live") tile.append(h("img", { src: `${API}/models/${v.urn}/thumbnail`, alt: "", loading: "lazy" }));
+  else tile.insertAdjacentHTML("beforeend", ISO);
+  tile.append(h("span", { class: "vlabel" }, h("span", { class: "vname" }, v.label || s.title), h("span", { class: `state ${st.cls}` }, st.text)));
+  return tile;
+}
+
+function linkRow(l) {
+  const t = TYPES[linkType(l)];
+  const inner = [h("span", { class: "ft", style: `background:${t.color}` }, t.label),
+    h("span", { class: "lt" }, l.title, l.note || !l.url ? h("span", { class: "ln" }, !l.url ? "Link not added yet" : l.note) : null)];
+  return h("li", {}, l.url ? h("a", { class: "link", href: l.url, target: "_blank", rel: "noopener" }, inner) : h("span", { class: "link missing" }, inner));
+}
+
+function move(p, s, d) {
+  const i = p.sections.indexOf(s), j = i + d;
+  if (j < 0 || j >= p.sections.length) return;
+  [p.sections[i], p.sections[j]] = [p.sections[j], p.sections[i]];
+  saveHub(); render();
+}
+
+// ---------- overlays ----------
+function overlay(panel) {
+  const host = document.getElementById("overlay");
+  const scrim = h("div", { class: "scrim", onclick: e => { if (e.target === scrim) close(); } }, panel);
+  function close() { host.replaceChildren(); document.removeEventListener("keydown", esc); panel.onclose?.(); }
+  function esc(e) { if (e.key === "Escape") close(); }
+  document.addEventListener("keydown", esc);
+  host.replaceChildren(scrim);
+  return close;
+}
+
+// Autodesk viewer, loaded on first use.
+let adskReady;
+function loadAdsk() {
+  adskReady ||= new Promise((resolve, reject) => {
+    const css = h("link", { rel: "stylesheet", href: "https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css" });
+    const js = h("script", { src: "https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js" });
+    js.onload = () => Autodesk.Viewing.Initializer({
+      env: "AutodeskProduction2", api: "streamingV2",
+      getAccessToken: async cb => { const t = await (await fetch(`${API}/viewer-token`)).json(); cb(t.access_token, t.expires_in); },
+    }, resolve);
+    js.onerror = reject;
+    document.head.append(css, js);
+  });
+  return adskReady;
+}
+
+function openViewer(s, v) {
+  const stage = h("div", { class: "vstage" });
+  const notes = (s.notes || "").split("\n").filter(Boolean);
+  const panel = h("div", { class: "panel viewer-panel", role: "dialog", "aria-label": v.label || s.title },
+    stage,
+    h("aside", { class: "vside" },
+      h("div", {}, h("div", { class: "eyebrow" }, s.qty > 1 ? `Build ×${s.qty}` : "Build ×1"), h("h3", {}, v.label || s.title)),
+      notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
+      (s.materials || []).length ? h("div", { class: "mats" }, s.materials.map(m => h("span", { class: "mat" }, m))) : null,
+      h("div", { class: "steps-box" }, h("b", {}, "Assembly steps"), h("div", {}, "Publish steps from the FTB Rhino plugin and they'll play here, part by part.")),
+      (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null,
+      h("button", { class: "btn", onclick: () => close() }, "Close")));
+  const close = overlay(panel);
+
+  if (v.urn && state.mode === "live") {
+    const box = h("div", { class: "adsk" });
+    stage.append(box);
+    loadAdsk().then(() => {
+      const viewer = new Autodesk.Viewing.GuiViewer3D(box);
+      viewer.start();
+      panel.onclose = () => viewer.finish();
+      Autodesk.Viewing.Document.load(`urn:${v.urn}`, doc => viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry()),
+        () => stage.replaceChildren(placeholder("This model is still processing or failed to convert. Try again in a minute.")));
+    }).catch(() => stage.replaceChildren(placeholder("Couldn't load the Autodesk viewer.")));
+  } else if (v.shareUrl && state.mode === "live") {
+    stage.append(h("iframe", { src: v.shareUrl, allowfullscreen: true, title: v.label || s.title }));
+  } else if (v.shareUrl) {
+    stage.append(placeholder("This piece still uses an Autodesk share link. Share links can expire; upload the model in Edit to keep it permanently.",
+      h("a", { class: "btn primary", href: v.shareUrl, target: "_blank", rel: "noopener" }, "Open share link")));
+  } else if (v.urn) {
+    stage.append(placeholder("Saved in FTB storage. The 3D view loads here on the deployed hub."));
+  } else {
+    stage.append(placeholder("No model yet. Turn on Edit to upload a Rhino, SketchUp or other 3D file."));
+  }
+}
+function placeholder(msg, extra) {
+  const ph = h("div", { class: "placeholder" }, h("p", {}, msg), extra);
+  ph.insertAdjacentHTML("afterbegin", ISO);
+  return ph;
+}
+
+// ---------- editors ----------
+function field(label, input) { return h("label", { class: "field" }, h("span", {}, label), input); }
+
+function openSectionEditor(p, s) {
+  const isNew = !s;
+  const draft = structuredClone(s || { id: "", title: "", links: [], viewers: [] });
+  draft.viewers ||= []; draft.links ||= [];
+  const title = h("input", { id: "f-title", value: draft.title, placeholder: "Curved Display Table" });
+  const qty = h("input", { id: "f-qty", type: "number", min: "1", value: draft.qty || 1 });
+  const shared = h("input", { id: "f-shared", type: "checkbox" }); shared.checked = !!draft.shared;
+  const notes = h("textarea", { id: "f-notes", rows: "4", placeholder: "One build note per line" }); notes.value = draft.notes || "";
+  const mats = h("input", { id: "f-mats", value: (draft.materials || []).join(", "), placeholder: '3/4" MDF, 1/2" MDF' });
+  const vbox = h("div", { class: "sub" }), lbox = h("div", { class: "sub" });
+
+  function drawViewers() {
+    vbox.replaceChildren(h("div", { class: "sub-h" }, h("b", {}, "3D viewers"),
+      h("button", { class: "btn", type: "button", onclick: () => { draft.viewers.push({ label: "" }); drawViewers(); } }, "+ Viewer")));
+    draft.viewers.forEach((v, i) => {
+      const file = h("input", { type: "file", accept: ".3dm,.skp,.step,.stp,.iges,.igs,.obj,.fbx,.dwg,.f3d,.ipt,.iam,.sldprt,.sldasm,.stl,.zip" });
+      file.onchange = () => upload(file.files[0], v, msg => { status.textContent = msg; });
+      const status = h("span", { class: "hint" }, v.urn ? "Saved in FTB storage." : "");
+      vbox.append(h("div", { class: "item" },
+        field("Label", h("input", { value: v.label || "", oninput: e => v.label = e.target.value })),
+        h("div", { class: "row" },
+          field("Upload model (kept permanently)", state.mode === "live" ? file : h("span", { class: "hint" }, "Available on the deployed hub")),
+          h("button", { class: "btn ghost danger", type: "button", onclick: () => { draft.viewers.splice(i, 1); drawViewers(); } }, "Remove")),
+        status,
+        field("Or Autodesk share link (may expire)", h("input", { value: v.shareUrl || "", placeholder: "https://autode.sk/…", oninput: e => v.shareUrl = e.target.value }))));
+    });
+  }
+  function drawLinks() {
+    lbox.replaceChildren(h("div", { class: "sub-h" }, h("b", {}, "Files + links"),
+      h("button", { class: "btn", type: "button", onclick: () => { draft.links.push({ title: "", url: "" }); drawLinks(); } }, "+ Link")));
+    draft.links.forEach((l, i) => lbox.append(h("div", { class: "item" },
+      h("div", { class: "row" },
+        field("Title", h("input", { value: l.title || "", oninput: e => l.title = e.target.value })),
+        h("button", { class: "btn ghost danger", type: "button", onclick: () => { draft.links.splice(i, 1); drawLinks(); } }, "Remove")),
+      field("URL", h("input", { value: l.url || "", placeholder: "https://docs.google.com/…", oninput: e => l.url = e.target.value })),
+      field("Note", h("input", { value: l.note || "", oninput: e => l.note = e.target.value })))));
+  }
+  drawViewers(); drawLinks();
+
+  let armed = false;
+  const del = h("button", { class: "btn danger", type: "button", onclick: () => {
+    if (!armed) { armed = true; del.textContent = "Click again to delete"; return; }
+    p.sections.splice(p.sections.indexOf(s), 1); saveHub(); close(); render();
+  } }, "Delete");
+  const form = h("form", { class: "panel editor", onsubmit: e => {
+    e.preventDefault();
+    Object.assign(draft, {
+      title: title.value.trim() || "Untitled", qty: Math.max(1, +qty.value || 1), shared: shared.checked,
+      notes: notes.value.trim(), materials: mats.value.split(",").map(x => x.trim()).filter(Boolean),
+    });
+    if (!draft.materials.length) delete draft.materials;
+    if (draft.qty === 1) delete draft.qty;
+    if (isNew) { draft.id = uid(draft.title); (p.sections ||= []).push(draft); } else Object.assign(s, draft);
+    saveHub(); close(); render();
+  } },
+    h("h3", {}, isNew ? "New piece" : "Edit piece"),
+    field("Name", title),
+    h("div", { class: "row" }, field("Build quantity", qty), h("label", { class: "field" }, h("span", {}, "Shared with client"), shared)),
+    field("Build notes", notes), field("Stock / materials", mats),
+    vbox, lbox,
+    h("div", { class: "foot" }, isNew ? h("span") : del,
+      h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
+  const close = overlay(form);
+  title.focus();
+}
+
+function openProjectEditor(p) {
+  const isNew = !p;
+  const name = h("input", { id: "p-name", value: p?.name || "" });
+  const client = h("input", { id: "p-client", value: p?.client || "" });
+  const status = h("input", { id: "p-status", value: p?.status || "", placeholder: "In production" });
+  const imp = h("input", { id: "p-import", type: "file", accept: ".html,.htm" });
+  imp.onchange = async () => {
+    const added = importBookmarks(await imp.files[0].text());
+    toast(added ? `Imported ${added} project${added > 1 ? "s" : ""}` : "No bookmarks found in that file");
+    if (added) { saveHub(); close(); render(); }
+  };
+  let armed = false;
+  const del = h("button", { class: "btn danger", type: "button", onclick: () => {
+    if (!armed) { armed = true; del.textContent = "Click again to delete project"; return; }
+    state.hub.projects.splice(state.hub.projects.indexOf(p), 1); state.current = null; saveHub(); close(); render();
+  } }, "Delete project");
+  const form = h("form", { class: "panel editor", onsubmit: e => {
+    e.preventDefault();
+    const vals = { name: name.value.trim() || "Untitled project", client: client.value.trim(), status: status.value.trim() };
+    if (isNew) { const np = { id: uid(vals.name), ...vals, sections: [] }; state.hub.projects.push(np); state.current = np.id; }
+    else Object.assign(p, vals);
+    saveHub(); close(); render();
+  } },
+    h("h3", {}, isNew ? "New project" : "Project settings"),
+    field("Project name", name), h("div", { class: "row" }, field("Client", client), field("Status", status)),
+    isNew ? h("div", { class: "sub" }, h("b", {}, "Or import from start.me"),
+      h("span", { class: "hint" }, "In start.me, export your bookmarks as an HTML file, then choose it here. Each page becomes a project and each widget a group."), imp) : null,
+    h("div", { class: "foot" }, isNew ? h("span") : del,
+      h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
+  const close = overlay(form);
+  name.focus();
+}
+
+// Netscape bookmark HTML (start.me / browser export): top folders become projects, sub-folders become groups.
+function importBookmarks(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const root = doc.querySelector("dl");
+  if (!root) return 0;
+  const kids = dl => [...dl.children].filter(el => el.tagName === "DT");
+  const folderOf = dt => { const h3 = dt.querySelector(":scope > h3"); const dl = dt.querySelector(":scope > dl"); return h3 && dl ? { name: h3.textContent.trim(), dl } : null; };
+  const toLink = a => {
+    const dd = a.closest("dt")?.nextElementSibling;
+    const note = dd?.tagName === "DD" ? dd.textContent.trim() : "";
+    return { title: a.textContent.trim(), url: a.href, note };
+  };
+  const section = (name, dl) => {
+    const links = [...dl.querySelectorAll("a")].map(toLink);
+    const viewers = links.filter(l => linkType(l) === "autodesk").map(l => ({ label: l.title, shareUrl: l.url }));
+    const notes = links.filter(l => linkType(l) === "autodesk").map(l => l.note).filter(Boolean).join("\n").replace(/\s*-\s*/g, "\n").trim();
+    return { id: uid(name), title: name, viewers, notes, links: links.filter(l => linkType(l) !== "autodesk") };
+  };
+  let added = 0;
+  for (const dt of kids(root)) {
+    const f = folderOf(dt);
+    if (!f) continue;
+    const subs = kids(f.dl).map(folderOf).filter(Boolean);
+    const sections = subs.length ? subs.map(sf => section(sf.name, sf.dl)) : [section(f.name, f.dl)];
+    state.hub.projects.push({ id: uid(f.name), name: f.name, sections });
+    added++;
+  }
+  if (added) state.current = state.hub.projects[state.hub.projects.length - added].id;
+  return added;
+}
+
+// Upload straight from the browser to the persistent APS bucket, then start conversion.
+async function upload(file, v, report) {
+  if (!file) return;
+  try {
+    report("Uploading…");
+    const start = await (await fetch(`${API}/models/upload`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name }) })).json();
+    const put = await fetch(start.url, { method: "PUT", body: file });
+    if (!put.ok) throw new Error(`upload failed (${put.status})`);
+    const done = await (await fetch(`${API}/models/complete`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(start) })).json();
+    if (!done.urn) throw new Error(done.error || "no model id returned");
+    v.urn = done.urn; v.file = file.name; v.progress = "0%";
+    if (!v.label) v.label = file.name.replace(/\.[^.]+$/, "");
+    report("Uploaded. Converting for the viewer; you can save and close.");
+    pollStatus(v);
+  } catch (err) {
+    report(`Upload didn't finish: ${err.message}. Try again.`);
+  }
+}
+
+async function pollStatus(v) {
+  for (let i = 0; i < 120; i++) {
+    const s = await (await fetch(`${API}/models/${v.urn}/status`)).json().catch(() => ({}));
+    v.progress = s.status === "success" ? "complete" : s.progress || v.progress;
+    render();
+    if (s.status === "success" || s.status === "failed") { if (s.status === "success") saveHub(); return; }
+    await new Promise(r => setTimeout(r, 5000));
+  }
+}
+
+// ---------- boot ----------
+document.getElementById("q").addEventListener("input", e => { state.query = e.target.value; render(); });
+document.getElementById("editBtn").addEventListener("click", e => {
+  state.editing = !state.editing;
+  e.currentTarget.setAttribute("aria-pressed", String(state.editing));
+  e.currentTarget.textContent = state.editing ? "Done" : "Edit";
+  render();
+});
+loadHub().then(() => {
+  const fromHash = location.hash.slice(1);
+  state.current = state.hub.projects.some(p => p.id === fromHash) ? fromHash : state.hub.projects[0]?.id;
+  render();
+});
+</script>
+<!--/BUILD:BODY-->
+</body>
+</html>

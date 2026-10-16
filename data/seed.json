@@ -1,0 +1,107 @@
+{
+  "projects": [
+    {
+      "id": "stuart-fails-to-save-the-universe",
+      "name": "Stuart Fails To Save The Universe",
+      "status": "In production",
+      "sections": [
+        {
+          "id": "resources-files",
+          "title": "Resources + Files",
+          "links": [
+            { "title": "SFTSU Packet", "url": "" },
+            { "title": "Internal Fabrication Models", "url": "", "type": "drive" },
+            { "title": "List of Walls in Packet", "url": "" },
+            { "title": "Overview with Wall Labels", "url": "" },
+            { "title": "Overview with Tech/TV Callouts", "url": "" }
+          ]
+        },
+        {
+          "id": "skyscrapers",
+          "title": "Skyscrapers",
+          "qty": 2,
+          "notes": "Part labels can be seen in the Autodesk viewer.\nUprights 1-10 left to right.\nCorner details stack together, then glue to base plate.\nBase plate gets stacked.",
+          "viewers": [{ "label": "Skyscrapers", "shareUrl": "" }],
+          "links": [{ "title": "Skyscraper Build Packet Reference Page", "url": "", "note": "Finish details TBD", "type": "slides" }]
+        },
+        {
+          "id": "comic-book-display-no-ipad",
+          "title": "Comic Book Display (no iPad)",
+          "notes": "Part identifiers in Autodesk viewer (use Model Browser).\nWill need to add stick framing as necessary.",
+          "viewers": [{ "label": "Comic Display", "shareUrl": "" }],
+          "links": [{ "title": "Comic Display Build Packet Reference Page", "url": "", "type": "slides" }]
+        },
+        {
+          "id": "ls-device-plinth",
+          "title": "LS Device Plinth",
+          "viewers": [{ "label": "LS Device Plinth", "shareUrl": "" }],
+          "links": [{ "title": "LS Device Plinth Build Packet Reference Page", "url": "", "type": "slides" }]
+        },
+        {
+          "id": "tv-bookshelf",
+          "title": "TV Bookshelf",
+          "viewers": [{ "label": "TV Bookshelf", "shareUrl": "" }],
+          "links": []
+        },
+        {
+          "id": "right-wall-cabinet-touchpoint",
+          "title": "Right Wall Cabinet Touchpoint",
+          "notes": "Part identifiers in Autodesk viewer (use Model Browser).",
+          "materials": ["3/4\" MDF", "1/2\" MDF", "3/4\" Plywood"],
+          "viewers": [{ "label": "Right Wall Cabinet Touchpoint", "shareUrl": "" }],
+          "links": [{ "title": "Left Wall Cabinet Touchpoint Packet Reference", "url": "", "type": "slides" }]
+        },
+        {
+          "id": "left-wall-cabinet-touchpoint",
+          "title": "Left Wall Cabinet Touchpoint",
+          "notes": "Part identifiers in Autodesk viewer (use Model Browser).\nAngled monitor screws in via side brackets. Will need to drill holes for securing via adjacent left and right panels.",
+          "viewers": [{ "label": "Left Wall Cabinet Touchpoint", "shareUrl": "" }],
+          "links": [{ "title": "Left Wall Cabinet Touchpoint Packet Reference", "url": "", "type": "slides" }]
+        },
+        {
+          "id": "comic-display-with-ipad",
+          "title": "Comic Display with iPad",
+          "qty": 2,
+          "viewers": [{ "label": "iPad Comic Display Touchpoint", "shareUrl": "" }],
+          "links": [{ "title": "iPad Comic Display Packet Reference Page", "url": "", "type": "slides" }]
+        },
+        {
+          "id": "curved-display-table",
+          "title": "Curved Display Table",
+          "shared": true,
+          "viewers": [
+            { "label": "Curved Display Table (half)", "shareUrl": "https://autode.sk/4wD3QIn" },
+            { "label": "Curved Display Table (full)", "shareUrl": "" }
+          ],
+          "links": [
+            { "title": "Half Unit (SKP model download)", "url": "", "type": "skp" },
+            { "title": "Adjointed Units (SKP model download)", "url": "", "type": "skp" },
+            { "title": "Curved Display / Packet Reference Page", "url": "", "type": "slides" },
+            { "title": "Curved Display Table .3dm source file", "url": "", "type": "3dm" }
+          ]
+        },
+        {
+          "id": "walls-tvs-cheat-sheets",
+          "title": "Walls/TVs Cheat Sheets",
+          "links": [
+            { "title": "Overview with Labels", "url": "", "type": "pdf" },
+            { "title": "All TV Sizes", "url": "", "type": "pdf" },
+            { "title": "Walls Split for CNC.pdf", "url": "", "type": "drive" }
+          ]
+        },
+        {
+          "id": "signage-templates",
+          "title": "Signage Templates",
+          "shared": true,
+          "links": [
+            { "title": "SFTSU Exterior Signage Template", "url": "", "type": "drive" },
+            { "title": "Photo Op Wall Template.pdf", "url": "", "type": "drive" }
+          ]
+        }
+      ]
+    },
+    { "id": "ftb-wizard-lounge", "name": "FTB Wizard Lounge", "sections": [] },
+    { "id": "cash-app-kiosks", "name": "Cash App Kiosks", "sections": [] },
+    { "id": "faye-webster-trophies", "name": "Faye Webster Trophies", "sections": [] }
+  ]
+}
