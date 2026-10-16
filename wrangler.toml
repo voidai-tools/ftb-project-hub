@@ -13,9 +13,15 @@ run_worker_first = ["/api/*"]
 binding = "HUB"
 id = "50c6236c260b4ddaafd3e3de33f2e5fa"
 
+[triggers]
+crons = ["*/5 * * * *"]
+
 [vars]
 APS_BUCKET = "ftb-design-models"
+TICKTICK_LIST = "CNC HUB"
 
 # Secrets (set with `npx wrangler secret put <NAME>`):
 #   APS_CLIENT_ID
 #   APS_CLIENT_SECRET
+#   TICKTICK_CLIENT_ID      (optional: TickTick sync, see src/ticktick.js)
+#   TICKTICK_CLIENT_SECRET

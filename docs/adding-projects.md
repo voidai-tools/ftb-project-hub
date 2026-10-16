@@ -47,3 +47,12 @@ The **Shop** tab tracks orders through Queued, In progress, Build, Ready for pai
 - Click **Out the door** once it's gone.
 
 For the lobby screen, open `https://ftbshop.fun/#tv` on the TV's browser, sign in once, and leave it. It shows CNC, Build and Paint side by side with how long each job has been there, plus a narrow Completed column showing where each finished piece goes. Queued orders stay off the TV. It refreshes every 30 seconds; double-click exits.
+
+## TickTick CNC list
+
+The hub can follow the **CNC HUB** list in TickTick. Every open task there shows up on the Shop board as a CNC job in progress (marked "TickTick"), and checking a task off in TickTick moves it to Completed, where you can send it to build or paint or tag where it goes. The sync runs every 5 minutes, or right away with **Sync TickTick** on the Shop tab. It only reads TickTick; nothing on the board changes your TickTick tasks.
+
+One-time setup:
+1. At developer.ticktick.com, sign in, open **Manage Apps**, and create an app. Set its redirect URL to `https://ftbshop.fun/api/ticktick/callback`.
+2. In Cloudflare, add the app's Client ID and Client Secret to the Worker as secrets named `TICKTICK_CLIENT_ID` and `TICKTICK_CLIENT_SECRET`.
+3. On the Shop tab, click **Connect TickTick** and approve.

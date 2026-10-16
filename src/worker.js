@@ -5,6 +5,7 @@
 //   GET  /api/orders                  -> shop pickup orders (one KV key each, so people updating at once don't clobber each other)
 //   PUT  /api/orders/:id
 //   DELETE /api/orders/:id
+//   GET  /api/ticktick/connect | /callback | /status, POST /api/ticktick/sync -> TickTick "CNC HUB" list feeds CNC orders (see ticktick.js)
 //   GET  /api/viewer-token            -> short-lived APS token, viewables:read only
 //   POST /api/models/upload           -> { fileName } => signed S3 URL for a direct browser upload
 //   POST /api/models/complete         -> { objectKey, uploadKey } => finalize upload + start translation, returns { urn }
@@ -16,6 +17,7 @@
 // Site access is gated by Cloudflare Access in front of the Worker, so the API trusts every request it receives.
 
 import seed from "../data/seed.json";
+import { ticktickRoute, syncTicktick } from "./ticktick.js";
 
 const APS = "https://developer.api.autodesk.com";
 const HUB_KEY = "hub";
@@ -30,11 +32,20 @@ export default {
       return json({ error: err.message || String(err) }, err.status || 500);
     }
   },
+  // Cron trigger (wrangler.toml): pull the TickTick CNC list every few minutes.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(syncTicktick(env));
+  },
 };
 
 async function route(request, env, url) {
   const { pathname } = url;
   const method = request.method;
+
+  if (pathname.startsWith("/api/ticktick/")) {
+    const res = await ticktickRoute(request, env, url);
+    if (res) return res;
+  }
 
   if (pathname === "/api/hub" && method === "GET") {
     const hub = await env.HUB.get(HUB_KEY, "json");

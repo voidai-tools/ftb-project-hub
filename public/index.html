@@ -714,6 +714,7 @@ function exampleOrders() {
 
 async function loadOrders() {
   if (state.mode === "live") {
+    if (!state.ticktick) state.ticktick = await (await fetch(`${API}/ticktick/status`)).json().catch(() => ({}));
     try { state.orders = (await (await fetch(`${API}/orders`)).json()).orders || []; } catch { state.orders ||= []; }
   } else {
     let local = null;
@@ -756,6 +757,7 @@ function renderPickup(main) {
   main.append(h("div", { class: "head" },
     h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, "Shop board")),
     h("div", { class: "tools" },
+      state.mode === "live" ? ticktickButton() : null,
       h("a", { class: "btn", href: "#tv", onclick: e => { e.preventDefault(); enterTv(); } }, "TV view"),
       h("button", { class: "btn primary", onclick: () => openOrderEditor(null) }, "+ Order"))));
   if (state.mode === "preview" && orders.some(o => o.example)) {
@@ -780,7 +782,8 @@ function orderCard(o, st) {
     h("div", { class: "order-m" },
       o.for ? h("span", {}, "For ", h("strong", {}, o.for)) : null,
       o.location ? h("span", {}, "At ", h("strong", {}, o.location)) : null,
-      o.project ? h("span", {}, o.project) : null),
+      o.project ? h("span", {}, o.project) : null,
+      o.source === "ticktick" ? h("span", { title: "Comes from the TickTick CNC HUB list" }, "TickTick") : null),
     o.notes ? h("div", { class: "order-m" }, o.notes) : null,
     st.id === "done" ? h("div", { class: "tags", role: "group", "aria-label": "Where it goes next" },
       OUT_TAGS.map(t => h("button", { class: "tagb", "aria-pressed": String(o.outTag === t), onclick: () => setTag(o, t) }, t))) : null,
@@ -789,8 +792,20 @@ function orderCard(o, st) {
       h("span", { class: "age", title: "Time in this stage" }, waited(o.statusAt)),
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
-      st.id === "in-progress" ? nextShops(o).map(hd => h("button", { class: "btn", onclick: () => advance(o, hd.id) }, hd.label)) : null,
+      st.id === "in-progress" || st.id === "done" ? nextShops(o).map(hd => h("button", { class: "btn", onclick: () => advance(o, hd.id) }, hd.label)) : null,
       st.next ? h("button", { class: "btn" + (st.id === "in-progress" ? " primary" : ""), onclick: () => advance(o) }, st.action) : null));
+}
+
+// TickTick: connect once, then the Worker pulls the CNC HUB list every 5 minutes; "Sync TickTick" pulls right away.
+function ticktickButton() {
+  const btn = h("button", { class: "btn", onclick: async () => {
+    if (!state.ticktick?.connected) { location.href = `${API}/ticktick/connect`; return; }
+    btn.disabled = true;
+    const r = await (await fetch(`${API}/ticktick/sync`, { method: "POST" })).json().catch(() => ({}));
+    toast(r.ok ? `TickTick: ${r.added} new, ${r.completed} completed` : `TickTick sync failed: ${r.reason || "try again"}`);
+    await loadOrders(); render();
+  } }, state.ticktick?.connected ? "Sync TickTick" : "Connect TickTick");
+  return btn;
 }
 
 async function setTag(o, t) {
