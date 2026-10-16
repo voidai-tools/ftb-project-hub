@@ -2,6 +2,8 @@ name = "ftb-project-hub"
 main = "src/worker.js"
 compatibility_date = "2026-09-01"
 
+routes = [{ pattern = "ftbshop.fun", custom_domain = true }]
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
