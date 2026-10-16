@@ -40,6 +40,6 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 
 ## Pickup board and lobby TV
 
-The **Pickup** tab tracks shop orders (CNC, paint, carpentry) through Queued, In progress, Ready for paint, Ready for pickup and Picked up. When a part comes off the machine, click **Ready for paint** if it needs finishing or **Ready for pickup** if it doesn't. The paint shop clicks **Start paint** to take it, then **Ready for pickup** when it's dry. Whoever grabs it clicks **Picked up**. Orders waiting more than 4 hours turn amber.
+The **Pickup** tab tracks shop orders (CNC, paint, build) through Queued, In progress, Build, Ready for paint, Ready for pickup and Picked up. When a part comes off the machine, click **Send to build** if it needs assembly, **Ready for paint** if it needs finishing, or **Ready for pickup** if it's done. The next shop clicks **Start build** or **Start paint** to take it over, and so on down the line (CNC, then build, then paint). Whoever grabs it clicks **Picked up**. Orders waiting more than 4 hours turn amber.
 
-For the lobby screen, open `https://ftbshop.fun/#tv` on the TV's browser, sign in once, and leave it. It shows ready orders oldest first with how long each has waited, plus what's on the CNC and in paint (queued jobs stay off the screen). It refreshes every 30 seconds, and double-click exits.
+For the lobby screen, open `https://ftbshop.fun/#tv` on the TV's browser, sign in once, and leave it. It shows ready orders oldest first with how long each has waited, plus CNC, Build and Paint sections (queued jobs stay off the screen). It refreshes every 30 seconds, and double-click exits.

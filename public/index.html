@@ -178,13 +178,15 @@ body.editing .add-sec { display: block; }
 /* pickup board */
 .tab.pickup { display: inline-flex; align-items: center; gap: 6px; }
 .tab .count { font: 600 11px/1 var(--f-mono); background: var(--ok); color: var(--sheet); border-radius: 9px; padding: 3px 6px; letter-spacing: 0; }
-.lanes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; padding-bottom: 48px; align-items: start; }
+.lanes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; padding-bottom: 48px; align-items: start; }
 .lane { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .lane-h { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid var(--rule); padding-bottom: 6px; }
 .lane-h b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
 .lane-h span { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
 .lane.ready .lane-h { border-color: var(--ok); }
 .lane.ready .lane-h b { color: var(--ok); }
+.lane.ready-build .lane-h { border-color: #9a6a1f; }
+.lane.ready-build .lane-h b { color: #9a6a1f; }
 .lane.ready-paint .lane-h { border-color: #b5413a; }
 .lane.ready-paint .lane-h b { color: #b5413a; }
 .order { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; box-shadow: var(--shadow); }
@@ -199,7 +201,7 @@ body.editing .add-sec { display: block; }
 .order-a .btn { padding: 5px 10px; font-size: 13px; }
 .dept { font: 600 10.5px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; color: #fff; white-space: nowrap; }
 .lane-empty { font-size: 13px; color: var(--ink-2); padding: 8px 0; }
-@media (max-width: 1180px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1400px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 860px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .lanes { grid-template-columns: 1fr; } }
 
@@ -211,7 +213,7 @@ body.tv .bar, body.tv #main { display: none; }
 .tvb-h h1 { font-size: 5.2vh; margin: 0; }
 .tvb-h .clock { font: 600 4.4vh/1 var(--f-display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .tvb-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 3vw; min-height: 0; }
-.tvb-side { display: grid; gap: 4vh; align-content: start; }
+.tvb-side { display: grid; gap: 3vh; align-content: start; }
 .tvb-col h2 { font: 700 3.4vh/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 1.6vh; }
 .tvb-col.ready h2 { color: var(--ok); }
 .tvb-list { display: grid; gap: 1.4vh; }
@@ -677,16 +679,20 @@ async function pollStatus(v) {
 
 // ---------- pickup board ----------
 // Shop orders (CNC, paint, carpentry) move Queued -> In progress -> Ready for pickup -> Picked up.
-// Parts that need finishing stop at Ready for paint first; the paint shop starts them from there.
+// Parts that need assembly stop at Build, parts that need finishing at Ready for paint;
+// the next shop starts them from there (CNC -> build -> paint -> pickup, skipping what a part doesn't need).
 // The lobby TV shows what's ready and how long it has been waiting.
 const STAGES = [
   { id: "queued", label: "Queued", next: "in-progress", action: "Start" },
   { id: "in-progress", label: "In progress", next: "ready", action: "Ready for pickup" },
+  { id: "ready-build", label: "Build", next: "in-progress", action: "Start build" },
   { id: "ready-paint", label: "Ready for paint", next: "in-progress", action: "Start paint" },
   { id: "ready", label: "Ready for pickup", next: "picked-up", action: "Picked up" },
   { id: "picked-up", label: "Picked up", next: null },
 ];
-const DEPTS = { CNC: "#2350c8", Paint: "#b5413a", Carpentry: "#9a6a1f", Other: "#6b7380" };
+// Handoff stages and the shop that picks each one up, in shop order.
+const HANDOFFS = [{ id: "ready-build", dept: "Build", label: "Send to build" }, { id: "ready-paint", dept: "Paint", label: "Ready for paint" }];
+const DEPTS = { CNC: "#2350c8", Paint: "#b5413a", Build: "#9a6a1f", Other: "#6b7380" };
 const STALE_HOURS = 4;
 
 function exampleOrders() {
@@ -696,7 +702,8 @@ function exampleOrders() {
     { id: "ex-plinth", title: "LS Device Plinth tops", qty: 2, dept: "Paint", for: "Front of house", project: "Stuart Fails To Save The Universe", status: "ready", statusAt: ago(1.5), example: true },
     { id: "ex-uprights", title: "Skyscraper uprights 1-10", qty: 2, dept: "CNC", project: "Stuart Fails To Save The Universe", status: "in-progress", statusAt: ago(3), example: true },
     { id: "ex-corners", title: "Skyscraper corner details", qty: 8, dept: "CNC", project: "Stuart Fails To Save The Universe", location: "Paint cart", status: "ready-paint", statusAt: ago(2), example: true },
-    { id: "ex-frame", title: "Comic display stick framing", dept: "Carpentry", status: "queued", statusAt: ago(5), example: true },
+    { id: "ex-frame", title: "Comic display stick framing", dept: "Build", status: "queued", statusAt: ago(5), example: true },
+    { id: "ex-cabinet", title: "Right wall cabinet panels", dept: "CNC", project: "Stuart Fails To Save The Universe", location: "Assembly table", status: "ready-build", statusAt: ago(0.75), example: true },
   ];
 }
 
@@ -774,8 +781,14 @@ function orderCard(o, st) {
       h("span", { class: "age", title: "Time in this stage" }, (st.id === "ready" ? "Waiting " : "") + waited(o.statusAt)),
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
-      st.id === "in-progress" && o.dept !== "Paint" ? h("button", { class: "btn", onclick: () => advance(o, "ready-paint") }, "Ready for paint") : null,
+      st.id === "in-progress" ? nextShops(o).map(hd => h("button", { class: "btn", onclick: () => advance(o, hd.id) }, hd.label)) : null,
       st.next ? h("button", { class: "btn" + (st.id === "in-progress" ? " primary" : ""), onclick: () => advance(o) }, st.action) : null));
+}
+
+// Shops that can still take an in-progress order: build only comes before paint, and nothing goes back to its own shop.
+function nextShops(o) {
+  const at = HANDOFFS.findIndex(hd => hd.dept === o.dept);
+  return HANDOFFS.filter((hd, i) => i > at);
 }
 
 async function advance(o, to) {
@@ -783,7 +796,8 @@ async function advance(o, to) {
   const next = to || st?.next;
   if (!next) return;
   const moved = { ...o, status: next, statusAt: new Date().toISOString() };
-  if (o.status === "ready-paint") moved.dept = "Paint"; // the paint shop owns it from here
+  const handoff = HANDOFFS.find(hd => hd.id === o.status);
+  if (handoff) moved.dept = handoff.dept; // the next shop owns it from here
   await saveOrder(moved);
   toast(`${o.title}: ${STAGES.find(s => s.id === next).label}`);
   render();
@@ -839,22 +853,25 @@ function enterTv() {
     const ready = (state.orders || []).filter(o => o.status === "ready").sort(byOldest);
     const all = state.orders || [];
     const cnc = all.filter(o => o.status === "in-progress" && o.dept === "CNC").sort(byOldest);
-    const paint = [...all.filter(o => o.status === "ready-paint").sort(byOldest),
-      ...all.filter(o => o.status === "in-progress" && o.dept === "Paint").sort(byOldest)];
-    const doing = { CNC: "Cutting", Paint: "Painting" };
+    const shop = (handoff, dept) => [...all.filter(o => o.status === handoff).sort(byOldest),
+      ...all.filter(o => o.status === "in-progress" && o.dept === dept).sort(byOldest)];
+    const build = shop("ready-build", "Build");
+    const paint = shop("ready-paint", "Paint");
+    const doing = { CNC: "Cutting", Build: "Building", Paint: "Painting" };
+    const handoffLabel = o => (HANDOFFS.some(hd => hd.id === o.status) ? "Waiting" : null);
     const item = (o, isReady) => h("div", { class: "tvb-item" + (isStale(o) ? " stale" : "") },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
       h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location, isReady ? o.dept : null].filter(Boolean).join(" · ")),
-      h("div", { class: "wait" + (o.status === "ready-paint" ? " paint" : "") },
-        isReady ? waited(o.statusAt) : `${o.status === "ready-paint" ? "Ready for paint" : doing[o.dept]} · ${waited(o.statusAt)}`));
+      h("div", { class: "wait" + (handoffLabel(o) ? " paint" : "") },
+        isReady ? waited(o.statusAt) : `${handoffLabel(o) || doing[o.dept]} · ${waited(o.statusAt)}`));
     const side = (title, list, empty) => h("section", { class: "tvb-col works" }, h("h2", {}, `${title} · ${list.length}`),
-      h("div", { class: "tvb-list" }, list.length ? list.slice(0, 5).map(o => item(o, false)) : h("div", { class: "tvb-empty" }, empty)));
+      h("div", { class: "tvb-list" }, list.length ? list.slice(0, 4).map(o => item(o, false)) : h("div", { class: "tvb-empty" }, empty)));
     host.replaceChildren(
       h("div", { class: "tvb-h" }, h("h1", {}, "FTB Pickup"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
       h("div", { class: "tvb-cols" },
         h("section", { class: "tvb-col ready" }, h("h2", {}, `Ready for pickup · ${ready.length}`),
           h("div", { class: "tvb-list" }, ready.length ? ready.map(o => item(o, true)) : h("div", { class: "tvb-empty" }, "Nothing waiting."))),
-        h("div", { class: "tvb-side" }, side("CNC", cnc, "Nothing on the machines."), side("Paint", paint, "Nothing in paint."))));
+        h("div", { class: "tvb-side" }, side("CNC", cnc, "Nothing on the machines."), side("Build", build, "Nothing in build."), side("Paint", paint, "Nothing in paint."))));
   };
   draw();
   clearInterval(tvTimer);
