@@ -211,6 +211,7 @@ body.tv .bar, body.tv #main { display: none; }
 .tvb-h h1 { font-size: 5.2vh; margin: 0; }
 .tvb-h .clock { font: 600 4.4vh/1 var(--f-display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .tvb-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 3vw; min-height: 0; }
+.tvb-side { display: grid; gap: 4vh; align-content: start; }
 .tvb-col h2 { font: 700 3.4vh/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 1.6vh; }
 .tvb-col.ready h2 { color: var(--ok); }
 .tvb-list { display: grid; gap: 1.4vh; }
@@ -825,7 +826,7 @@ function openOrderEditor(o) {
   title.focus();
 }
 
-// Lobby TV: ready orders big and oldest first, work in progress beside them. Refreshes every 30 seconds.
+// Lobby TV: ready orders big and oldest first, with CNC and Paint sections beside them (queued jobs stay off). Refreshes every 30 seconds.
 let tvTimer;
 function enterTv() {
   location.hash = "tv";
@@ -836,19 +837,24 @@ function enterTv() {
   const draw = () => {
     const now = new Date();
     const ready = (state.orders || []).filter(o => o.status === "ready").sort(byOldest);
-    const rank = { "ready-paint": 0, "in-progress": 1, queued: 2 };
-    const works = (state.orders || []).filter(o => o.status in rank).sort((a, b) => rank[a.status] - rank[b.status] || byOldest(a, b));
+    const all = state.orders || [];
+    const cnc = all.filter(o => o.status === "in-progress" && o.dept === "CNC").sort(byOldest);
+    const paint = [...all.filter(o => o.status === "ready-paint").sort(byOldest),
+      ...all.filter(o => o.status === "in-progress" && o.dept === "Paint").sort(byOldest)];
+    const doing = { CNC: "Cutting", Paint: "Painting" };
     const item = (o, isReady) => h("div", { class: "tvb-item" + (isStale(o) ? " stale" : "") },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
-      h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location, o.dept].filter(Boolean).join(" · ")),
-      h("div", { class: "wait" + (o.status === "ready-paint" ? " paint" : "") }, isReady ? waited(o.statusAt) : STAGES.find(s => s.id === o.status).label));
+      h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location, isReady ? o.dept : null].filter(Boolean).join(" · ")),
+      h("div", { class: "wait" + (o.status === "ready-paint" ? " paint" : "") },
+        isReady ? waited(o.statusAt) : `${o.status === "ready-paint" ? "Ready for paint" : doing[o.dept]} · ${waited(o.statusAt)}`));
+    const side = (title, list, empty) => h("section", { class: "tvb-col works" }, h("h2", {}, `${title} · ${list.length}`),
+      h("div", { class: "tvb-list" }, list.length ? list.slice(0, 5).map(o => item(o, false)) : h("div", { class: "tvb-empty" }, empty)));
     host.replaceChildren(
       h("div", { class: "tvb-h" }, h("h1", {}, "FTB Pickup"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
       h("div", { class: "tvb-cols" },
         h("section", { class: "tvb-col ready" }, h("h2", {}, `Ready for pickup · ${ready.length}`),
           h("div", { class: "tvb-list" }, ready.length ? ready.map(o => item(o, true)) : h("div", { class: "tvb-empty" }, "Nothing waiting."))),
-        h("section", { class: "tvb-col works" }, h("h2", {}, "In the works"),
-          h("div", { class: "tvb-list" }, works.length ? works.slice(0, 8).map(o => item(o, false)) : h("div", { class: "tvb-empty" }, "Nothing queued.")))));
+        h("div", { class: "tvb-side" }, side("CNC", cnc, "Nothing on the machines."), side("Paint", paint, "Nothing in paint."))));
   };
   draw();
   clearInterval(tvTimer);
