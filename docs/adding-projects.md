@@ -37,3 +37,9 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 | Stock / materials | 3/4" MDF, 1/2" MDF, 3/4" Plywood |
 | 3D viewers | uploaded model (permanent) or an Autodesk share link (can expire) |
 | Files + links | packet page, .3dm / .skp downloads, cut files, PDFs |
+
+## Pickup board and lobby TV
+
+The **Pickup** tab tracks shop orders (CNC, paint, carpentry) through Queued, In progress, Ready for pickup and Picked up. Whoever finishes a part clicks **Mark ready**; whoever grabs it clicks **Picked up**. Orders waiting more than 4 hours turn amber.
+
+For the lobby screen, open `https://ftbshop.fun/#tv` on the TV's browser, sign in once, and leave it. It shows ready orders oldest first with how long each has waited, refreshes every 30 seconds, and double-click exits.

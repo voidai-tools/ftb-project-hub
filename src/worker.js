@@ -2,6 +2,9 @@
 // Serves the static site from /public and a small JSON API:
 //   GET  /api/hub                     -> hub document (projects, sections, links, viewers)
 //   PUT  /api/hub                     -> replace hub document
+//   GET  /api/orders                  -> shop pickup orders (one KV key each, so people updating at once don't clobber each other)
+//   PUT  /api/orders/:id
+//   DELETE /api/orders/:id
 //   GET  /api/viewer-token            -> short-lived APS token, viewables:read only
 //   POST /api/models/upload           -> { fileName } => signed S3 URL for a direct browser upload
 //   POST /api/models/complete         -> { objectKey, uploadKey } => finalize upload + start translation, returns { urn }
@@ -44,6 +47,32 @@ async function route(request, env, url) {
     hub.updatedAt = new Date().toISOString();
     await env.HUB.put(HUB_KEY, JSON.stringify(hub));
     return json({ ok: true, updatedAt: hub.updatedAt });
+  }
+
+  if (pathname === "/api/orders" && method === "GET") {
+    const keys = [];
+    let cursor;
+    do {
+      const page = await env.HUB.list({ prefix: "order:", cursor });
+      keys.push(...page.keys.map(k => k.name));
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+    const orders = (await Promise.all(keys.map(k => env.HUB.get(k, "json")))).filter(Boolean);
+    return json({ orders });
+  }
+  const om = pathname.match(/^\/api\/orders\/([\w-]+)$/);
+  if (om && method === "PUT") {
+    const order = await request.json();
+    if (!order?.title) throw httpError(400, "order.title required");
+    order.id = om[1];
+    // Picked-up orders clear themselves out after 30 days.
+    const opts = order.status === "picked-up" ? { expirationTtl: 60 * 60 * 24 * 30 } : {};
+    await env.HUB.put(`order:${om[1]}`, JSON.stringify(order), opts);
+    return json({ ok: true });
+  }
+  if (om && method === "DELETE") {
+    await env.HUB.delete(`order:${om[1]}`);
+    return json({ ok: true });
   }
 
   if (pathname === "/api/viewer-token" && method === "GET") {

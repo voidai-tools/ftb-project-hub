@@ -175,6 +175,53 @@ body.editing .add-sec { display: block; }
   .viewer-panel { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) auto; overflow: auto; }
   .vside { border-left: 0; border-top: 1px solid var(--rule); }
 }
+/* pickup board */
+.tab.pickup { display: inline-flex; align-items: center; gap: 6px; }
+.tab .count { font: 600 11px/1 var(--f-mono); background: var(--ok); color: var(--sheet); border-radius: 9px; padding: 3px 6px; letter-spacing: 0; }
+.lanes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding-bottom: 48px; align-items: start; }
+.lane { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.lane-h { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid var(--rule); padding-bottom: 6px; }
+.lane-h b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.lane-h span { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
+.lane.ready .lane-h { border-color: var(--ok); }
+.lane.ready .lane-h b { color: var(--ok); }
+.order { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; box-shadow: var(--shadow); }
+.order.stale { border-color: var(--warn); }
+.order-t { display: flex; gap: 8px; align-items: start; }
+.order-t b { flex: 1; min-width: 0; font-weight: 600; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+.order-m { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; color: var(--ink-2); }
+.order-m strong { color: var(--ink); font-weight: 600; }
+.age { font: 500 11px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; background: var(--paper); color: var(--ink-2); white-space: nowrap; }
+.order.stale .age { background: var(--warn-soft); color: var(--warn); }
+.order-a { display: flex; gap: 6px; }
+.order-a .btn { padding: 5px 10px; font-size: 13px; }
+.dept { font: 600 10.5px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; color: #fff; white-space: nowrap; }
+.lane-empty { font-size: 13px; color: var(--ink-2); padding: 8px 0; }
+@media (max-width: 960px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .lanes { grid-template-columns: 1fr; } }
+
+/* lobby TV: one fixed dark look, readable across the room */
+body.tv { --paper: #0f1216; --sheet: #181c22; --ink: #f1f3f5; --ink-2: #9aa3af; --rule: #2a3039; --ok: #4fd18b; --ok-soft: #12301f; --warn: #ffb547; --warn-soft: #3a2a0e; color-scheme: dark; background: var(--paper); }
+body.tv .bar, body.tv #main { display: none; }
+.tvb { min-height: 100vh; padding-block: 3vh; display: grid; grid-template-rows: auto 1fr; gap: 3vh; }
+.tvb-h { display: flex; justify-content: space-between; align-items: baseline; }
+.tvb-h h1 { font-size: 5.2vh; margin: 0; }
+.tvb-h .clock { font: 600 4.4vh/1 var(--f-display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tvb-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 3vw; min-height: 0; }
+.tvb-col h2 { font: 700 3.4vh/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 1.6vh; }
+.tvb-col.ready h2 { color: var(--ok); }
+.tvb-list { display: grid; gap: 1.4vh; }
+.tvb-item { background: var(--sheet); border: 1px solid var(--rule); border-left: 0.8vh solid var(--ok); border-radius: 1vh; padding: 1.6vh 2vh; display: grid; grid-template-columns: 1fr auto; gap: .6vh 2vh; align-items: center; }
+.tvb-col.works .tvb-item { border-left-color: var(--rule); padding: 1.1vh 1.6vh; }
+.tvb-item .t { font: 700 3.6vh/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .02em; }
+.tvb-col.works .t { font-size: 2.6vh; }
+.tvb-item .who { font-size: 2.2vh; color: var(--ink-2); grid-column: 1; }
+.tvb-col.works .who { font-size: 1.7vh; }
+.tvb-item .who strong { color: var(--ink); }
+.tvb-item .wait { grid-row: 1 / span 2; grid-column: 2; text-align: right; font: 600 3vh/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.tvb-item.stale .wait { color: var(--warn); }
+.tvb-col.works .wait { font-size: 2vh; color: var(--ink-2); }
+.tvb-empty { font-size: 2.4vh; color: var(--ink-2); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 <!--/BUILD:HEAD-->
@@ -281,13 +328,16 @@ function viewerState(v) {
 
 // ---------- render ----------
 function project() { return state.hub.projects.find(p => p.id === state.current) || state.hub.projects[0]; }
+const pickupTab = () => h("button", { class: "tab pickup", role: "tab", "aria-selected": String(state.current === "pickup"),
+  onclick: () => { state.current = "pickup"; location.hash = "pickup"; render(); } }, "Pickup", readyCount() ? h("span", { class: "count" }, readyCount()) : null);
 
 function render() {
   document.body.classList.toggle("editing", state.editing);
-  const p = project();
+  const onPickup = state.current === "pickup";
+  const p = onPickup ? null : project();
   if (p) state.current = p.id;
   const tabs = document.getElementById("tabs");
-  tabs.replaceChildren(...state.hub.projects.map(pr =>
+  tabs.replaceChildren(pickupTab(), ...state.hub.projects.map(pr =>
     h("button", { class: "tab", role: "tab", "aria-selected": String(pr.id === state.current), onclick: () => { state.current = pr.id; location.hash = pr.id; render(); } }, pr.name)),
     ...(state.editing ? [h("button", { class: "tab", onclick: () => openProjectEditor(null) }, "+ Project")] : []));
 
@@ -297,6 +347,7 @@ function render() {
     main.append(h("div", { class: "notice" },
       "Preview with sample data from your start.me page. Link addresses are blank where the screenshot cut them off; turn on Edit to paste them in. Edits here stay in this browser. Once deployed, models upload straight into FTB's own Autodesk storage."));
   }
+  if (onPickup) { renderPickup(main); return; }
   if (!p) { main.append(h("p", { class: "empty" }, "No projects yet. Turn on Edit and add one, or import your start.me bookmarks.")); return; }
 
   const sections = p.sections || [];
@@ -619,6 +670,186 @@ async function pollStatus(v) {
   }
 }
 
+// ---------- pickup board ----------
+// Shop orders (CNC, paint, carpentry) move Queued -> In progress -> Ready for pickup -> Picked up.
+// The lobby TV shows what's ready and how long it has been waiting.
+const STAGES = [
+  { id: "queued", label: "Queued", next: "in-progress", action: "Start" },
+  { id: "in-progress", label: "In progress", next: "ready", action: "Mark ready" },
+  { id: "ready", label: "Ready for pickup", next: "picked-up", action: "Picked up" },
+  { id: "picked-up", label: "Picked up", next: null },
+];
+const DEPTS = { CNC: "#2350c8", Paint: "#b5413a", Carpentry: "#9a6a1f", Other: "#6b7380" };
+const STALE_HOURS = 4;
+
+function exampleOrders() {
+  const ago = h => new Date(Date.now() - h * 3600e3).toISOString();
+  return [
+    { id: "ex-onion", title: "Tiny Onion Sign", dept: "CNC", for: "Jen", location: "Pickup rack", status: "ready", statusAt: ago(26), example: true },
+    { id: "ex-plinth", title: "LS Device Plinth tops", qty: 2, dept: "Paint", for: "Front of house", project: "Stuart Fails To Save The Universe", status: "ready", statusAt: ago(1.5), example: true },
+    { id: "ex-uprights", title: "Skyscraper uprights 1-10", qty: 2, dept: "CNC", project: "Stuart Fails To Save The Universe", status: "in-progress", statusAt: ago(3), example: true },
+    { id: "ex-frame", title: "Comic display stick framing", dept: "Carpentry", status: "queued", statusAt: ago(5), example: true },
+  ];
+}
+
+async function loadOrders() {
+  if (state.mode === "live") {
+    try { state.orders = (await (await fetch(`${API}/orders`)).json()).orders || []; } catch { state.orders ||= []; }
+  } else {
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem("ftb-orders") || "null"); } catch {}
+    state.orders = local || exampleOrders();
+  }
+}
+
+async function saveOrder(o) {
+  const i = state.orders.findIndex(x => x.id === o.id);
+  if (i >= 0) state.orders[i] = o; else state.orders.push(o);
+  if (state.mode === "live") {
+    const res = await fetch(`${API}/orders/${o.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
+    if (!res.ok) { toast("Couldn't save the order. Try again."); return; }
+  } else {
+    try { localStorage.setItem("ftb-orders", JSON.stringify(state.orders)); } catch {}
+  }
+}
+
+async function deleteOrder(o) {
+  state.orders = state.orders.filter(x => x.id !== o.id);
+  if (state.mode === "live") await fetch(`${API}/orders/${o.id}`, { method: "DELETE" });
+  else try { localStorage.setItem("ftb-orders", JSON.stringify(state.orders)); } catch {}
+}
+
+function waited(iso) {
+  const mins = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 60) return `${Math.round(mins)}m`;
+  const hrs = mins / 60;
+  if (hrs < 24) return `${Math.floor(hrs)}h ${Math.round(mins % 60)}m`;
+  return `${Math.floor(hrs / 24)}d ${Math.floor(hrs % 24)}h`;
+}
+const isStale = o => o.status === "ready" && Date.now() - new Date(o.statusAt).getTime() > STALE_HOURS * 3600e3;
+const byOldest = (a, b) => new Date(a.statusAt) - new Date(b.statusAt);
+const readyCount = () => (state.orders || []).filter(o => o.status === "ready").length;
+
+function renderPickup(main) {
+  const orders = state.orders || [];
+  const dayAgo = Date.now() - 24 * 3600e3;
+  main.append(h("div", { class: "head" },
+    h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, "Pickup board")),
+    h("div", { class: "tools" },
+      h("a", { class: "btn", href: "#tv", onclick: e => { e.preventDefault(); enterTv(); } }, "TV view"),
+      h("button", { class: "btn primary", onclick: () => openOrderEditor(null) }, "+ Order"))));
+  if (state.mode === "preview" && orders.some(o => o.example)) {
+    main.append(h("p", { class: "hint" }, "These four orders are examples. Add your own with + Order; changes stay in this browser until the hub is deployed."));
+  }
+  const lanes = h("div", { class: "lanes" });
+  for (const st of STAGES) {
+    let list = orders.filter(o => o.status === st.id).sort(byOldest);
+    if (st.id === "picked-up") list = list.filter(o => new Date(o.statusAt) > dayAgo).reverse();
+    lanes.append(h("section", { class: `lane ${st.id}` },
+      h("div", { class: "lane-h" }, h("b", {}, st.label), h("span", {}, st.id === "picked-up" ? "last 24h" : list.length)),
+      list.length ? list.map(o => orderCard(o, st)) : h("div", { class: "lane-empty" }, st.id === "ready" ? "Nothing waiting." : "Empty.")));
+  }
+  main.append(lanes);
+}
+
+function orderCard(o, st) {
+  return h("article", { class: "order" + (isStale(o) ? " stale" : "") },
+    h("div", { class: "order-t" },
+      h("b", {}, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
+      h("span", { class: "dept", style: `background:${DEPTS[o.dept] || DEPTS.Other}` }, o.dept || "Other")),
+    h("div", { class: "order-m" },
+      o.for ? h("span", {}, "For ", h("strong", {}, o.for)) : null,
+      o.location ? h("span", {}, "At ", h("strong", {}, o.location)) : null,
+      o.project ? h("span", {}, o.project) : null),
+    o.notes ? h("div", { class: "order-m" }, o.notes) : null,
+    h("div", { class: "order-a" },
+      h("span", { class: "age", title: "Time in this stage" }, (st.id === "ready" ? "Waiting " : "") + waited(o.statusAt)),
+      h("span", { style: "flex:1" }),
+      h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
+      st.next ? h("button", { class: "btn" + (st.id === "in-progress" ? " primary" : ""), onclick: () => advance(o) }, st.action) : null));
+}
+
+async function advance(o) {
+  const st = STAGES.find(s => s.id === o.status);
+  if (!st?.next) return;
+  await saveOrder({ ...o, status: st.next, statusAt: new Date().toISOString() });
+  toast(st.next === "ready" ? `${o.title} is ready for pickup` : `${o.title}: ${STAGES.find(s => s.id === st.next).label}`);
+  render();
+}
+
+function openOrderEditor(o) {
+  const isNew = !o;
+  const d = o ? { ...o } : { status: "queued", dept: "CNC" };
+  const title = h("input", { id: "o-title", value: d.title || "", placeholder: "Tiny Onion Sign", required: true });
+  const qty = h("input", { id: "o-qty", type: "number", min: "1", value: d.qty || 1 });
+  const dept = h("select", { id: "o-dept" }, Object.keys(DEPTS).map(k => h("option", { value: k, selected: k === d.dept }, k)));
+  const status = h("select", { id: "o-status" }, STAGES.map(s => h("option", { value: s.id, selected: s.id === d.status }, s.label)));
+  const who = h("input", { id: "o-for", value: d.for || "", placeholder: "Who's waiting on it" });
+  const loc = h("input", { id: "o-loc", value: d.location || "", placeholder: "Pickup rack, paint booth…" });
+  const proj = h("select", { id: "o-proj" }, h("option", { value: "" }, "None"),
+    state.hub.projects.map(p => h("option", { value: p.name, selected: p.name === d.project }, p.name)));
+  const notes = h("input", { id: "o-notes", value: d.notes || "" });
+  let armed = false;
+  const del = h("button", { class: "btn danger", type: "button", onclick: async () => {
+    if (!armed) { armed = true; del.textContent = "Click again to delete"; return; }
+    await deleteOrder(o); close(); render();
+  } }, "Delete");
+  const form = h("form", { class: "panel editor", onsubmit: async e => {
+    e.preventDefault();
+    const next = { ...d, title: title.value.trim(), qty: Math.max(1, +qty.value || 1), dept: dept.value, for: who.value.trim(),
+      location: loc.value.trim(), project: proj.value, notes: notes.value.trim(), status: status.value };
+    if (isNew) { next.id = uid(next.title); next.createdAt = new Date().toISOString(); }
+    if (isNew || status.value !== d.status) next.statusAt = new Date().toISOString();
+    delete next.example;
+    await saveOrder(next); close(); render();
+  } },
+    h("h3", {}, isNew ? "New order" : "Edit order"),
+    field("What is it", title),
+    h("div", { class: "row" }, field("Qty", qty), field("Shop", dept), field("Stage", status)),
+    h("div", { class: "row" }, field("For", who), field("Where to pick up", loc)),
+    field("Project", proj), field("Note", notes),
+    h("div", { class: "foot" }, isNew ? h("span") : del,
+      h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
+  const close = overlay(form);
+  title.focus();
+}
+
+// Lobby TV: ready orders big and oldest first, work in progress beside them. Refreshes every 30 seconds.
+let tvTimer;
+function enterTv() {
+  location.hash = "tv";
+  document.body.classList.add("tv");
+  const host = h("div", { class: "tvb wrap", id: "tvb" });
+  document.getElementById("tvb")?.remove();
+  document.body.append(host);
+  const draw = () => {
+    const now = new Date();
+    const ready = (state.orders || []).filter(o => o.status === "ready").sort(byOldest);
+    const works = (state.orders || []).filter(o => o.status === "in-progress" || o.status === "queued").sort(byOldest);
+    const item = (o, isReady) => h("div", { class: "tvb-item" + (isStale(o) ? " stale" : "") },
+      h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
+      h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location, o.dept].filter(Boolean).join(" · ")),
+      h("div", { class: "wait" }, isReady ? waited(o.statusAt) : STAGES.find(s => s.id === o.status).label));
+    host.replaceChildren(
+      h("div", { class: "tvb-h" }, h("h1", {}, "FTB Pickup"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
+      h("div", { class: "tvb-cols" },
+        h("section", { class: "tvb-col ready" }, h("h2", {}, `Ready for pickup · ${ready.length}`),
+          h("div", { class: "tvb-list" }, ready.length ? ready.map(o => item(o, true)) : h("div", { class: "tvb-empty" }, "Nothing waiting."))),
+        h("section", { class: "tvb-col works" }, h("h2", {}, "In the works"),
+          h("div", { class: "tvb-list" }, works.length ? works.slice(0, 8).map(o => item(o, false)) : h("div", { class: "tvb-empty" }, "Nothing queued.")))));
+  };
+  draw();
+  clearInterval(tvTimer);
+  tvTimer = setInterval(async () => { await loadOrders(); draw(); }, 30000);
+  host.addEventListener("dblclick", exitTv);
+}
+function exitTv() {
+  clearInterval(tvTimer);
+  document.body.classList.remove("tv");
+  document.getElementById("tvb")?.remove();
+  state.current = "pickup"; location.hash = "pickup"; render();
+}
+
 // ---------- boot ----------
 document.getElementById("q").addEventListener("input", e => { state.query = e.target.value; render(); });
 document.getElementById("editBtn").addEventListener("click", e => {
@@ -627,10 +858,14 @@ document.getElementById("editBtn").addEventListener("click", e => {
   e.currentTarget.textContent = state.editing ? "Done" : "Edit";
   render();
 });
-loadHub().then(() => {
+loadHub().then(loadOrders).then(() => {
   const fromHash = location.hash.slice(1);
-  state.current = state.hub.projects.some(p => p.id === fromHash) ? fromHash : state.hub.projects[0]?.id;
+  state.current = fromHash === "pickup" || fromHash === "tv" ? "pickup"
+    : state.hub.projects.some(p => p.id === fromHash) ? fromHash : state.hub.projects[0]?.id;
   render();
+  if (fromHash === "tv") enterTv();
+  // Keep the Pickup count fresh for anyone leaving the hub open.
+  setInterval(async () => { if (!document.body.classList.contains("tv")) { await loadOrders(); if (state.current === "pickup" && !document.querySelector(".scrim")) render(); } }, 60000);
 });
 </script>
 <!--/BUILD:BODY-->
