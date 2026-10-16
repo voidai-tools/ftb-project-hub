@@ -50,7 +50,7 @@ For the lobby screen, open `https://ftbshop.fun/#tv` on the TV's browser, sign i
 
 ## TickTick CNC list
 
-The hub can follow the **CNC HUB** list in TickTick. Every open task there shows up on the Shop board as a CNC job in progress (marked "TickTick"), and checking a task off in TickTick moves it to Completed, where you can send it to build or paint or tag where it goes. The sync runs every 5 minutes, or right away with **Sync TickTick** on the Shop tab. It only reads TickTick; nothing on the board changes your TickTick tasks.
+The hub can follow the **CNC HUB** list in TickTick. Every open task there shows up on the Shop board as a CNC job in progress (marked "TickTick"), and checking a task off in TickTick moves it to Build. From there you move it by hand: **Start build**, **Ready for paint**, or **Completed** (then tag it Pickup, Wrap for truck, FOH table or Ship). The sync runs every 5 minutes, or right away with **Sync TickTick** on the Shop tab. It only reads TickTick; nothing on the board changes your TickTick tasks.
 
 One-time setup:
 1. At developer.ticktick.com, sign in, open **Manage Apps**, and create an app. Set its redirect URL to `https://ftbshop.fun/api/ticktick/callback`.

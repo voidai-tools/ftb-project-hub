@@ -793,6 +793,9 @@ function orderCard(o, st) {
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
       st.id === "in-progress" || st.id === "done" ? nextShops(o).map(hd => h("button", { class: "btn", onclick: () => advance(o, hd.id) }, hd.label)) : null,
+      // Waiting in Build: it can also skip straight to paint or Completed without a build step.
+      st.id === "ready-build" ? [h("button", { class: "btn", onclick: () => advance(o, "ready-paint") }, "Ready for paint"),
+        h("button", { class: "btn", onclick: () => advance(o, "done") }, "Completed")] : null,
       st.next ? h("button", { class: "btn" + (st.id === "in-progress" ? " primary" : ""), onclick: () => advance(o) }, st.action) : null));
 }
 
@@ -802,7 +805,7 @@ function ticktickButton() {
     if (!state.ticktick?.connected) { location.href = `${API}/ticktick/connect`; return; }
     btn.disabled = true;
     const r = await (await fetch(`${API}/ticktick/sync`, { method: "POST" })).json().catch(() => ({}));
-    toast(r.ok ? `TickTick: ${r.added} new, ${r.completed} completed` : `TickTick sync failed: ${r.reason || "try again"}`);
+    toast(r.ok ? `TickTick: ${r.added} new, ${r.toBuild} sent to build` : `TickTick sync failed: ${r.reason || "try again"}`);
     await loadOrders(); render();
   } }, state.ticktick?.connected ? "Sync TickTick" : "Connect TickTick");
   return btn;

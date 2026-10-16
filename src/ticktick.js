@@ -1,6 +1,6 @@
 // One-way sync from a TickTick list (default "CNC HUB") into shop board orders.
 // Open tasks on the list show up as CNC jobs in progress; when a task is checked off in TickTick,
-// its order moves to Completed. Everything after that (build, paint, where it goes) happens on the board.
+// its order moves to Build. From there it goes to paint or Completed by hand on the board.
 //
 // Setup: register an app at developer.ticktick.com with redirect URL https://<site>/api/ticktick/callback,
 // add TICKTICK_CLIENT_ID and TICKTICK_CLIENT_SECRET as Worker secrets, then open /api/ticktick/connect once.
@@ -70,7 +70,7 @@ export async function syncTicktick(env) {
     const open = (data.tasks || []).filter(t => t.status === 0 && !t.parentId);
     const openIds = new Set(open.map(t => t.id));
     const now = new Date().toISOString();
-    let added = 0, completed = 0;
+    let added = 0, toBuild = 0;
 
     for (const t of open) {
       const key = `order:tt-${t.id}`;
@@ -86,17 +86,17 @@ export async function syncTicktick(env) {
       }
     }
 
-    // Orders from TickTick still on the CNC whose task is no longer open were checked off: move them to Completed.
+    // Orders from TickTick still on the CNC whose task is no longer open were checked off: send them to Build.
     const keys = (await env.HUB.list({ prefix: "order:tt-" })).keys.map(k => k.name);
     for (const key of keys) {
       const o = await env.HUB.get(key, "json");
       if (o && o.status === "in-progress" && o.dept === "CNC" && !openIds.has(o.ticktickId)) {
-        await env.HUB.put(key, JSON.stringify({ ...o, status: "done", statusAt: now }));
-        completed++;
+        await env.HUB.put(key, JSON.stringify({ ...o, status: "ready-build", statusAt: now }));
+        toBuild++;
       }
     }
 
-    const result = { ok: true, list: list.name, open: open.length, added, completed, at: now };
+    const result = { ok: true, list: list.name, open: open.length, added, toBuild, at: now };
     await env.HUB.put("ticktick:last-sync", JSON.stringify(result));
     return result;
   } catch (err) {
