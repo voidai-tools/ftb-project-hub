@@ -178,13 +178,15 @@ body.editing .add-sec { display: block; }
 /* pickup board */
 .tab.pickup { display: inline-flex; align-items: center; gap: 6px; }
 .tab .count { font: 600 11px/1 var(--f-mono); background: var(--ok); color: var(--sheet); border-radius: 9px; padding: 3px 6px; letter-spacing: 0; }
-.lanes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding-bottom: 48px; align-items: start; }
+.lanes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; padding-bottom: 48px; align-items: start; }
 .lane { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .lane-h { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid var(--rule); padding-bottom: 6px; }
 .lane-h b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
 .lane-h span { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
 .lane.ready .lane-h { border-color: var(--ok); }
 .lane.ready .lane-h b { color: var(--ok); }
+.lane.ready-paint .lane-h { border-color: #b5413a; }
+.lane.ready-paint .lane-h b { color: #b5413a; }
 .order { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; box-shadow: var(--shadow); }
 .order.stale { border-color: var(--warn); }
 .order-t { display: flex; gap: 8px; align-items: start; }
@@ -193,11 +195,12 @@ body.editing .add-sec { display: block; }
 .order-m strong { color: var(--ink); font-weight: 600; }
 .age { font: 500 11px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; background: var(--paper); color: var(--ink-2); white-space: nowrap; }
 .order.stale .age { background: var(--warn-soft); color: var(--warn); }
-.order-a { display: flex; gap: 6px; }
+.order-a { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .order-a .btn { padding: 5px 10px; font-size: 13px; }
 .dept { font: 600 10.5px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; color: #fff; white-space: nowrap; }
 .lane-empty { font-size: 13px; color: var(--ink-2); padding: 8px 0; }
-@media (max-width: 960px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1180px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .lanes { grid-template-columns: 1fr; } }
 
 /* lobby TV: one fixed dark look, readable across the room */
@@ -221,6 +224,7 @@ body.tv .bar, body.tv #main { display: none; }
 .tvb-item .wait { grid-row: 1 / span 2; grid-column: 2; text-align: right; font: 600 3vh/1 var(--f-display); font-variant-numeric: tabular-nums; }
 .tvb-item.stale .wait { color: var(--warn); }
 .tvb-col.works .wait { font-size: 2vh; color: var(--ink-2); }
+.tvb-col.works .wait.paint { color: #ff7a6b; }
 .tvb-empty { font-size: 2.4vh; color: var(--ink-2); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -672,10 +676,12 @@ async function pollStatus(v) {
 
 // ---------- pickup board ----------
 // Shop orders (CNC, paint, carpentry) move Queued -> In progress -> Ready for pickup -> Picked up.
+// Parts that need finishing stop at Ready for paint first; the paint shop starts them from there.
 // The lobby TV shows what's ready and how long it has been waiting.
 const STAGES = [
   { id: "queued", label: "Queued", next: "in-progress", action: "Start" },
-  { id: "in-progress", label: "In progress", next: "ready", action: "Mark ready" },
+  { id: "in-progress", label: "In progress", next: "ready", action: "Ready for pickup" },
+  { id: "ready-paint", label: "Ready for paint", next: "in-progress", action: "Start paint" },
   { id: "ready", label: "Ready for pickup", next: "picked-up", action: "Picked up" },
   { id: "picked-up", label: "Picked up", next: null },
 ];
@@ -688,6 +694,7 @@ function exampleOrders() {
     { id: "ex-onion", title: "Tiny Onion Sign", dept: "CNC", for: "Jen", location: "Pickup rack", status: "ready", statusAt: ago(26), example: true },
     { id: "ex-plinth", title: "LS Device Plinth tops", qty: 2, dept: "Paint", for: "Front of house", project: "Stuart Fails To Save The Universe", status: "ready", statusAt: ago(1.5), example: true },
     { id: "ex-uprights", title: "Skyscraper uprights 1-10", qty: 2, dept: "CNC", project: "Stuart Fails To Save The Universe", status: "in-progress", statusAt: ago(3), example: true },
+    { id: "ex-corners", title: "Skyscraper corner details", qty: 8, dept: "CNC", project: "Stuart Fails To Save The Universe", location: "Paint cart", status: "ready-paint", statusAt: ago(2), example: true },
     { id: "ex-frame", title: "Comic display stick framing", dept: "Carpentry", status: "queued", statusAt: ago(5), example: true },
   ];
 }
@@ -739,7 +746,7 @@ function renderPickup(main) {
       h("a", { class: "btn", href: "#tv", onclick: e => { e.preventDefault(); enterTv(); } }, "TV view"),
       h("button", { class: "btn primary", onclick: () => openOrderEditor(null) }, "+ Order"))));
   if (state.mode === "preview" && orders.some(o => o.example)) {
-    main.append(h("p", { class: "hint" }, "These four orders are examples. Add your own with + Order; changes stay in this browser until the hub is deployed."));
+    main.append(h("p", { class: "hint" }, "These orders are examples. Add your own with + Order; changes stay in this browser until the hub is deployed."));
   }
   const lanes = h("div", { class: "lanes" });
   for (const st of STAGES) {
@@ -766,14 +773,18 @@ function orderCard(o, st) {
       h("span", { class: "age", title: "Time in this stage" }, (st.id === "ready" ? "Waiting " : "") + waited(o.statusAt)),
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
+      st.id === "in-progress" && o.dept !== "Paint" ? h("button", { class: "btn", onclick: () => advance(o, "ready-paint") }, "Ready for paint") : null,
       st.next ? h("button", { class: "btn" + (st.id === "in-progress" ? " primary" : ""), onclick: () => advance(o) }, st.action) : null));
 }
 
-async function advance(o) {
+async function advance(o, to) {
   const st = STAGES.find(s => s.id === o.status);
-  if (!st?.next) return;
-  await saveOrder({ ...o, status: st.next, statusAt: new Date().toISOString() });
-  toast(st.next === "ready" ? `${o.title} is ready for pickup` : `${o.title}: ${STAGES.find(s => s.id === st.next).label}`);
+  const next = to || st?.next;
+  if (!next) return;
+  const moved = { ...o, status: next, statusAt: new Date().toISOString() };
+  if (o.status === "ready-paint") moved.dept = "Paint"; // the paint shop owns it from here
+  await saveOrder(moved);
+  toast(`${o.title}: ${STAGES.find(s => s.id === next).label}`);
   render();
 }
 
@@ -825,11 +836,12 @@ function enterTv() {
   const draw = () => {
     const now = new Date();
     const ready = (state.orders || []).filter(o => o.status === "ready").sort(byOldest);
-    const works = (state.orders || []).filter(o => o.status === "in-progress" || o.status === "queued").sort(byOldest);
+    const rank = { "ready-paint": 0, "in-progress": 1, queued: 2 };
+    const works = (state.orders || []).filter(o => o.status in rank).sort((a, b) => rank[a.status] - rank[b.status] || byOldest(a, b));
     const item = (o, isReady) => h("div", { class: "tvb-item" + (isStale(o) ? " stale" : "") },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
       h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location, o.dept].filter(Boolean).join(" · ")),
-      h("div", { class: "wait" }, isReady ? waited(o.statusAt) : STAGES.find(s => s.id === o.status).label));
+      h("div", { class: "wait" + (o.status === "ready-paint" ? " paint" : "") }, isReady ? waited(o.statusAt) : STAGES.find(s => s.id === o.status).label));
     host.replaceChildren(
       h("div", { class: "tvb-h" }, h("h1", {}, "FTB Pickup"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
       h("div", { class: "tvb-cols" },
