@@ -65,8 +65,8 @@ async function route(request, env, url) {
     const order = await request.json();
     if (!order?.title) throw httpError(400, "order.title required");
     order.id = om[1];
-    // Picked-up orders clear themselves out after 30 days.
-    const opts = order.status === "picked-up" ? { expirationTtl: 60 * 60 * 24 * 30 } : {};
+    // Orders that have left the shop clear themselves out after 30 days.
+    const opts = order.status === "out" ? { expirationTtl: 60 * 60 * 24 * 30 } : {};
     await env.HUB.put(`order:${om[1]}`, JSON.stringify(order), opts);
     return json({ ok: true });
   }

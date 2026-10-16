@@ -175,16 +175,14 @@ body.editing .add-sec { display: block; }
   .viewer-panel { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) auto; overflow: auto; }
   .vside { border-left: 0; border-top: 1px solid var(--rule); }
 }
-/* pickup board */
-.tab.pickup { display: inline-flex; align-items: center; gap: 6px; }
-.tab .count { font: 600 11px/1 var(--f-mono); background: var(--ok); color: var(--sheet); border-radius: 9px; padding: 3px 6px; letter-spacing: 0; }
+/* shop board */
 .lanes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; padding-bottom: 48px; align-items: start; }
 .lane { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .lane-h { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid var(--rule); padding-bottom: 6px; }
 .lane-h b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
 .lane-h span { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
-.lane.ready .lane-h { border-color: var(--ok); }
-.lane.ready .lane-h b { color: var(--ok); }
+.lane.done .lane-h { border-color: var(--ok); }
+.lane.done .lane-h b { color: var(--ok); }
 .lane.ready-build .lane-h { border-color: #9a6a1f; }
 .lane.ready-build .lane-h b { color: #9a6a1f; }
 .lane.ready-paint .lane-h { border-color: #b5413a; }
@@ -200,6 +198,10 @@ body.editing .add-sec { display: block; }
 .order-a { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .order-a .btn { padding: 5px 10px; font-size: 13px; }
 .dept { font: 600 10.5px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; color: #fff; white-space: nowrap; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tagb { border: 1px solid var(--rule); background: var(--paper); color: var(--ink-2); border-radius: 999px; padding: 3px 9px; font-size: 12px; font-weight: 500; cursor: pointer; }
+.tagb:hover { border-color: var(--ink-2); color: var(--ink); }
+.tagb[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--sheet); }
 .lane-empty { font-size: 13px; color: var(--ink-2); padding: 8px 0; }
 @media (max-width: 1400px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 860px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -212,23 +214,25 @@ body.tv .bar, body.tv #main { display: none; }
 .tvb-h { display: flex; justify-content: space-between; align-items: baseline; }
 .tvb-h h1 { font-size: 5.2vh; margin: 0; }
 .tvb-h .clock { font: 600 4.4vh/1 var(--f-display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.tvb-cols { display: grid; grid-template-columns: 1.6fr 1fr; gap: 3vw; min-height: 0; }
-.tvb-side { display: grid; gap: 3vh; align-content: start; }
-.tvb-col h2 { font: 700 3.4vh/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 1.6vh; }
-.tvb-col.ready h2 { color: var(--ok); }
-.tvb-list { display: grid; gap: 1.4vh; }
-.tvb-item { background: var(--sheet); border: 1px solid var(--rule); border-left: 0.8vh solid var(--ok); border-radius: 1vh; padding: 1.6vh 2vh; display: grid; grid-template-columns: 1fr auto; gap: .6vh 2vh; align-items: center; }
-.tvb-col.works .tvb-item { border-left-color: var(--rule); padding: 1.1vh 1.6vh; }
-.tvb-item .t { font: 700 3.6vh/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .02em; }
-.tvb-col.works .t { font-size: 2.6vh; }
-.tvb-item .who { font-size: 2.2vh; color: var(--ink-2); grid-column: 1; }
-.tvb-col.works .who { font-size: 1.7vh; }
-.tvb-item .who strong { color: var(--ink); }
-.tvb-item .wait { grid-row: 1 / span 2; grid-column: 2; text-align: right; font: 600 3vh/1 var(--f-display); font-variant-numeric: tabular-nums; }
-.tvb-item.stale .wait { color: var(--warn); }
-.tvb-col.works .wait { font-size: 2vh; color: var(--ink-2); }
-.tvb-col.works .wait.paint { color: #ff7a6b; }
-.tvb-empty { font-size: 2.4vh; color: var(--ink-2); }
+.tvb-cols { display: grid; grid-template-columns: 1fr 1fr 1fr .8fr; gap: 2vw; min-height: 0; align-items: start; }
+.tvb-col h2 { font: 700 3.6vh/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 1.6vh; padding-bottom: 1vh; border-bottom: .4vh solid var(--accent-col, var(--rule)); }
+.tvb-col.cnc { --accent-col: #5b84ff; }
+.tvb-col.build { --accent-col: #d9a441; }
+.tvb-col.paint { --accent-col: #ff7a6b; }
+.tvb-col.done { --accent-col: var(--ok); }
+.tvb-col.done h2 { color: var(--ok); font-size: 2.8vh; }
+.tvb-list { display: grid; gap: 1.2vh; }
+.tvb-item { background: var(--sheet); border: 1px solid var(--rule); border-radius: 1vh; padding: 1.4vh 1.6vh; display: grid; gap: .7vh; }
+.tvb-item .t { font: 700 3vh/1.05 var(--f-display); text-transform: uppercase; letter-spacing: .02em; overflow-wrap: anywhere; }
+.tvb-item .who { font-size: 1.8vh; color: var(--ink-2); }
+.tvb-item .wait { font: 600 2.1vh/1 var(--f-display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.tvb-item .wait.waiting { color: #ff7a6b; }
+.tvb-col.done .tvb-item { padding: 1vh 1.2vh; gap: .5vh; }
+.tvb-col.done .t { font-size: 2.1vh; }
+.tvb-col.done .row { display: flex; justify-content: space-between; align-items: center; gap: 1vh; }
+.tvb-tag { font: 600 1.6vh/1 var(--f-body); background: var(--ok-soft); color: var(--ok); border-radius: 99px; padding: .5vh 1vh; white-space: nowrap; }
+.tvb-tag.none { background: var(--warn-soft); color: var(--warn); }
+.tvb-empty { font-size: 2vh; color: var(--ink-2); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 <!--/BUILD:HEAD-->
@@ -336,7 +340,7 @@ function viewerState(v) {
 // ---------- render ----------
 function project() { return state.hub.projects.find(p => p.id === state.current) || state.hub.projects[0]; }
 const pickupTab = () => h("button", { class: "tab pickup", role: "tab", "aria-selected": String(state.current === "pickup"),
-  onclick: () => { state.current = "pickup"; location.hash = "pickup"; render(); } }, "Pickup", readyCount() ? h("span", { class: "count" }, readyCount()) : null);
+  onclick: () => { state.current = "pickup"; location.hash = "pickup"; render(); } }, "Shop");
 
 function render() {
   document.body.classList.toggle("editing", state.editing);
@@ -677,33 +681,34 @@ async function pollStatus(v) {
   }
 }
 
-// ---------- pickup board ----------
-// Shop orders (CNC, paint, carpentry) move Queued -> In progress -> Ready for pickup -> Picked up.
-// Parts that need assembly stop at Build, parts that need finishing at Ready for paint;
-// the next shop starts them from there (CNC -> build -> paint -> pickup, skipping what a part doesn't need).
-// The lobby TV shows what's ready and how long it has been waiting.
+// ---------- shop board ----------
+// Shop orders move Queued -> In progress -> (Build) -> (Ready for paint) -> Completed -> Out the door,
+// skipping the shops a part doesn't need. Completed orders get a tag for where they go next.
 const STAGES = [
   { id: "queued", label: "Queued", next: "in-progress", action: "Start" },
-  { id: "in-progress", label: "In progress", next: "ready", action: "Ready for pickup" },
+  { id: "in-progress", label: "In progress", next: "done", action: "Completed" },
   { id: "ready-build", label: "Build", next: "in-progress", action: "Start build" },
   { id: "ready-paint", label: "Ready for paint", next: "in-progress", action: "Start paint" },
-  { id: "ready", label: "Ready for pickup", next: "picked-up", action: "Picked up" },
-  { id: "picked-up", label: "Picked up", next: null },
+  { id: "done", label: "Completed", next: "out", action: "Out the door" },
+  { id: "out", label: "Out the door", next: null },
 ];
 // Handoff stages and the shop that picks each one up, in shop order.
 const HANDOFFS = [{ id: "ready-build", dept: "Build", label: "Send to build" }, { id: "ready-paint", dept: "Paint", label: "Ready for paint" }];
-const DEPTS = { CNC: "#2350c8", Paint: "#b5413a", Build: "#9a6a1f", Other: "#6b7380" };
+const DEPTS = { CNC: "#2350c8", Build: "#9a6a1f", Paint: "#b5413a", Other: "#6b7380" };
+const OUT_TAGS = ["Pickup", "Wrap for truck", "FOH table", "Ship"];
 const STALE_HOURS = 4;
 
 function exampleOrders() {
   const ago = h => new Date(Date.now() - h * 3600e3).toISOString();
+  const stuart = "Stuart Fails To Save The Universe";
   return [
-    { id: "ex-onion", title: "Tiny Onion Sign", dept: "CNC", for: "Jen", location: "Pickup rack", status: "ready", statusAt: ago(26), example: true },
-    { id: "ex-plinth", title: "LS Device Plinth tops", qty: 2, dept: "Paint", for: "Front of house", project: "Stuart Fails To Save The Universe", status: "ready", statusAt: ago(1.5), example: true },
-    { id: "ex-uprights", title: "Skyscraper uprights 1-10", qty: 2, dept: "CNC", project: "Stuart Fails To Save The Universe", status: "in-progress", statusAt: ago(3), example: true },
-    { id: "ex-corners", title: "Skyscraper corner details", qty: 8, dept: "CNC", project: "Stuart Fails To Save The Universe", location: "Paint cart", status: "ready-paint", statusAt: ago(2), example: true },
+    { id: "ex-onion", title: "Tiny Onion Sign", dept: "CNC", for: "Jen", status: "done", statusAt: ago(26), example: true },
+    { id: "ex-plinth", title: "LS Device Plinth tops", qty: 2, dept: "Paint", project: stuart, status: "done", outTag: "Wrap for truck", statusAt: ago(1.5), example: true },
+    { id: "ex-uprights", title: "Skyscraper uprights 1-10", qty: 2, dept: "CNC", project: stuart, status: "in-progress", statusAt: ago(3), example: true },
+    { id: "ex-cabinet", title: "Right wall cabinet panels", dept: "CNC", project: stuart, location: "Assembly table", status: "ready-build", statusAt: ago(0.75), example: true },
+    { id: "ex-comic", title: "Comic display shell", dept: "Build", project: stuart, status: "in-progress", statusAt: ago(2.5), example: true },
+    { id: "ex-corners", title: "Skyscraper corner details", qty: 8, dept: "CNC", project: stuart, location: "Paint cart", status: "ready-paint", statusAt: ago(2), example: true },
     { id: "ex-frame", title: "Comic display stick framing", dept: "Build", status: "queued", statusAt: ago(5), example: true },
-    { id: "ex-cabinet", title: "Right wall cabinet panels", dept: "CNC", project: "Stuart Fails To Save The Universe", location: "Assembly table", status: "ready-build", statusAt: ago(0.75), example: true },
   ];
 }
 
@@ -712,7 +717,7 @@ async function loadOrders() {
     try { state.orders = (await (await fetch(`${API}/orders`)).json()).orders || []; } catch { state.orders ||= []; }
   } else {
     let local = null;
-    try { local = JSON.parse(localStorage.getItem("ftb-orders") || "null"); } catch {}
+    try { local = JSON.parse(localStorage.getItem("ftb-orders-v2") || "null"); } catch {}
     state.orders = local || exampleOrders();
   }
 }
@@ -724,14 +729,14 @@ async function saveOrder(o) {
     const res = await fetch(`${API}/orders/${o.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
     if (!res.ok) { toast("Couldn't save the order. Try again."); return; }
   } else {
-    try { localStorage.setItem("ftb-orders", JSON.stringify(state.orders)); } catch {}
+    try { localStorage.setItem("ftb-orders-v2", JSON.stringify(state.orders)); } catch {}
   }
 }
 
 async function deleteOrder(o) {
   state.orders = state.orders.filter(x => x.id !== o.id);
   if (state.mode === "live") await fetch(`${API}/orders/${o.id}`, { method: "DELETE" });
-  else try { localStorage.setItem("ftb-orders", JSON.stringify(state.orders)); } catch {}
+  else try { localStorage.setItem("ftb-orders-v2", JSON.stringify(state.orders)); } catch {}
 }
 
 function waited(iso) {
@@ -741,15 +746,15 @@ function waited(iso) {
   if (hrs < 24) return `${Math.floor(hrs)}h ${Math.round(mins % 60)}m`;
   return `${Math.floor(hrs / 24)}d ${Math.floor(hrs % 24)}h`;
 }
-const isStale = o => o.status === "ready" && Date.now() - new Date(o.statusAt).getTime() > STALE_HOURS * 3600e3;
+// A completed order nobody has tagged for a few hours is probably sitting forgotten.
+const isStale = o => o.status === "done" && !o.outTag && Date.now() - new Date(o.statusAt).getTime() > STALE_HOURS * 3600e3;
 const byOldest = (a, b) => new Date(a.statusAt) - new Date(b.statusAt);
-const readyCount = () => (state.orders || []).filter(o => o.status === "ready").length;
 
 function renderPickup(main) {
   const orders = state.orders || [];
   const dayAgo = Date.now() - 24 * 3600e3;
   main.append(h("div", { class: "head" },
-    h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, "Pickup board")),
+    h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, "Shop board")),
     h("div", { class: "tools" },
       h("a", { class: "btn", href: "#tv", onclick: e => { e.preventDefault(); enterTv(); } }, "TV view"),
       h("button", { class: "btn primary", onclick: () => openOrderEditor(null) }, "+ Order"))));
@@ -759,10 +764,10 @@ function renderPickup(main) {
   const lanes = h("div", { class: "lanes" });
   for (const st of STAGES) {
     let list = orders.filter(o => o.status === st.id).sort(byOldest);
-    if (st.id === "picked-up") list = list.filter(o => new Date(o.statusAt) > dayAgo).reverse();
+    if (st.id === "out") list = list.filter(o => new Date(o.statusAt) > dayAgo).reverse();
     lanes.append(h("section", { class: `lane ${st.id}` },
-      h("div", { class: "lane-h" }, h("b", {}, st.label), h("span", {}, st.id === "picked-up" ? "last 24h" : list.length)),
-      list.length ? list.map(o => orderCard(o, st)) : h("div", { class: "lane-empty" }, st.id === "ready" ? "Nothing waiting." : "Empty.")));
+      h("div", { class: "lane-h" }, h("b", {}, st.label), h("span", {}, st.id === "out" ? "last 24h" : list.length)),
+      list.length ? list.map(o => orderCard(o, st)) : h("div", { class: "lane-empty" }, "Empty.")));
   }
   main.append(lanes);
 }
@@ -777,12 +782,20 @@ function orderCard(o, st) {
       o.location ? h("span", {}, "At ", h("strong", {}, o.location)) : null,
       o.project ? h("span", {}, o.project) : null),
     o.notes ? h("div", { class: "order-m" }, o.notes) : null,
+    st.id === "done" ? h("div", { class: "tags", role: "group", "aria-label": "Where it goes next" },
+      OUT_TAGS.map(t => h("button", { class: "tagb", "aria-pressed": String(o.outTag === t), onclick: () => setTag(o, t) }, t))) : null,
+    st.id === "out" && o.outTag ? h("div", { class: "order-m" }, o.outTag) : null,
     h("div", { class: "order-a" },
-      h("span", { class: "age", title: "Time in this stage" }, (st.id === "ready" ? "Waiting " : "") + waited(o.statusAt)),
+      h("span", { class: "age", title: "Time in this stage" }, waited(o.statusAt)),
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
       st.id === "in-progress" ? nextShops(o).map(hd => h("button", { class: "btn", onclick: () => advance(o, hd.id) }, hd.label)) : null,
       st.next ? h("button", { class: "btn" + (st.id === "in-progress" ? " primary" : ""), onclick: () => advance(o) }, st.action) : null));
+}
+
+async function setTag(o, t) {
+  await saveOrder({ ...o, outTag: o.outTag === t ? "" : t });
+  render();
 }
 
 // Shops that can still take an in-progress order: build only comes before paint, and nothing goes back to its own shop.
@@ -810,8 +823,9 @@ function openOrderEditor(o) {
   const qty = h("input", { id: "o-qty", type: "number", min: "1", value: d.qty || 1 });
   const dept = h("select", { id: "o-dept" }, Object.keys(DEPTS).map(k => h("option", { value: k, selected: k === d.dept }, k)));
   const status = h("select", { id: "o-status" }, STAGES.map(s => h("option", { value: s.id, selected: s.id === d.status }, s.label)));
+  const outTag = h("select", { id: "o-out" }, h("option", { value: "" }, "Not decided"), OUT_TAGS.map(t => h("option", { value: t, selected: t === d.outTag }, t)));
   const who = h("input", { id: "o-for", value: d.for || "", placeholder: "Who's waiting on it" });
-  const loc = h("input", { id: "o-loc", value: d.location || "", placeholder: "Pickup rack, paint booth…" });
+  const loc = h("input", { id: "o-loc", value: d.location || "", placeholder: "Assembly table, paint cart…" });
   const proj = h("select", { id: "o-proj" }, h("option", { value: "" }, "None"),
     state.hub.projects.map(p => h("option", { value: p.name, selected: p.name === d.project }, p.name)));
   const notes = h("input", { id: "o-notes", value: d.notes || "" });
@@ -823,7 +837,7 @@ function openOrderEditor(o) {
   const form = h("form", { class: "panel editor", onsubmit: async e => {
     e.preventDefault();
     const next = { ...d, title: title.value.trim(), qty: Math.max(1, +qty.value || 1), dept: dept.value, for: who.value.trim(),
-      location: loc.value.trim(), project: proj.value, notes: notes.value.trim(), status: status.value };
+      location: loc.value.trim(), project: proj.value, notes: notes.value.trim(), status: status.value, outTag: outTag.value };
     if (isNew) { next.id = uid(next.title); next.createdAt = new Date().toISOString(); }
     if (isNew || status.value !== d.status) next.statusAt = new Date().toISOString();
     delete next.example;
@@ -832,15 +846,17 @@ function openOrderEditor(o) {
     h("h3", {}, isNew ? "New order" : "Edit order"),
     field("What is it", title),
     h("div", { class: "row" }, field("Qty", qty), field("Shop", dept), field("Stage", status)),
-    h("div", { class: "row" }, field("For", who), field("Where to pick up", loc)),
-    field("Project", proj), field("Note", notes),
+    h("div", { class: "row" }, field("For", who), field("Where it is", loc)),
+    h("div", { class: "row" }, field("Project", proj), field("When it's done", outTag)),
+    field("Note", notes),
     h("div", { class: "foot" }, isNew ? h("span") : del,
       h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
   const close = overlay(form);
   title.focus();
 }
 
-// Lobby TV: ready orders big and oldest first, with CNC and Paint sections beside them (queued jobs stay off). Refreshes every 30 seconds.
+// Lobby TV: CNC, Build and Paint across the screen, a narrow Completed column with where each piece goes next.
+// Queued orders stay off the TV. Refreshes every 30 seconds.
 let tvTimer;
 function enterTv() {
   location.hash = "tv";
@@ -850,28 +866,29 @@ function enterTv() {
   document.body.append(host);
   const draw = () => {
     const now = new Date();
-    const ready = (state.orders || []).filter(o => o.status === "ready").sort(byOldest);
     const all = state.orders || [];
-    const cnc = all.filter(o => o.status === "in-progress" && o.dept === "CNC").sort(byOldest);
     const shop = (handoff, dept) => [...all.filter(o => o.status === handoff).sort(byOldest),
       ...all.filter(o => o.status === "in-progress" && o.dept === dept).sort(byOldest)];
-    const build = shop("ready-build", "Build");
-    const paint = shop("ready-paint", "Paint");
-    const doing = { CNC: "Cutting", Build: "Building", Paint: "Painting" };
-    const handoffLabel = o => (HANDOFFS.some(hd => hd.id === o.status) ? "Waiting" : null);
-    const item = (o, isReady) => h("div", { class: "tvb-item" + (isStale(o) ? " stale" : "") },
+    const doing = { CNC: "Cutting", Build: "Building", Paint: "Painting", Other: "In progress" };
+    const item = o => h("div", { class: "tvb-item" },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
-      h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location, isReady ? o.dept : null].filter(Boolean).join(" · ")),
-      h("div", { class: "wait" + (handoffLabel(o) ? " paint" : "") },
-        isReady ? waited(o.statusAt) : `${handoffLabel(o) || doing[o.dept]} · ${waited(o.statusAt)}`));
-    const side = (title, list, empty) => h("section", { class: "tvb-col works" }, h("h2", {}, `${title} · ${list.length}`),
-      h("div", { class: "tvb-list" }, list.length ? list.slice(0, 4).map(o => item(o, false)) : h("div", { class: "tvb-empty" }, empty)));
+      [o.for ? `For ${o.for}` : null, o.location].some(Boolean) ? h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location].filter(Boolean).join(" · ")) : null,
+      HANDOFFS.some(hd => hd.id === o.status)
+        ? h("div", { class: "wait waiting" }, `Waiting · ${waited(o.statusAt)}`)
+        : h("div", { class: "wait" }, `${doing[o.dept] || doing.Other} · ${waited(o.statusAt)}`));
+    const doneItem = o => h("div", { class: "tvb-item" },
+      h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
+      h("div", { class: "row" }, h("span", { class: "tvb-tag" + (o.outTag ? "" : " none") }, o.outTag || "Needs a spot"), h("span", { class: "wait" }, waited(o.statusAt))));
+    const col = (cls, title, list, render, empty, max) => h("section", { class: `tvb-col ${cls}` }, h("h2", {}, `${title} · ${list.length}`),
+      h("div", { class: "tvb-list" }, list.length ? list.slice(0, max).map(render) : h("div", { class: "tvb-empty" }, empty)));
+    const done = all.filter(o => o.status === "done").sort(byOldest);
     host.replaceChildren(
-      h("div", { class: "tvb-h" }, h("h1", {}, "FTB Pickup"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
+      h("div", { class: "tvb-h" }, h("h1", {}, "FTB Shop"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
       h("div", { class: "tvb-cols" },
-        h("section", { class: "tvb-col ready" }, h("h2", {}, `Ready for pickup · ${ready.length}`),
-          h("div", { class: "tvb-list" }, ready.length ? ready.map(o => item(o, true)) : h("div", { class: "tvb-empty" }, "Nothing waiting."))),
-        h("div", { class: "tvb-side" }, side("CNC", cnc, "Nothing on the machines."), side("Build", build, "Nothing in build."), side("Paint", paint, "Nothing in paint."))));
+        col("cnc", "CNC", shop(null, "CNC"), item, "Nothing on the machines.", 6),
+        col("build", "Build", shop("ready-build", "Build"), item, "Nothing in build.", 6),
+        col("paint", "Paint", shop("ready-paint", "Paint"), item, "Nothing in paint.", 6),
+        col("done", "Completed", done, doneItem, "Nothing finished yet.", 10)));
   };
   draw();
   clearInterval(tvTimer);
