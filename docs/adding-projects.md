@@ -40,9 +40,10 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 
 ## Shop board and lobby TV
 
-The **Shop** tab tracks orders through Queued, In progress, Build, Ready for paint, Completed and Out the door.
+The **Shop** tab has the same columns as the lobby TV: **CNC**, **Build**, **Paint** and **Completed**, plus a **Queued** column on the left that stays off the TV. Inside each shop column, jobs marked **Waiting** are ready for that shop and haven't been started; the rest are being worked on (Cutting, Building, Painting).
 
-- When a part comes off the machine, click **Send to build** if it needs assembly, **Ready for paint** if it needs finishing, or **Completed** if it's done. The next shop clicks **Start build** or **Start paint** to take it over (CNC, then build, then paint, skipping what a part doesn't need).
+- When a shop finishes a part, click **To build**, **To paint** or **Completed** on its card. It shows up as Waiting in that column until that shop clicks **Start build** or **Start paint** (CNC, then build, then paint, skipping what a part doesn't need). A waiting card can also skip ahead.
+- To put a card anywhere by hand, click ✎ and change **Where is it**.
 - On a completed order, tap where it goes next: **Pickup**, **Wrap for truck**, **FOH table** or **Ship**. A completed order with no tag for more than 4 hours turns amber.
 - Click **Out the door** once it's gone.
 
@@ -50,7 +51,7 @@ For the lobby screen, open `https://ftbshop.fun/#tv` on the TV's browser, sign i
 
 ## TickTick CNC list
 
-The hub can follow the **CNC HUB** list in TickTick. Every open task there shows up on the Shop board as a CNC job in progress (marked "TickTick"), and checking a task off in TickTick moves it to Build. From there you move it by hand: **Start build**, **Ready for paint**, or **Completed** (then tag it Pickup, Wrap for truck, FOH table or Ship). The sync runs every 5 minutes, or right away with **Sync TickTick** on the Shop tab. It only reads TickTick; nothing on the board changes your TickTick tasks.
+The hub can follow the **CNC HUB** list in TickTick. Every open task there shows up on the Shop board as a CNC job in progress (marked "TickTick"), and checking a task off in TickTick moves it to Build. From there you move it by hand: **Start build**, **To paint**, or **Completed** (then tag it Pickup, Wrap for truck, FOH table or Ship). The sync runs every 5 minutes, or right away with **Sync TickTick** on the Shop tab. It only reads TickTick; nothing on the board changes your TickTick tasks.
 
 One-time setup:
 1. At developer.ticktick.com, sign in, open **Manage Apps**, and create an app. Set its redirect URL to `https://ftbshop.fun/api/ticktick/callback`.

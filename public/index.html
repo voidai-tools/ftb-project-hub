@@ -65,7 +65,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* top bar */
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--sheet); border-bottom: 1px solid var(--rule); }
 .bar-in { display: flex; align-items: center; gap: 16px; min-height: 56px; }
-.mark { font: 700 22px/1 var(--f-display); letter-spacing: .04em; display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.mark { font: 700 22px/1 var(--f-display); letter-spacing: .04em; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+/* FTB logo: dark lettering on the light theme, the original white lettering on dark and on the TV. Full size: ftb-logo.png */
+:root { --logo: url(data:image/png;base64,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); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --logo: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAACBCAMAAAAsTlWBAAAAwFBMVEXq2uAAu/7+ChwmlcyX5P+jMU8B8P/+U2CmmrBbR20qyf/9AgaMQGL+BBPBJUBUYotd0/0Au/1t6P8IuPcxFSKl+v8Af/8Gxf9hERtda6FFhq9WzfqkGyX5CRfx29sAAP8Awf+h5v//ZXL/qKj/v8T/6u0zAAAAf38/f6o2hLd/AABCu+xv2/+/LT//qLDZ9f8AAAD////+/v7+ABFmUncBu/3//v7+/v7+/v/+/v///v7+/v8Axf5nTXFbV30AvP5SjS8GAAAAQHRSTlP+F97+/v4F/v///gT+Sf7++6IHRfwHAo37BZ+x9qsSAURtBgX/XQUCDP8CsVcciKMABfr9//7OTK+Nbi/+//+P/NH8YgAADABJREFUeNrtnYl62zYSgC27VlvLWadO0tw9t9u9l+DaOH28/1sVMwBJALxAEoRpNfjSqJElkv45mMFc4Mnn0yTj86E4FMc0Tv6faHwBMxEMWWUsPno+ML+QX6ed+WnH6FUmA9Nz/kKxFYaqDj/56EqpQOKiwJx+PXv8Fl46MWBEucKgeHRSkLnfp5wLyZBKDxofzNfJLl1sGkx9HMFID5oWmJOZox8MT6159SEbMGzil/Vc0gItheDUXqnqRBOCOZm7kPnBPTv3wKRWnNIDs0D/MoFwOCsKMgbmr3OV79/co/JVJUYukZjAbioJbLhqCU0yMJ4dDCQmqe0mocSQJRZbvzBAI0OhqcCcX55fXp5/U57olxnj/PI7M3bFXp/hWYCxdPR/EoSG+AeqwVzdPDx8q8E8zBo3V3dmPDcwFg1vkanBPNzc3ACY+5s54/7q1oznB8ag0asK6pH5AsaikUDG0cBfwDhkuGObvoBxDqttU2owN88djD6I0rZJ1UfrBHN/dnt2O288Ux2j/wiq13qNmukBc3d7N21sCczUyBT8UFJBCuZMpl4wCSVmcjBtkhMZi73vnPAPRjmGePQauPphajB78iZ0CcQMwZ7iRM6RmPrf8D+Kc3RFNZ5GZNJLTMuJpGJwyPA3I/pKB79Bh8DoNzntHRwCVFLVQRirXNCd5JTB1dplXgSYi68mjP/ZS48PVAUqyC7QowNVHWBoRIBK4Sf1H1QuNZ7mgBFgXi6K4DE+OKgPxlyq/s2GvyVGwGip6B76pnEToeJomRkicvDUNyoOTLzEcGEuPVYnSheM1YPa26VxuqgPzHD0ipggDIObpqxyqfDIai5FgTmZqmOmW5hGDyqgRWMs2QCYsS+bSANlRrnUulfBKk9NAHM30SrF5pXcZQ4qF3OpKDFkkcQMr1vgFoBpNqraxVMfMTUYWMdMMcz1moSg/qsm+qpgrOlDRVidk1emqTLYQ2Duvtvtdvvdz2W530WP4sdZYOzaEye6lOuDsU5jfc7aNFUrjUEwj3gIBvpopUSpBUNItfZEM5EFDNFfpsq/JaK5U8Ng9vv9m70G88P+eh83ZoGBmd7oP5IFTJ3ZaW4JnjsOTLGDlUgQ9FtBYszhVaUHaRYwRPuMzTlry70tMEWje/Ul8jwSo8Bi23PWePimwFRLc4tHZgNT69zaNIk45ZsHjB52ohs9mAkMgcVco3sNHrolMLBKd5bm4ONmkhhVn7OSWBqzjsmoY5yJzniZB4xWvqw6Z22aYlyCrGDcsEg2c106oRg0h1wYR2E7Osab6JkWeBTSsoVjDjFSFRF2uHs8vD/8eoAF3qF/pACjL64Ji2QCAzNJ+e4AHlAOg4Fx8bZyCVbyCIIkQqMHcziRBGJSoe6V1UzqAfOPMxwfXsD4b1m+GBiHJFbJ0b0w0VcGQ0wAlKhQ99ahx55M5D2Oh/Oq/mytknBngeeGpFecSlWwCMIxUvi6F8xhnYscStFmAwO/jBuSXg5mJIelhAmJk8AcOhHoTYCxyYxaDybwlfonkVKS1+WafpZA41IkHRjyy+xSeU/5NiHpxcqX9qQkKLWpFdoOg/sZ2iQSk8QqaUmuLnW5EzmSVeLMlmx6eMDZbu5sFJjBqugg1yenrAWbBZ6o/H54XQIGbn9fzlMP6CYghWcG7StUgZC4wqEGzPRM21TlKxs9SBaCicrvO6F3q3u96pgoMCOdF7+5mT46C4z9R5IsQRHRxAQq2I3zEjynf6gIMFP6cfhMMCRZliDyvMoPg5eBvKQAc3Bv00wwhHjZ0tXBWDPYxHkxYdBdAN0J5vQvo+P81U+v9PgpqBialyVAM0HygGl0L6pG0lcy31mceDVWEX71cHVblYTvZoNJmSWI1b51rAFNhmy15iyt2qzqWBeCcbIEhFOeQcdU613htOYkLZlPBKZIlSWYMqzuZWVH19ImwIDWTpUliD5zE4rhQqH+9fTMRiTGZgn48ixB9FwKQjGoa1gx4hLcx4+bRFMpVZYg8rwsDMVwJc26fbDO9+osfiQC44akc0ylVhi8QO+zJjMU851SE74MTMIswbhL0Dibjr7H6BXnDZlUdb7LlK/NEhQJsgRRixi3GtzDI2ovOB0Ycj3fJUiYJYBb37t7Ae5f4Cu0AE8ZU2q2pCT8abMEI9sXCKk5hbrX4uHWm4wAc3cRM37GGzIz7JA6SxATN2KEiLZpwsAoiFXyyvCZC7y0WQLZu32Bgu0LTG04bWcJUGrMZNoEmIxZAvshhTkkQYIMra2pghBnHJiIqfRvZQaZrXwbPUhXyys5Fhv8auplCaxpUigyyUrmd4uzBE3hplw/RYtdbaXdMyMwTdCbMwzGrOCgMnx0XLxCcz0xsbRClmBC1SaQEc4tqU0THHWwDOTsEcbHsnz7ODbe7orvl6Rok2UJosHAafV6jnWYJrCtcZXhWcpA3KahHGBM7VDZYZqg+2UYzG63u96xsnyzG+0m2C8F0/RUyTwSY4uHSJDAtiVFG6nzJSpVlmASGIIVVJ5pQjz63W3U4HlZgiIbGPR6g/w+mibt2Wypl4Bk7SUwIoPr3GC1ACFEvr1egoVZgokSY3qOQrdAr2Q2U+fbTHBBZE4wJcFzeqap3AiYJktgTFNeMJK2aqv0BNuK8q0qs/P1EtRgOmqrtgKmnUzOBsa2eHurBXx3U70EKbIEE8Fg+59qdWBvBcwT9BJYcw1BrVaLMWyssBUdkyxLMG3lC01uXi+BMU3bWeClyxJM85V4pXu9FmOQo+2sfHP2ErjG2r0lVvdqOWKbaRbN1EvghWMYbiTZ1WJcks00i7oh6UyhTaiLIWEC2+rezTSLJs4SxATDBXIJsgTgyGLD6IaUb8osweg0wvQJJ14YvMKDrW+bAeMmkxdPJdGz+b7ZjcluxkRlTwIbm/W3omPCmOvqKVrOVBgGb9rc2FbApM0SaBU1vOEbPJKgkN0ZWqznGslEZtYxabIExVDhUPMZ1ZGCNCYpInedd4Hn+P1rFifW+f1WrKGo3IHRaoe8WQKarJdgsO3E+Zx3zqLZiJSN1cfk1DFeT1XmXgJX95o2t2JbOw7VejBjL0Ggewnf2qYXpHBC0hl6CRgn/jmD3d6KDWUJeO0W5Osl4K02NxGxbe2TZAm4ytZL0GoxLp0+2m1lCZ6gl8CNNbj9xQ2Y+/ubewAD4xlnCWK5hLEG4yc0v2j1PKXLKxgaDL4+YZYAaqsyNIsSP85bFVY6zyXAzXHeHx7v2uV22bMEJE0vQbzuNeeU1q9k7vrvBP/eF08KBhw/x+9fzyq5XpO7X1fZfviUkZjdU0pM7d6ZSyUTwcx7YmZlBq1yaT+uzEjMrkdirvcEtqRcWWKs7hW8CrxNAaNmuZBEcghbDTzgLgTzlS8xJnCzKphq33RnA/UpLgHlcaOJyMQ9EjEE4+2bflJd5qpguvfXjwWz5CmRlAumeh6i2QLTOdYDw/qe4hBndEXcqPbk6Opc6nnsqg8mfDaD3YlFbv2Ru3Pvy0Apuw8m6Fp7zHVtMx67PBaTWvps5xrMRevBQbcXj3P6A45kjEjMrvizjhP7ukuwNfqGVUnkmx1gjoRA35uk803SBGd6wfx4HAJDut4hpGhl5Qqi/gQSo39FXNma7TwgyYgDXWfcVZMy8wNF7ScUr6MvpODo4Ad7MR0LGO0cM3zIDi6nqWLYnon9JVwpiaF/8IeJyWLBm6z6OMUNhwI//fmCcTZZhs3hYa2s8JfTYLjrNYCbyZkLRssXuq1WprT7pNfBRwMGxvt9LTECzAwVBgzFRT8KB7TYsOpBRQgGYDn7O+pvaS/7aCTmUByaPZYRDHbymYI+0XSAE9OXhdgcMAxKh4QwE4xKIHU0YD6ffnr34Rof59SWGOexXVB9KEtReGCkBiOEnXl6GmoldBxg/lkcTj+9fn31sbiuJaZSoL6OYahOYK60dExRg8GC36MAo2fS6bvX765e/h1EBsFoM0OpmTFWxxjDrA0QYahUfKtElCMxhLS2lHy2U+nFp9ffvvzX799bq1Q6CxMb9rcm2mxYZilV6xjcRZJZcy2R2ZGsYw7Ffz68/Fi3wVulQrxghFXMSpHAQcI3lesfkNCf+AMZE0xSJdvXsQAAAABJRU5ErkJggg==); } }
+:root[data-theme="dark"], body.tv { --logo: url(data:image/png;base64,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); }
+.logo { display: inline-block; aspect-ratio: 794 / 366; height: 36px; background: var(--logo) left center / contain no-repeat; }
 .mark small { font: 500 11px/1 var(--f-mono); color: var(--ink-2); letter-spacing: .08em; text-transform: uppercase; }
 .tabs { display: flex; gap: 4px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
@@ -176,17 +181,17 @@ body.editing .add-sec { display: block; }
   .vside { border-left: 0; border-top: 1px solid var(--rule); }
 }
 /* shop board */
-.lanes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; padding-bottom: 48px; align-items: start; }
+.lanes { display: grid; grid-template-columns: .8fr 1fr 1fr 1fr .9fr; gap: 16px; padding-bottom: 48px; align-items: start; }
 .lane { display: grid; gap: 10px; align-content: start; min-width: 0; }
-.lane-h { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid var(--rule); padding-bottom: 6px; }
-.lane-h b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.lane-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 3px solid var(--lane, var(--rule)); padding-bottom: 6px; }
+.lane-h b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--lane, var(--ink)); }
 .lane-h span { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
-.lane.done .lane-h { border-color: var(--ok); }
-.lane.done .lane-h b { color: var(--ok); }
-.lane.ready-build .lane-h { border-color: #9a6a1f; }
-.lane.ready-build .lane-h b { color: #9a6a1f; }
-.lane.ready-paint .lane-h { border-color: #b5413a; }
-.lane.ready-paint .lane-h b { color: #b5413a; }
+.lane.cnc { --lane: #2350c8; }
+.lane.build { --lane: #9a6a1f; }
+.lane.paint { --lane: #b5413a; }
+.lane.done { --lane: var(--ok); }
+.lane.queued { --lane: var(--ink-2); }
+.lane.queued .order { box-shadow: none; background: transparent; border-style: dashed; }
 .order { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; box-shadow: var(--shadow); }
 .order.stale { border-color: var(--warn); }
 .order-t { display: flex; gap: 8px; align-items: start; }
@@ -197,13 +202,19 @@ body.editing .add-sec { display: block; }
 .order.stale .age { background: var(--warn-soft); color: var(--warn); }
 .order-a { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .order-a .btn { padding: 5px 10px; font-size: 13px; }
-.dept { font: 600 10.5px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; color: #fff; white-space: nowrap; }
+.chip { font: 600 10.5px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; white-space: nowrap; background: var(--paper); color: var(--ink-2); }
+.chip.doing { background: var(--lane); color: #fff; }
+.chip.waiting { background: var(--warn-soft); color: var(--warn); }
+.outs { font-size: 13px; color: var(--ink-2); }
+.outs summary { cursor: pointer; padding: 4px 0; }
+.outs ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; }
+.outs li { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
 .tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .tagb { border: 1px solid var(--rule); background: var(--paper); color: var(--ink-2); border-radius: 999px; padding: 3px 9px; font-size: 12px; font-weight: 500; cursor: pointer; }
 .tagb:hover { border-color: var(--ink-2); color: var(--ink); }
 .tagb[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--sheet); }
 .lane-empty { font-size: 13px; color: var(--ink-2); padding: 8px 0; }
-@media (max-width: 1400px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1400px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lane.queued { order: 9; } }
 @media (max-width: 860px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .lanes { grid-template-columns: 1fr; } }
 
@@ -212,7 +223,8 @@ body.tv { --paper: #0f1216; --sheet: #181c22; --ink: #f1f3f5; --ink-2: #9aa3af; 
 body.tv .bar, body.tv #main { display: none; }
 .tvb { min-height: 100vh; padding-block: 3vh; display: grid; grid-template-rows: auto 1fr; gap: 3vh; }
 .tvb-h { display: flex; justify-content: space-between; align-items: baseline; }
-.tvb-h h1 { font-size: 5.2vh; margin: 0; }
+.tvb-h h1 { font-size: 5.2vh; margin: 0; display: flex; align-items: center; gap: 2vh; }
+.tvb-h .logo { height: 7vh; }
 .tvb-h .clock { font: 600 4.4vh/1 var(--f-display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .tvb-cols { display: grid; grid-template-columns: 1fr 1fr 1fr .8fr; gap: 2vw; min-height: 0; align-items: start; }
 .tvb-col h2 { font: 700 3.6vh/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 1.6vh; padding-bottom: 1vh; border-bottom: .4vh solid var(--accent-col, var(--rule)); }
@@ -240,7 +252,7 @@ body.tv .bar, body.tv #main { display: none; }
 <body>
 <!--BUILD:BODY-->
 <header class="bar"><div class="wrap bar-in">
-  <div class="mark">FTB <small>Project Hub</small></div>
+  <div class="mark"><span class="logo" role="img" aria-label="FTB Design"></span><small>Project Hub</small></div>
   <nav class="tabs" id="tabs" role="tablist" aria-label="Projects"></nav>
   <div class="tools">
     <input class="search" id="q" type="search" placeholder="Search" aria-label="Search this project">
@@ -682,19 +694,9 @@ async function pollStatus(v) {
 }
 
 // ---------- shop board ----------
-// Shop orders move Queued -> In progress -> (Build) -> (Ready for paint) -> Completed -> Out the door,
-// skipping the shops a part doesn't need. Completed orders get a tag for where they go next.
-const STAGES = [
-  { id: "queued", label: "Queued", next: "in-progress", action: "Start" },
-  { id: "in-progress", label: "In progress", next: "done", action: "Completed" },
-  { id: "ready-build", label: "Build", next: "in-progress", action: "Start build" },
-  { id: "ready-paint", label: "Ready for paint", next: "in-progress", action: "Start paint" },
-  { id: "done", label: "Completed", next: "out", action: "Out the door" },
-  { id: "out", label: "Out the door", next: null },
-];
-// Handoff stages and the shop that picks each one up, in shop order.
-const HANDOFFS = [{ id: "ready-build", dept: "Build", label: "Send to build" }, { id: "ready-paint", dept: "Paint", label: "Ready for paint" }];
-const DEPTS = { CNC: "#2350c8", Build: "#9a6a1f", Paint: "#b5413a", Other: "#6b7380" };
+// Orders go Queued -> CNC -> Build -> Paint -> Completed -> Out the door, skipping shops a part doesn't need.
+// Status is queued | in-progress (with dept = the shop working on it) | ready-build | ready-paint (waiting for that shop) | done | out.
+// Completed orders get a tag for where they go next.
 const OUT_TAGS = ["Pickup", "Wrap for truck", "FOH table", "Ship"];
 const STALE_HOURS = 4;
 
@@ -751,6 +753,20 @@ function waited(iso) {
 const isStale = o => o.status === "done" && !o.outTag && Date.now() - new Date(o.statusAt).getTime() > STALE_HOURS * 3600e3;
 const byOldest = (a, b) => new Date(a.statusAt) - new Date(b.statusAt);
 
+// The board and the TV share these columns. Each shop lists the jobs waiting for it first, then the ones it's working on.
+const SHOP_COLS = [
+  { dept: "CNC", cls: "cnc", waiting: null, doing: "Cutting", to: null, empty: "Nothing on the machines." },
+  { dept: "Build", cls: "build", waiting: "ready-build", doing: "Building", to: "To build", empty: "Nothing in build." },
+  { dept: "Paint", cls: "paint", waiting: "ready-paint", doing: "Painting", to: "To paint", empty: "Nothing in paint." },
+];
+// Which shop column an order sits in (-1 when it's queued, completed or gone). Old "Other" jobs show under Build.
+function colOf(o) {
+  if (o.status === "in-progress") { const i = SHOP_COLS.findIndex(c => c.dept === o.dept); return i < 0 ? 1 : i; }
+  return SHOP_COLS.findIndex(c => c.waiting && c.waiting === o.status);
+}
+const shopList = (all, i) => [...all.filter(o => o.status !== "in-progress" && colOf(o) === i).sort(byOldest),
+  ...all.filter(o => o.status === "in-progress" && colOf(o) === i).sort(byOldest)];
+
 function renderPickup(main) {
   const orders = state.orders || [];
   const dayAgo = Date.now() - 24 * 3600e3;
@@ -763,40 +779,53 @@ function renderPickup(main) {
   if (state.mode === "preview" && orders.some(o => o.example)) {
     main.append(h("p", { class: "hint" }, "These orders are examples. Add your own with + Order; changes stay in this browser until the hub is deployed."));
   }
-  const lanes = h("div", { class: "lanes" });
-  for (const st of STAGES) {
-    let list = orders.filter(o => o.status === st.id).sort(byOldest);
-    if (st.id === "out") list = list.filter(o => new Date(o.statusAt) > dayAgo).reverse();
-    lanes.append(h("section", { class: `lane ${st.id}` },
-      h("div", { class: "lane-h" }, h("b", {}, st.label), h("span", {}, st.id === "out" ? "last 24h" : list.length)),
-      list.length ? list.map(o => orderCard(o, st)) : h("div", { class: "lane-empty" }, "Empty.")));
-  }
-  main.append(lanes);
+  const lane = (cls, title, note, list, empty, extra) => h("section", { class: `lane ${cls}` },
+    h("div", { class: "lane-h" }, h("b", {}, title), h("span", {}, note ? `${list.length} · ${note}` : list.length)),
+    list.length ? list.map(orderCard) : h("div", { class: "lane-empty" }, empty), extra);
+  const queued = orders.filter(o => o.status === "queued").sort(byOldest);
+  const done = orders.filter(o => o.status === "done").sort(byOldest);
+  const out = orders.filter(o => o.status === "out" && new Date(o.statusAt) > dayAgo).sort(byOldest).reverse();
+  const outList = out.length ? h("details", { class: "outs" }, h("summary", {}, `Out the door today · ${out.length}`),
+    h("ul", {}, out.map(o => h("li", {}, h("span", {}, o.title, o.outTag ? ` · ${o.outTag}` : ""),
+      h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"))))) : null;
+  main.append(h("div", { class: "lanes" },
+    lane("queued", "Queued", "not on TV", queued, "Nothing waiting to start."),
+    SHOP_COLS.map((c, i) => lane(c.cls, c.dept, "", shopList(orders, i), c.empty)),
+    lane("done", "Completed", "", done, "Nothing finished yet.", outList)));
 }
 
-function orderCard(o, st) {
+// Where an order can go from here: a later shop, or straight to Completed.
+function laterMoves(o) {
+  const at = o.status === "queued" ? SHOP_COLS.findIndex(c => c.dept === o.dept) : colOf(o);
+  return [...SHOP_COLS.filter((c, i) => c.waiting && i > at).map(c => ({ to: c.waiting, label: c.to })), { to: "done", label: "Completed" }];
+}
+
+function orderCard(o) {
+  const col = SHOP_COLS[colOf(o)];
+  const chip = o.status === "queued" ? h("span", { class: "chip" }, `For ${o.dept || "CNC"}`)
+    : o.status === "in-progress" ? h("span", { class: "chip doing" }, col.doing)
+    : col ? h("span", { class: "chip waiting" }, "Waiting") : null;
+  const btn = (label, to, primary) => h("button", { class: "btn" + (primary ? " primary" : ""), onclick: () => advance(o, to) }, label);
+  let actions = [];
+  if (o.status === "queued") actions = [btn(`Start ${(o.dept || "CNC").toLowerCase()}`, "in-progress", true)];
+  else if (o.status === "in-progress") actions = laterMoves(o).map(m => btn(m.label, m.to, m.to === "done"));
+  else if (col) actions = [...laterMoves(o).map(m => btn(m.label, m.to)), btn(`Start ${col.dept.toLowerCase()}`, "in-progress", true)];
+  else if (o.status === "done") actions = [btn("Out the door", "out")];
   return h("article", { class: "order" + (isStale(o) ? " stale" : "") },
-    h("div", { class: "order-t" },
-      h("b", {}, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
-      h("span", { class: "dept", style: `background:${DEPTS[o.dept] || DEPTS.Other}` }, o.dept || "Other")),
+    h("div", { class: "order-t" }, h("b", {}, o.title, o.qty > 1 ? ` ×${o.qty}` : ""), chip),
     h("div", { class: "order-m" },
       o.for ? h("span", {}, "For ", h("strong", {}, o.for)) : null,
       o.location ? h("span", {}, "At ", h("strong", {}, o.location)) : null,
       o.project ? h("span", {}, o.project) : null,
       o.source === "ticktick" ? h("span", { title: "Comes from the TickTick CNC HUB list" }, "TickTick") : null),
     o.notes ? h("div", { class: "order-m" }, o.notes) : null,
-    st.id === "done" ? h("div", { class: "tags", role: "group", "aria-label": "Where it goes next" },
+    o.status === "done" ? h("div", { class: "tags", role: "group", "aria-label": "Where it goes next" },
       OUT_TAGS.map(t => h("button", { class: "tagb", "aria-pressed": String(o.outTag === t), onclick: () => setTag(o, t) }, t))) : null,
-    st.id === "out" && o.outTag ? h("div", { class: "order-m" }, o.outTag) : null,
     h("div", { class: "order-a" },
-      h("span", { class: "age", title: "Time in this stage" }, waited(o.statusAt)),
+      h("span", { class: "age", title: "Time in this spot" }, waited(o.statusAt)),
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
-      st.id === "in-progress" || st.id === "done" ? nextShops(o).map(hd => h("button", { class: "btn", onclick: () => advance(o, hd.id) }, hd.label)) : null,
-      // Waiting in Build: it can also skip straight to paint or Completed without a build step.
-      st.id === "ready-build" ? [h("button", { class: "btn", onclick: () => advance(o, "ready-paint") }, "Ready for paint"),
-        h("button", { class: "btn", onclick: () => advance(o, "done") }, "Completed")] : null,
-      st.next ? h("button", { class: "btn" + (st.id === "in-progress" ? " primary" : ""), onclick: () => advance(o) }, st.action) : null));
+      actions));
 }
 
 // TickTick: connect once, then the Worker pulls the CNC HUB list every 5 minutes; "Sync TickTick" pulls right away.
@@ -816,31 +845,38 @@ async function setTag(o, t) {
   render();
 }
 
-// Shops that can still take an in-progress order: build only comes before paint, and nothing goes back to its own shop.
-function nextShops(o) {
-  const at = HANDOFFS.findIndex(hd => hd.dept === o.dept);
-  return HANDOFFS.filter((hd, i) => i > at);
-}
-
 async function advance(o, to) {
-  const st = STAGES.find(s => s.id === o.status);
-  const next = to || st?.next;
-  if (!next) return;
-  const moved = { ...o, status: next, statusAt: new Date().toISOString() };
-  const handoff = HANDOFFS.find(hd => hd.id === o.status);
-  if (handoff) moved.dept = handoff.dept; // the next shop owns it from here
+  const moved = { ...o, status: to, statusAt: new Date().toISOString() };
+  const waitingFor = SHOP_COLS.find(c => c.waiting === o.status);
+  if (waitingFor) moved.dept = waitingFor.dept; // the shop it was waiting for owns it from here
   await saveOrder(moved);
-  toast(`${o.title}: ${STAGES.find(s => s.id === next).label}`);
+  toast(`${o.title}: ${placeOf(moved).label}`);
   render();
 }
+
+// Every spot an order can be, as one list for the editor.
+const PLACES = [
+  { label: "Queued for CNC", status: "queued", dept: "CNC" },
+  { label: "Queued for build", status: "queued", dept: "Build" },
+  { label: "Queued for paint", status: "queued", dept: "Paint" },
+  { label: "CNC · cutting", status: "in-progress", dept: "CNC" },
+  { label: "Build · waiting", status: "ready-build" },
+  { label: "Build · building", status: "in-progress", dept: "Build" },
+  { label: "Paint · waiting", status: "ready-paint" },
+  { label: "Paint · painting", status: "in-progress", dept: "Paint" },
+  { label: "Completed", status: "done" },
+  { label: "Out the door", status: "out" },
+];
+const placeOf = o => PLACES.find(p => p.status === o.status && (!p.dept || p.dept === o.dept))
+  || PLACES.find(p => p.status === o.status && p.dept === "Build") || PLACES.find(p => p.status === o.status) || PLACES[0];
 
 function openOrderEditor(o) {
   const isNew = !o;
   const d = o ? { ...o } : { status: "queued", dept: "CNC" };
   const title = h("input", { id: "o-title", value: d.title || "", placeholder: "Tiny Onion Sign", required: true });
   const qty = h("input", { id: "o-qty", type: "number", min: "1", value: d.qty || 1 });
-  const dept = h("select", { id: "o-dept" }, Object.keys(DEPTS).map(k => h("option", { value: k, selected: k === d.dept }, k)));
-  const status = h("select", { id: "o-status" }, STAGES.map(s => h("option", { value: s.id, selected: s.id === d.status }, s.label)));
+  const here = placeOf(d);
+  const place = h("select", { id: "o-place" }, PLACES.map((p, i) => h("option", { value: i, selected: p === here }, p.label)));
   const outTag = h("select", { id: "o-out" }, h("option", { value: "" }, "Not decided"), OUT_TAGS.map(t => h("option", { value: t, selected: t === d.outTag }, t)));
   const who = h("input", { id: "o-for", value: d.for || "", placeholder: "Who's waiting on it" });
   const loc = h("input", { id: "o-loc", value: d.location || "", placeholder: "Assembly table, paint cart…" });
@@ -854,16 +890,17 @@ function openOrderEditor(o) {
   } }, "Delete");
   const form = h("form", { class: "panel editor", onsubmit: async e => {
     e.preventDefault();
-    const next = { ...d, title: title.value.trim(), qty: Math.max(1, +qty.value || 1), dept: dept.value, for: who.value.trim(),
-      location: loc.value.trim(), project: proj.value, notes: notes.value.trim(), status: status.value, outTag: outTag.value };
+    const p = PLACES[+place.value];
+    const next = { ...d, title: title.value.trim(), qty: Math.max(1, +qty.value || 1), dept: p.dept || d.dept, for: who.value.trim(),
+      location: loc.value.trim(), project: proj.value, notes: notes.value.trim(), status: p.status, outTag: outTag.value };
     if (isNew) { next.id = uid(next.title); next.createdAt = new Date().toISOString(); }
-    if (isNew || status.value !== d.status) next.statusAt = new Date().toISOString();
+    if (isNew || p !== here) next.statusAt = new Date().toISOString();
     delete next.example;
     await saveOrder(next); close(); render();
   } },
     h("h3", {}, isNew ? "New order" : "Edit order"),
     field("What is it", title),
-    h("div", { class: "row" }, field("Qty", qty), field("Shop", dept), field("Stage", status)),
+    h("div", { class: "row" }, field("Where is it", place), field("Qty", qty)),
     h("div", { class: "row" }, field("For", who), field("Where it is", loc)),
     h("div", { class: "row" }, field("Project", proj), field("When it's done", outTag)),
     field("Note", notes),
@@ -885,15 +922,12 @@ function enterTv() {
   const draw = () => {
     const now = new Date();
     const all = state.orders || [];
-    const shop = (handoff, dept) => [...all.filter(o => o.status === handoff).sort(byOldest),
-      ...all.filter(o => o.status === "in-progress" && o.dept === dept).sort(byOldest)];
-    const doing = { CNC: "Cutting", Build: "Building", Paint: "Painting", Other: "In progress" };
     const item = o => h("div", { class: "tvb-item" },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
       [o.for ? `For ${o.for}` : null, o.location].some(Boolean) ? h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location].filter(Boolean).join(" · ")) : null,
-      HANDOFFS.some(hd => hd.id === o.status)
-        ? h("div", { class: "wait waiting" }, `Waiting · ${waited(o.statusAt)}`)
-        : h("div", { class: "wait" }, `${doing[o.dept] || doing.Other} · ${waited(o.statusAt)}`));
+      o.status === "in-progress"
+        ? h("div", { class: "wait" }, `${SHOP_COLS[colOf(o)].doing} · ${waited(o.statusAt)}`)
+        : h("div", { class: "wait waiting" }, `Waiting · ${waited(o.statusAt)}`));
     const doneItem = o => h("div", { class: "tvb-item" },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
       h("div", { class: "row" }, h("span", { class: "tvb-tag" + (o.outTag ? "" : " none") }, o.outTag || "Needs a spot"), h("span", { class: "wait" }, waited(o.statusAt))));
@@ -901,11 +935,9 @@ function enterTv() {
       h("div", { class: "tvb-list" }, list.length ? list.slice(0, max).map(render) : h("div", { class: "tvb-empty" }, empty)));
     const done = all.filter(o => o.status === "done").sort(byOldest);
     host.replaceChildren(
-      h("div", { class: "tvb-h" }, h("h1", {}, "FTB Shop"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
+      h("div", { class: "tvb-h" }, h("h1", {}, h("span", { class: "logo", role: "img", "aria-label": "FTB Design" }), "Shop"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
       h("div", { class: "tvb-cols" },
-        col("cnc", "CNC", shop(null, "CNC"), item, "Nothing on the machines.", 6),
-        col("build", "Build", shop("ready-build", "Build"), item, "Nothing in build.", 6),
-        col("paint", "Paint", shop("ready-paint", "Paint"), item, "Nothing in paint.", 6),
+        SHOP_COLS.map((c, i) => col(c.cls, c.dept, shopList(all, i), item, c.empty, 6)),
         col("done", "Completed", done, doneItem, "Nothing finished yet.", 10)));
   };
   draw();
