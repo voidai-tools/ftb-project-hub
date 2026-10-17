@@ -57,3 +57,14 @@ One-time setup:
 1. At developer.ticktick.com, sign in, open **Manage Apps**, and create an app. Set its redirect URL to `https://ftbshop.fun/api/ticktick/callback`.
 2. In Cloudflare, add the app's Client ID and Client Secret to the Worker as secrets named `TICKTICK_CLIENT_ID` and `TICKTICK_CLIENT_SECRET`.
 3. On the Shop tab, click **Connect TickTick** and approve.
+
+## Sign-in and comments
+
+Everyone signs in through Cloudflare Access with their @ftb.design email (a code is emailed to them). Their name and initials show at the top right; click it to change the name that appears on comments.
+
+Every piece or link group on a project page has a **Comments** button at the bottom of its card. Open it to read the thread and post (Ctrl+Enter posts). You can delete your own comments.
+
+Setup, once:
+1. In Zero Trust, go to **Access > Applications** and add a self-hosted app for `ftbshop.fun` with an Allow rule for emails ending in `@ftb.design`.
+2. Copy the app's **Application Audience (AUD) Tag** (on the app's overview) and your team domain (Zero Trust **Settings > Custom Pages**, e.g. `ftb.cloudflareaccess.com`).
+3. Put them in `wrangler.toml` as `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` (they aren't secret) and push. Until then, comments are read-only.

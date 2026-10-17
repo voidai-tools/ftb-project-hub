@@ -19,6 +19,10 @@ crons = ["*/5 * * * *"]
 [vars]
 APS_BUCKET = "ftb-design-models"
 TICKTICK_LIST = "CNC HUB"
+# Sign-in for comments: from Zero Trust > Settings (team domain) and the ftbshop.fun Access app (Audience tag).
+# Not secret. Leave empty until Access is set up; comments are read-only until then.
+ACCESS_TEAM_DOMAIN = ""
+ACCESS_AUD = ""
 
 # Secrets (set with `npx wrangler secret put <NAME>`):
 #   APS_CLIENT_ID

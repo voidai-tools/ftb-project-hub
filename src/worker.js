@@ -6,6 +6,8 @@
 //   PUT  /api/orders/:id
 //   DELETE /api/orders/:id
 //   GET  /api/ticktick/connect | /callback | /status, POST /api/ticktick/sync -> TickTick "CNC HUB" list feeds CNC orders (see ticktick.js)
+//   GET/PUT /api/me                   -> who's signed in (Cloudflare Access) and their display name (see auth.js)
+//   GET/POST/DELETE /api/comments     -> comments on project items (see comments.js)
 //   GET  /api/viewer-token            -> short-lived APS token, viewables:read only
 //   POST /api/models/upload           -> { fileName } => signed S3 URL for a direct browser upload
 //   POST /api/models/complete         -> { objectKey, uploadKey } => finalize upload + start translation, returns { urn }
@@ -14,10 +16,13 @@
 //   GET  /api/models/:urn/steps       -> assembly steps JSON (written by the Rhino plugin)
 //   PUT  /api/models/:urn/steps
 //
-// Site access is gated by Cloudflare Access in front of the Worker, so the API trusts every request it receives.
+// Site access is gated by Cloudflare Access in front of the Worker. Most routes trust every request they receive;
+// comments check the signed Access token so each one is tied to a real person.
 
 import seed from "../data/seed.json";
 import { ticktickRoute, syncTicktick } from "./ticktick.js";
+import { meRoute } from "./auth.js";
+import { commentsRoute } from "./comments.js";
 
 const APS = "https://developer.api.autodesk.com";
 const HUB_KEY = "hub";
@@ -44,6 +49,15 @@ async function route(request, env, url) {
 
   if (pathname.startsWith("/api/ticktick/")) {
     const res = await ticktickRoute(request, env, url);
+    if (res) return res;
+  }
+
+  if (pathname === "/api/me") {
+    const res = await meRoute(request, env);
+    if (res) return res;
+  }
+  if (pathname.startsWith("/api/comments")) {
+    const res = await commentsRoute(request, env, url);
     if (res) return res;
   }
 

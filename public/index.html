@@ -171,6 +171,24 @@ body.editing .add-sec { display: block; }
 .foot .r { display: flex; gap: 8px; }
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--sheet); padding: 9px 16px; border-radius: 8px; z-index: 30; font-weight: 500; }
 .hint { font-size: 12px; color: var(--ink-2); }
+/* signed-in person + comments */
+.me { display: flex; align-items: center; gap: 8px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); border-radius: 999px; padding: 3px 12px 3px 3px; cursor: pointer; font-weight: 500; white-space: nowrap; }
+.me:hover { border-color: var(--ink-2); }
+@media (max-width: 640px) { .me { padding: 3px; } .me .nm { display: none; } }
+.avatar { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font: 600 11px/1 var(--f-mono); letter-spacing: .02em; color: #fff; background: var(--av, #6b7380); }
+.card-foot { border-top: 1px solid var(--rule); padding: 6px 8px; display: flex; }
+.cmt-toggle { border: 0; background: none; color: var(--ink-2); font: 500 13px/1 var(--f-body); padding: 6px; border-radius: 6px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.cmt-toggle:hover, .cmt-toggle[aria-expanded="true"] { color: var(--ink); background: var(--paper); }
+.cmt-toggle b { font: 600 11px/1 var(--f-mono); background: var(--layout); color: var(--sheet); border-radius: 999px; padding: 3px 6px; }
+.thread { border-top: 1px solid var(--rule); background: var(--paper); padding: 12px 14px 14px; display: grid; gap: 12px; }
+.cmt { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.cmt-h { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; color: var(--ink-2); }
+.cmt-h b { color: var(--ink); font-weight: 600; font-size: 13.5px; }
+.cmt-h .icon-btn { margin-left: auto; padding: 0 4px; }
+.cmt-t { white-space: pre-wrap; overflow-wrap: anywhere; }
+.cmt-form { display: grid; grid-template-columns: 28px 1fr; gap: 10px; }
+.cmt-form textarea { width: 100%; min-height: 64px; resize: vertical; font: inherit; color: var(--ink); background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; }
+.cmt-form .r { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
 
 @media (max-width: 760px) {
   .bar-in { flex-wrap: wrap; padding-block: 8px; gap: 8px; }
@@ -255,6 +273,7 @@ body.tv .bar, body.tv #main { display: none; }
   <div class="mark"><span class="logo" role="img" aria-label="FTB Design"></span><small>Project Hub</small></div>
   <nav class="tabs" id="tabs" role="tablist" aria-label="Projects"></nav>
   <div class="tools">
+    <div id="me"></div>
     <input class="search" id="q" type="search" placeholder="Search" aria-label="Search this project">
     <button class="btn" id="editBtn" aria-pressed="false">Edit</button>
   </div>
@@ -267,7 +286,8 @@ body.tv .bar, body.tv #main { display: none; }
 
 // ---------- state + storage ----------
 const API = "/api";
-const state = { hub: { projects: [] }, current: null, editing: false, query: "", mode: "live" };
+const state = { hub: { projects: [] }, current: null, editing: false, query: "", mode: "live",
+  me: null, counts: {}, threads: {}, open: new Set(), drafts: {} };
 
 async function loadHub() {
   try {
@@ -390,6 +410,7 @@ function render() {
   const q = state.query.trim().toLowerCase();
   const match = s => !q || JSON.stringify(s).toLowerCase().includes(q);
   const board = h("div", { class: "board" });
+  if (!state.counts[p.id]) loadCounts(p.id);
   sections.filter(match).forEach(s => board.append(card(p, s)));
   board.append(h("button", { class: "add-sec", onclick: () => openSectionEditor(p, null) }, "+ Add piece or link group"));
   main.append(board);
@@ -412,7 +433,8 @@ function card(p, s) {
     (notes.length || (s.materials || []).length || (s.links || []).length) ? h("div", { class: "body" },
       notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
       (s.materials || []).length ? h("div", { class: "mats" }, h("span", { class: "lbl" }, "Stock"), s.materials.map(m => h("span", { class: "mat" }, m))) : null,
-      (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null) : null);
+      (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null) : null,
+    commentsBlock(p, s));
 }
 
 function vtile(s, v) {
@@ -693,6 +715,170 @@ async function pollStatus(v) {
   }
 }
 
+// ---------- people + comments ----------
+// Sign-in comes from Cloudflare Access (see src/auth.js). In the preview everyone is "You" and comments stay in this browser.
+async function loadMe() {
+  if (state.mode === "live") {
+    state.me = await (await fetch(`${API}/me`)).json().catch(() => ({ setup: false, signedIn: false }));
+  } else {
+    let name = "You";
+    try { name = localStorage.getItem("ftb-name") || name; } catch {}
+    state.me = { setup: true, signedIn: true, email: "you@ftb.design", name };
+  }
+  renderMe();
+}
+
+const AVATAR = ["#2350c8", "#9a6a1f", "#b5413a", "#1e8e4e", "#6b5bd6", "#0f7c8c", "#c4392f", "#3a7d44"];
+function avatar(person) {
+  const name = person.name || person.email || "?";
+  const initials = name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  let n = 0;
+  for (const c of person.email || name) n = (n * 31 + c.charCodeAt(0)) >>> 0;
+  return h("span", { class: "avatar", style: `--av:${AVATAR[n % AVATAR.length]}`, "aria-hidden": "true" }, initials);
+}
+
+function renderMe() {
+  const slot = document.getElementById("me");
+  const me = state.me;
+  slot.replaceChildren(me?.signedIn
+    ? h("button", { class: "me", title: `Signed in as ${me.email}. Click to change your name.`, onclick: openNameEditor }, avatar(me), h("span", { class: "nm" }, me.name))
+    : []);
+}
+
+function openNameEditor() {
+  const me = state.me;
+  const name = h("input", { id: "me-name", value: me.name, maxlength: "40", required: true });
+  const form = h("form", { class: "panel editor", onsubmit: async e => {
+    e.preventDefault();
+    const v = name.value.trim();
+    if (!v) return;
+    if (state.mode === "live") {
+      const res = await fetch(`${API}/me`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: v }) });
+      if (!res.ok) { toast("Couldn't save your name. Try again."); return; }
+    } else {
+      try { localStorage.setItem("ftb-name", v); } catch {}
+    }
+    me.name = v; close(); renderMe(); toast("Name saved");
+  } },
+    h("h3", {}, "Your name"),
+    h("p", { class: "hint" }, `Signed in as ${me.email}. This name shows on your comments.`),
+    field("Name", name),
+    h("div", { class: "foot" }, h("span"), h("div", { class: "r" },
+      h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
+  const close = overlay(form);
+  name.focus();
+}
+
+function localComments() {
+  try { return JSON.parse(localStorage.getItem("ftb-comments") || "[]"); } catch { return []; }
+}
+function saveLocalComments(all) { try { localStorage.setItem("ftb-comments", JSON.stringify(all)); } catch {} }
+
+async function loadCounts(pid) {
+  state.counts[pid] = {};
+  if (state.mode === "live") {
+    const r = await (await fetch(`${API}/comments?project=${encodeURIComponent(pid)}`)).json().catch(() => ({}));
+    state.counts[pid] = r.counts || {};
+  } else {
+    for (const c of localComments().filter(c => c.project === pid)) state.counts[pid][c.item] = (state.counts[pid][c.item] || 0) + 1;
+  }
+  if (state.current === pid) render();
+}
+
+async function loadThread(pid, sid) {
+  const key = `${pid}/${sid}`;
+  state.threads[key] = "loading";
+  if (state.mode === "live") {
+    const r = await (await fetch(`${API}/comments?project=${encodeURIComponent(pid)}&item=${encodeURIComponent(sid)}`)).json().catch(() => ({}));
+    state.threads[key] = r.comments || [];
+  } else {
+    state.threads[key] = localComments().filter(c => c.project === pid && c.item === sid);
+  }
+  (state.counts[pid] ||= {})[sid] = state.threads[key].length;
+  render();
+}
+
+async function postComment(pid, sid, text) {
+  const key = `${pid}/${sid}`;
+  let comment;
+  if (state.mode === "live") {
+    const res = await fetch(`${API}/comments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: pid, item: sid, text }) });
+    if (!res.ok) { toast((await res.json().catch(() => ({}))).error || "Couldn't post. Try again."); return false; }
+    comment = (await res.json()).comment;
+  } else {
+    const at = new Date().toISOString();
+    comment = { id: `${pid}:${sid}:${at}`, project: pid, item: sid, text, at, email: state.me.email, name: state.me.name };
+    saveLocalComments([...localComments(), comment]);
+  }
+  state.threads[key] = [...(Array.isArray(state.threads[key]) ? state.threads[key] : []), comment];
+  (state.counts[pid] ||= {})[sid] = state.threads[key].length;
+  return true;
+}
+
+async function deleteComment(c) {
+  const key = `${c.project}/${c.item}`;
+  if (state.mode === "live") {
+    const res = await fetch(`${API}/comments/${encodeURIComponent(c.id)}`, { method: "DELETE" });
+    if (!res.ok) { toast("Couldn't delete that comment."); return; }
+  } else {
+    saveLocalComments(localComments().filter(x => x.id !== c.id));
+  }
+  state.threads[key] = state.threads[key].filter(x => x.id !== c.id);
+  state.counts[c.project][c.item] = state.threads[key].length;
+  render();
+}
+
+function ago(iso) {
+  const mins = (Date.now() - new Date(iso).getTime()) / 60000;
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${Math.floor(mins)}m ago`;
+  if (mins < 24 * 60) return `${Math.floor(mins / 60)}h ago`;
+  if (mins < 7 * 24 * 60) return `${Math.floor(mins / 1440)}d ago`;
+  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function commentsBlock(p, s) {
+  const key = `${p.id}/${s.id}`;
+  const n = state.counts[p.id]?.[s.id] || 0;
+  const open = state.open.has(key);
+  const toggle = h("button", { class: "cmt-toggle", "aria-expanded": String(open), onclick: () => {
+    if (open) state.open.delete(key); else { state.open.add(key); if (!state.threads[key]) { loadThread(p.id, s.id); return; } }
+    render();
+  } }, "Comments", n ? h("b", {}, n) : null);
+  const foot = h("div", { class: "card-foot" }, toggle);
+  if (!open) return foot;
+
+  const list = state.threads[key];
+  const me = state.me || {};
+  let form;
+  if (me.signedIn) {
+    const box = h("textarea", { "aria-label": `Comment on ${s.title}`, placeholder: "Add a comment", "data-thread": key,
+      oninput: e => { state.drafts[key] = e.target.value; },
+      onkeydown: e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) e.target.form.requestSubmit(); } });
+    box.value = state.drafts[key] || "";
+    form = h("form", { class: "cmt-form", onsubmit: async e => {
+      e.preventDefault();
+      const text = box.value.trim();
+      if (!text) return;
+      if (!(await postComment(p.id, s.id, text))) return;
+      state.drafts[key] = "";
+      render();
+      document.querySelector(`textarea[data-thread="${key}"]`)?.focus();
+    } }, avatar(me), h("div", {}, box,
+      h("div", { class: "r" }, h("span", { class: "hint" }, "Ctrl+Enter to post"), h("button", { class: "btn primary" }, "Post"))));
+  } else {
+    form = h("p", { class: "hint" }, me.setup ? "Sign in to comment." : "Comments open once team sign-in is set up.");
+  }
+  return h("div", {}, foot, h("div", { class: "thread" },
+    list === "loading" || !list ? h("p", { class: "hint" }, "Loading…")
+      : list.length ? list.map(c => h("div", { class: "cmt" }, avatar(c), h("div", {},
+          h("div", { class: "cmt-h" }, h("b", {}, c.name), h("span", { title: new Date(c.at).toLocaleString() }, ago(c.at)),
+            c.email === me.email ? h("button", { class: "icon-btn", "aria-label": "Delete comment", title: "Delete", onclick: () => deleteComment(c) }, "×") : null),
+          h("div", { class: "cmt-t" }, c.text))))
+      : h("p", { class: "hint" }, "No comments yet."),
+    form));
+}
+
 // ---------- shop board ----------
 // Orders go Queued -> CNC -> Build -> Paint -> Completed -> Out the door, skipping shops a part doesn't need.
 // Status is queued | in-progress (with dept = the shop working on it) | ready-build | ready-paint (waiting for that shop) | done | out.
@@ -960,7 +1146,7 @@ document.getElementById("editBtn").addEventListener("click", e => {
   e.currentTarget.textContent = state.editing ? "Done" : "Edit";
   render();
 });
-loadHub().then(loadOrders).then(() => {
+loadHub().then(() => Promise.all([loadOrders(), loadMe()])).then(() => {
   const fromHash = location.hash.slice(1);
   state.current = fromHash === "pickup" || fromHash === "tv" ? "pickup"
     : state.hub.projects.some(p => p.id === fromHash) ? fromHash : state.hub.projects[0]?.id;
