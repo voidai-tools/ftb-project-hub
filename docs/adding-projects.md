@@ -64,7 +64,7 @@ Everyone signs in through Cloudflare Access with their @ftb.design email (a code
 
 Every piece or link group on a project page has a **Comments** button at the bottom of its card. Open it to read the thread and post (Ctrl+Enter posts). You can delete your own comments.
 
-Setup, once:
+Setup (done 2026-10-19 for ftbshop.fun):
 1. In Zero Trust, go to **Access > Applications** and add a self-hosted app for `ftbshop.fun` with an Allow rule for emails ending in `@ftb.design`.
 2. Copy the app's **Application Audience (AUD) Tag** (on the app's overview) and your team domain (Zero Trust **Settings > Custom Pages**, e.g. `ftb.cloudflareaccess.com`).
 3. Put them in `wrangler.toml` as `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` (they aren't secret) and push. Until then, comments are read-only.

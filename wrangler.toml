@@ -21,8 +21,8 @@ APS_BUCKET = "ftb-design-models"
 TICKTICK_LIST = "CNC HUB"
 # Sign-in for comments: from Zero Trust > Settings (team domain) and the ftbshop.fun Access app (Audience tag).
 # Not secret. Leave empty until Access is set up; comments are read-only until then.
-ACCESS_TEAM_DOMAIN = ""
-ACCESS_AUD = ""
+ACCESS_TEAM_DOMAIN = "shiny-lake-82a5.cloudflareaccess.com"
+ACCESS_AUD = "edf3200dbf383a9108bc7f928db6365cda69ff794868be90e1913a260cb93676"
 
 # Secrets (set with `npx wrangler secret put <NAME>`):
 #   APS_CLIENT_ID
