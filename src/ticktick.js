@@ -5,6 +5,8 @@
 // Setup: register an app at developer.ticktick.com with redirect URL https://<site>/api/ticktick/callback,
 // add TICKTICK_CLIENT_ID and TICKTICK_CLIENT_SECRET as Worker secrets, then open /api/ticktick/connect once.
 
+import { listOrders, putOrders } from "./orders.js";
+
 const TT_API = "https://api.ticktick.com/open/v1";
 const TOKEN_KEY = "ticktick:token";
 
@@ -72,29 +74,29 @@ export async function syncTicktick(env) {
     const now = new Date().toISOString();
     let added = 0, toBuild = 0;
 
+    const byId = new Map((await listOrders(env)).map(o => [o.id, o]));
+    const changed = [];
     for (const t of open) {
-      const key = `order:tt-${t.id}`;
-      const existing = await env.HUB.get(key, "json");
+      const existing = byId.get(`tt-${t.id}`);
       if (!existing) {
-        await env.HUB.put(key, JSON.stringify({
+        changed.push({
           id: `tt-${t.id}`, title: t.title, dept: "CNC", status: "in-progress", statusAt: now, createdAt: now,
           notes: t.content || "", source: "ticktick", ticktickId: t.id,
-        }));
+        });
         added++;
       } else if (existing.title !== t.title) {
-        await env.HUB.put(key, JSON.stringify({ ...existing, title: t.title }));
+        changed.push({ ...existing, title: t.title });
       }
     }
 
     // Orders from TickTick still on the CNC whose task is no longer open were checked off: send them to Build.
-    const keys = (await env.HUB.list({ prefix: "order:tt-" })).keys.map(k => k.name);
-    for (const key of keys) {
-      const o = await env.HUB.get(key, "json");
-      if (o && o.status === "in-progress" && o.dept === "CNC" && !openIds.has(o.ticktickId)) {
-        await env.HUB.put(key, JSON.stringify({ ...o, status: "ready-build", statusAt: now }));
+    for (const o of byId.values()) {
+      if (o.source === "ticktick" && o.status === "in-progress" && o.dept === "CNC" && !openIds.has(o.ticktickId)) {
+        changed.push({ ...o, status: "ready-build", statusAt: now });
         toBuild++;
       }
     }
+    await putOrders(env, changed);
 
     const result = { ok: true, list: list.name, open: open.length, added, toBuild, at: now };
     await env.HUB.put("ticktick:last-sync", JSON.stringify(result));

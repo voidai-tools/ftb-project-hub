@@ -2,7 +2,7 @@
 // Serves the static site from /public and a small JSON API:
 //   GET  /api/hub                     -> hub document (projects, sections, links, viewers)
 //   PUT  /api/hub                     -> replace hub document
-//   GET  /api/orders                  -> shop pickup orders (one KV key each, so people updating at once don't clobber each other)
+//   GET  /api/orders                  -> shop orders (stored one KV key each, read from one combined copy; see orders.js)
 //   PUT  /api/orders/:id
 //   DELETE /api/orders/:id
 //   GET  /api/ticktick/connect | /callback | /status, POST /api/ticktick/sync -> TickTick "CNC HUB" list feeds CNC orders (see ticktick.js)
@@ -23,6 +23,7 @@ import seed from "../data/seed.json";
 import { ticktickRoute, syncTicktick } from "./ticktick.js";
 import { meRoute } from "./auth.js";
 import { commentsRoute } from "./comments.js";
+import { listOrders, putOrder, deleteOrder } from "./orders.js";
 
 const APS = "https://developer.api.autodesk.com";
 const HUB_KEY = "hub";
@@ -75,28 +76,18 @@ async function route(request, env, url) {
   }
 
   if (pathname === "/api/orders" && method === "GET") {
-    const keys = [];
-    let cursor;
-    do {
-      const page = await env.HUB.list({ prefix: "order:", cursor });
-      keys.push(...page.keys.map(k => k.name));
-      cursor = page.list_complete ? null : page.cursor;
-    } while (cursor);
-    const orders = (await Promise.all(keys.map(k => env.HUB.get(k, "json")))).filter(Boolean);
-    return json({ orders });
+    return json({ orders: await listOrders(env) });
   }
   const om = pathname.match(/^\/api\/orders\/([\w-]+)$/);
   if (om && method === "PUT") {
     const order = await request.json();
     if (!order?.title) throw httpError(400, "order.title required");
     order.id = om[1];
-    // Orders that have left the shop clear themselves out after 30 days.
-    const opts = order.status === "out" ? { expirationTtl: 60 * 60 * 24 * 30 } : {};
-    await env.HUB.put(`order:${om[1]}`, JSON.stringify(order), opts);
+    await putOrder(env, order);
     return json({ ok: true });
   }
   if (om && method === "DELETE") {
-    await env.HUB.delete(`order:${om[1]}`);
+    await deleteOrder(env, om[1]);
     return json({ ok: true });
   }
 
