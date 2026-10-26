@@ -8,6 +8,7 @@
 //   GET  /api/ticktick/connect | /callback | /status, POST /api/ticktick/sync -> TickTick "CNC HUB" list feeds CNC orders (see ticktick.js)
 //   GET/PUT /api/me                   -> who's signed in (Cloudflare Access) and their display name (see auth.js)
 //   GET/POST/DELETE /api/comments     -> comments on project items (see comments.js)
+//   GET/POST/DELETE /api/photos       -> job photos in R2, per project, plus the Gallery (see photos.js)
 //   GET  /api/viewer-token            -> short-lived APS token, viewables:read only
 //   POST /api/models/upload           -> { fileName } => signed S3 URL for a direct browser upload
 //   POST /api/models/complete         -> { objectKey, uploadKey } => finalize upload + start translation, returns { urn }
@@ -23,6 +24,7 @@ import seed from "../data/seed.json";
 import { ticktickRoute, syncTicktick } from "./ticktick.js";
 import { meRoute } from "./auth.js";
 import { commentsRoute } from "./comments.js";
+import { photosRoute } from "./photos.js";
 import { listOrders, putOrder, deleteOrder } from "./orders.js";
 
 const APS = "https://developer.api.autodesk.com";
@@ -59,6 +61,11 @@ async function route(request, env, url) {
   }
   if (pathname.startsWith("/api/comments")) {
     const res = await commentsRoute(request, env, url);
+    if (res) return res;
+  }
+
+  if (pathname.startsWith("/api/photos")) {
+    const res = await photosRoute(request, env, url);
     if (res) return res;
   }
 

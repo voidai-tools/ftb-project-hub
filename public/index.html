@@ -297,6 +297,69 @@ body.tv .bar, body.tv #main { display: none; }
 .tvb-tag { font: 600 1.6vh/1 var(--f-body); background: var(--ok-soft); color: var(--ok); border-radius: 99px; padding: .5vh 1vh; white-space: nowrap; }
 .tvb-tag.none { background: var(--warn-soft); color: var(--warn); }
 .tvb-empty { font-size: 2vh; color: var(--ink-2); }
+/* job photos: a strip on each project page, and the Gallery tab with one album per project */
+.tab.gallery { margin-right: 6px; }
+.photos { border: 1px solid var(--rule); background: var(--sheet); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; display: grid; gap: 8px; }
+.ph-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ph-h > b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
+.ph-h .count { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
+.ph-h .r { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.ph-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+.ph-row .thumb { flex: none; height: 84px; aspect-ratio: 4 / 3; }
+.thumb { position: relative; border: 0; padding: 0; border-radius: 6px; overflow: hidden; cursor: zoom-in; background: var(--paper); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s ease; }
+.thumb:hover img { transform: scale(1.04); }
+.thumb .pc { position: absolute; left: 4px; bottom: 4px; max-width: calc(100% - 8px); font: 500 10px/1 var(--f-mono); background: rgba(10,14,20,.7); color: #fff; padding: 3px 5px; border-radius: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ph-more { flex: none; height: 84px; aspect-ratio: 4 / 3; border: 1px dashed var(--rule); border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font: 600 14px/1.2 var(--f-display); letter-spacing: .05em; text-transform: uppercase; }
+.ph-more:hover { color: var(--layout); border-color: var(--layout); }
+.up-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.up-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; background: var(--paper); }
+.up-grid .busy { opacity: .45; }
+.up-grid .ok { outline: 3px solid var(--ok); outline-offset: -3px; }
+/* gallery */
+.gal-h { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; padding-block: 28px 18px; }
+.albums { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; padding-bottom: 48px; }
+.album { border: 1px solid var(--rule); background: var(--sheet); border-radius: 10px; overflow: hidden; padding: 0; cursor: pointer; text-align: left; color: var(--ink); box-shadow: var(--shadow); display: grid; }
+.album:hover { border-color: var(--layout); }
+.album .cov { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; aspect-ratio: 4 / 3; background: var(--rule); }
+.album .cov img { width: 100%; height: 100%; object-fit: cover; display: block; min-height: 0; }
+.album .cov img:first-child { grid-row: span 2; }
+.album .cov img:only-child { grid-column: span 2; }
+.album .cov.two img:first-child { grid-row: span 2; }
+.album .cov.two img:last-child { grid-row: span 2; }
+.album .meta { padding: 10px 12px 12px; display: grid; gap: 3px; }
+.album .meta b { font: 700 19px/1.1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; }
+.album .meta span { font-size: 12.5px; color: var(--ink-2); }
+.album.empty-al .cov { display: grid; place-items: center; background: var(--paper); color: var(--ink-2); font-size: 13px; }
+.gal-day { font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 18px 0 8px; }
+.gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.gal-grid .thumb { aspect-ratio: 1; }
+.gal-f { display: flex; gap: 6px; flex-wrap: wrap; }
+.gal-f button { border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); border-radius: 999px; padding: 5px 11px; font: 500 12.5px/1 var(--f-body); cursor: pointer; }
+.gal-f button[aria-pressed="true"] { color: var(--layout); border-color: var(--layout); background: var(--layout-soft); }
+/* full-size photo viewer */
+.lightbox { position: fixed; inset: 0; z-index: 25; background: rgba(6, 8, 12, .94); color: #f1f3f5; display: grid; grid-template-rows: 1fr auto; }
+.lb-stage { position: relative; min-height: 0; }
+.lb-stage img { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); bottom: 0; left: 56px; width: calc(100% - 112px); height: calc(100% - max(12px, env(safe-area-inset-top, 0px))); object-fit: contain; }
+.lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.4); color: #fff; font-size: 18px; cursor: pointer; }
+.lb-nav.prev { left: 8px; } .lb-nav.next { right: 8px; }
+.lb-nav:disabled { opacity: .25; cursor: default; }
+.lb-x { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0,0,0,.5); color: #fff; font-size: 22px; cursor: pointer; z-index: 1; }
+.lb-info { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px max(16px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); font-size: 13px; color: #c3c9d1; }
+.lb-info .cap { color: #fff; font-size: 15px; flex-basis: 100%; }
+.lb-info .cap:empty { display: none; }
+.lb-info .pos { margin-left: auto; font: 500 12px/1 var(--f-mono); }
+.lb-info a, .lb-info .btn { color: #fff; }
+.lb-info .btn { background: transparent; border-color: rgba(255,255,255,.3); padding: 5px 10px; font-size: 13px; }
+@media (max-width: 760px) {
+  .ph-row .thumb, .ph-more { height: 72px; }
+  .gal-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; }
+  .gal-grid .thumb { border-radius: 2px; }
+  .albums { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .album .meta b { font-size: 16px; }
+  .lb-stage img { left: 0; width: 100%; }
+  .lb-nav { display: none; }
+}
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 <!--/BUILD:HEAD-->
@@ -321,7 +384,8 @@ body.tv .bar, body.tv #main { display: none; }
 // ---------- state + storage ----------
 const API = "/api";
 const state = { hub: { projects: [] }, current: null, editing: false, query: "", mode: "live",
-  me: null, counts: {}, threads: {}, open: new Set(), drafts: {}, board: "shop" };
+  me: null, counts: {}, threads: {}, open: new Set(), drafts: {}, board: "shop",
+  photos: {}, allPhotos: null, album: null, albumPiece: "" };
 
 async function loadHub() {
   try {
@@ -439,16 +503,17 @@ async function setArchived(p, on) {
 }
 const pickupTab = () => h("button", { class: "tab pickup", role: "tab", "aria-selected": String(state.current === "pickup"),
   onclick: () => { state.current = "pickup"; location.hash = (BOARDS[state.board] || BOARDS.shop).hash; render(); } }, "Shop");
+const galleryTab = () => h("button", { class: "tab gallery", role: "tab", "aria-selected": String(state.current === "gallery"), onclick: () => openGallery() }, "Gallery");
 
 function render() {
   document.body.classList.toggle("editing", state.editing);
-  const onPickup = state.current === "pickup";
-  const p = onPickup ? null : project();
+  const onPickup = state.current === "pickup", onGallery = state.current === "gallery";
+  const p = onPickup || onGallery ? null : project();
   if (p) state.current = p.id;
   const tabs = document.getElementById("tabs");
   // Archived projects stay off the bar (unless one is open) and live in the Archive menu.
   const archived = state.hub.projects.filter(pr => pr.archived);
-  tabs.replaceChildren(pickupTab(), ...state.hub.projects.filter(pr => !pr.archived || pr.id === state.current).map(pr =>
+  tabs.replaceChildren(pickupTab(), galleryTab(), ...state.hub.projects.filter(pr => !pr.archived || pr.id === state.current).map(pr =>
     h("button", { class: "tab" + (pr.archived ? " archived" : ""), role: "tab", "aria-selected": String(pr.id === state.current), onclick: () => openProject(pr.id) }, pr.name)),
     ...(archived.length ? [h("button", { class: "tab", onclick: openArchive }, `Archive · ${archived.length}`)] : []),
     ...(state.editing ? [h("button", { class: "tab", onclick: () => openProjectEditor(null) }, "+ Project")] : []));
@@ -460,6 +525,7 @@ function render() {
       "Preview with sample data from your start.me page. Link addresses are blank where the screenshot cut them off; turn on Edit to paste them in. Edits here stay in this browser. Once deployed, models upload straight into FTB's own Autodesk storage."));
   }
   if (onPickup) { renderPickup(main); return; }
+  if (onGallery) { renderGallery(main); return; }
   if (!p) { main.append(h("p", { class: "empty" }, "No projects yet. Turn on Edit and add one, or import your start.me bookmarks.")); return; }
 
   const sections = p.sections || [];
@@ -486,7 +552,7 @@ function render() {
   const shown = sections.filter(match);
   shown.forEach(s => board.append(card(p, s)));
   board.append(h("button", { class: "add-sec", onclick: () => openSectionEditor(p, null) }, "+ Add piece or link group"));
-  main.append(projectNav(board, shown), board);
+  main.append(photoStrip(p), projectNav(board, shown), board);
   fitBoard();
 }
 
@@ -1005,6 +1071,279 @@ function commentsBlock(p, s) {
     form));
 }
 
+// ---------- job photos + gallery ----------
+// Photos live in R2 (see src/photos.js). Phones send huge images, so each one is shrunk here first: a ~2,560 px
+// JPEG for full view and a small thumbnail for strips and grids. In the preview they're kept small in this browser.
+function localPhotos() {
+  try { return JSON.parse(localStorage.getItem("ftb-photos") || "[]"); } catch { return []; }
+}
+function saveLocalPhotos(all) {
+  try { localStorage.setItem("ftb-photos", JSON.stringify(all)); return true; } catch { return false; }
+}
+
+async function loadPhotos(pid) {
+  if (state.mode === "live") {
+    const r = await (await fetch(`${API}/photos${pid ? `?project=${encodeURIComponent(pid)}` : ""}`)).json().catch(() => ({}));
+    return r.photos || [];
+  }
+  return localPhotos().filter(ph => !pid || ph.project === pid).sort((a, b) => b.at.localeCompare(a.at));
+}
+async function refreshPhotos(pid) {
+  state.photos[pid] = await loadPhotos(pid);
+  if (state.current === pid && !document.querySelector(".scrim, .lightbox")) render();
+}
+async function refreshGallery() {
+  state.allPhotos = await loadPhotos(null);
+  for (const pid of Object.keys(state.photos)) state.photos[pid] = state.allPhotos.filter(ph => ph.project === pid);
+  if (state.current === "gallery" && !document.querySelector(".scrim, .lightbox")) render();
+}
+
+async function shrink(file, max, quality) {
+  let src;
+  try { src = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch {
+    src = await new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => rej(new Error(`Can't read ${file.name}`));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  const k = Math.min(1, max / Math.max(src.width, src.height));
+  const c = h("canvas", { width: Math.round(src.width * k), height: Math.round(src.height * k) });
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", quality));
+  return { blob, w: c.width, h: c.height };
+}
+const dataUrl = blob => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+
+async function uploadPhoto(file, project, item, caption) {
+  if (state.mode === "live") {
+    const full = await shrink(file, 2560, .82), thumb = await shrink(file, 640, .74);
+    const form = new FormData();
+    form.append("full", full.blob, "full.jpg");
+    form.append("thumb", thumb.blob, "thumb.jpg");
+    Object.entries({ project, item, caption, w: full.w, h: full.h }).forEach(([k, v]) => form.append(k, v));
+    const res = await fetch(`${API}/photos`, { method: "POST", body: form });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Upload failed");
+    return (await res.json()).photo;
+  }
+  const full = await shrink(file, 1280, .7), thumb = await shrink(file, 480, .7);
+  const at = new Date().toISOString();
+  const photo = { id: `${at.replace(/[:.]/g, "-")}-${Math.random().toString(36).slice(2, 6)}`, project, item, caption, at,
+    email: state.me.email, name: state.me.name, w: full.w, h: full.h, full: await dataUrl(full.blob), thumb: await dataUrl(thumb.blob) };
+  if (!saveLocalPhotos([...localPhotos(), photo])) throw new Error("This browser is out of room for preview photos");
+  return photo;
+}
+
+async function deletePhoto(ph) {
+  if (state.mode === "live") {
+    const res = await fetch(`${API}/photos/${encodeURIComponent(ph.project)}/${encodeURIComponent(ph.id)}`, { method: "DELETE" });
+    if (!res.ok) { toast((await res.json().catch(() => ({}))).error || "Couldn't delete that photo."); return false; }
+  } else {
+    saveLocalPhotos(localPhotos().filter(x => x.id !== ph.id));
+  }
+  if (state.photos[ph.project]) state.photos[ph.project] = state.photos[ph.project].filter(x => x.id !== ph.id);
+  if (state.allPhotos) state.allPhotos = state.allPhotos.filter(x => x.id !== ph.id);
+  toast("Photo deleted");
+  return true;
+}
+
+const pieceName = (pid, item) => (state.hub.projects.find(p => p.id === pid)?.sections || []).find(s => s.id === item)?.title || "";
+const canUpload = () => state.me?.signedIn;
+
+// Pick photos (a phone offers the camera or the library), then tag the piece and add a caption before uploading.
+function pickPhotos(p, item) {
+  if (!canUpload()) { toast(state.me?.setup ? "Sign in to add photos." : "Photo uploads open once team sign-in is set up."); return; }
+  const input = h("input", { type: "file", accept: "image/*", multiple: true, style: "display:none" });
+  input.addEventListener("change", () => { const files = [...input.files]; input.remove(); if (files.length) openUploader(p, files, item); });
+  document.body.append(input);
+  input.click();
+}
+
+function openUploader(p, files, item = "") {
+  const urls = files.map(f => URL.createObjectURL(f));
+  const imgs = urls.map(u => h("img", { src: u, alt: "" }));
+  const piece = h("select", {}, h("option", { value: "" }, "Whole project"),
+    (p.sections || []).map(s => h("option", { value: s.id, selected: s.id === item }, s.title)));
+  const caption = h("textarea", { rows: "2", maxlength: "300", placeholder: "Optional, e.g. first coat of primer on the arch" });
+  const status = h("span", { class: "hint" }, `${files.length} photo${files.length > 1 ? "s" : ""} ready`);
+  const go = h("button", { class: "btn primary" }, "Upload");
+  let busy = false;
+  const form = h("form", { class: "panel editor", onsubmit: async e => {
+    e.preventDefault();
+    if (busy) return;
+    busy = true; go.disabled = true;
+    let done = 0;
+    const failed = [];
+    for (const [i, f] of files.entries()) {
+      status.textContent = `Uploading ${i + 1} of ${files.length}…`;
+      imgs[i].classList.add("busy");
+      try {
+        const ph = await uploadPhoto(f, p.id, piece.value, caption.value.trim());
+        (state.photos[p.id] ||= []).unshift(ph);
+        state.allPhotos?.unshift(ph);
+        imgs[i].classList.replace("busy", "ok");
+        done++;
+      } catch (err) {
+        imgs[i].classList.remove("busy");
+        failed.push(err.message);
+      }
+    }
+    close();
+    toast(failed.length ? `${done} uploaded, ${failed.length} failed: ${failed[0]}` : `${done} photo${done > 1 ? "s" : ""} added`);
+    render();
+  } },
+    h("h3", {}, "Add photos"),
+    h("p", { class: "hint" }, `To ${p.name}. Photos are shrunk on this device before uploading, so they go up fast.`),
+    h("div", { class: "up-grid" }, imgs),
+    field("Which piece (optional)", piece),
+    field("Caption (optional)", caption),
+    h("div", { class: "foot" }, status, h("div", { class: "r" },
+      h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), go)));
+  form.onclose = () => urls.forEach(u => URL.revokeObjectURL(u));
+  const close = overlay(form);
+}
+
+function thumbBtn(ph, list, i, showPiece) {
+  const pc = showPiece && ph.item ? pieceName(ph.project, ph.item) : "";
+  return h("button", { class: "thumb", "aria-label": `Open photo${ph.caption ? `: ${ph.caption}` : ""}`, onclick: () => openLightbox(list, i) },
+    h("img", { src: ph.thumb, alt: ph.caption || "", loading: "lazy" }), pc ? h("span", { class: "pc" }, pc) : null);
+}
+
+// Strip on each project page: newest photos, an add button, and a link to the full album.
+function photoStrip(p) {
+  if (!state.photos[p.id]) { state.photos[p.id] = []; setTimeout(() => refreshPhotos(p.id)); }
+  const list = state.photos[p.id];
+  const SHOW = 14;
+  return h("section", { class: "photos", "aria-label": "Job photos" },
+    h("div", { class: "ph-h" }, h("b", {}, "Photos"), h("span", { class: "count" }, list.length || ""),
+      h("div", { class: "r" },
+        list.length ? h("button", { class: "btn ghost", onclick: () => openGallery(p.id) }, "Open album") : null,
+        h("button", { class: "btn primary", onclick: () => pickPhotos(p) }, "+ Add photos"))),
+    list.length
+      ? h("div", { class: "ph-row" }, list.slice(0, SHOW).map((ph, i) => thumbBtn(ph, list, i, true)),
+          list.length > SHOW ? h("button", { class: "ph-more", onclick: () => openGallery(p.id) }, `+${list.length - SHOW} more`) : null)
+      : h("p", { class: "hint", style: "margin:0" }, "No photos yet. Snap progress shots as the job goes, straight from your phone."));
+}
+
+function openLightbox(list, start) {
+  let i = start;
+  const img = h("img", { alt: "" });
+  const info = h("div", { class: "lb-info" });
+  const prev = h("button", { class: "lb-nav prev", "aria-label": "Previous photo", onclick: () => go(-1) }, "←");
+  const next = h("button", { class: "lb-nav next", "aria-label": "Next photo", onclick: () => go(1) }, "→");
+  const box = h("div", { class: "lightbox", role: "dialog", "aria-label": "Photo" },
+    h("div", { class: "lb-stage", onclick: e => { if (e.target.classList.contains("lb-stage")) close(); } },
+      img, prev, next, h("button", { class: "lb-x", "aria-label": "Close", onclick: () => close() }, "×")),
+    info);
+  function draw() {
+    const ph = list[i];
+    img.src = ph.thumb;          // show the thumbnail at once, then swap in the full photo
+    const full = new Image();
+    full.onload = () => { if (list[i] === ph) img.src = ph.full; };
+    full.src = ph.full;
+    img.alt = ph.caption || "Job photo";
+    prev.disabled = i === 0; next.disabled = i === list.length - 1;
+    const pr = state.hub.projects.find(p => p.id === ph.project);
+    const pc = pieceName(ph.project, ph.item);
+    info.replaceChildren(...[
+      h("div", { class: "cap" }, ph.caption || ""),
+      avatar(ph), h("span", {}, ph.name || ph.email),
+      h("span", {}, new Date(ph.at).toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })),
+      pr && state.current !== pr.id ? h("a", { href: `#${pr.id}`, onclick: e => { e.preventDefault(); close(); openProject(pr.id); } }, pr.name) : null,
+      pc ? h("span", {}, `· ${pc}`) : null,
+      h("a", { href: ph.full, download: `${ph.project}-${ph.id}.jpg`, target: "_blank", rel: "noopener" }, "Full size"),
+      ph.email === state.me?.email ? h("button", { class: "btn", onclick: async () => {
+        if (!confirm("Delete this photo? This can't be undone.")) return;
+        if (!(await deletePhoto(ph))) return;
+        list.splice(i, 1);
+        if (!list.length) { close(); return; }
+        i = Math.min(i, list.length - 1); draw();
+      } }, "Delete") : null,
+      h("span", { class: "pos" }, `${i + 1} / ${list.length}`)].filter(Boolean));
+  }
+  function go(d) { const j = i + d; if (j >= 0 && j < list.length) { i = j; draw(); } }
+  function key(e) {
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowLeft") go(-1);
+    else if (e.key === "ArrowRight") go(1);
+  }
+  // Swipe left/right on phones.
+  let x0 = null;
+  box.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+  box.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); x0 = null; });
+  function close() { box.remove(); document.removeEventListener("keydown", key); render(); }
+  document.addEventListener("keydown", key);
+  document.body.append(box);
+  draw();
+}
+
+function openGallery(pid = null) {
+  state.current = "gallery"; state.album = pid; state.albumPiece = "";
+  location.hash = pid ? `gallery/${pid}` : "gallery";
+  render();
+  refreshGallery();
+}
+
+const dayLabel = iso => new Date(iso).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+
+function renderGallery(main) {
+  const all = state.allPhotos;
+  if (!all) { main.append(h("p", { class: "empty" }, "Loading photos…")); return; }
+  const q = state.query.trim().toLowerCase();
+  const pid = state.album;
+  if (pid) {
+    const p = state.hub.projects.find(pr => pr.id === pid);
+    let list = all.filter(ph => ph.project === pid);
+    const pieces = [...new Set(list.map(ph => ph.item).filter(Boolean))];
+    if (state.albumPiece) list = list.filter(ph => ph.item === state.albumPiece);
+    if (q) list = list.filter(ph => `${ph.caption} ${ph.name} ${pieceName(pid, ph.item)}`.toLowerCase().includes(q));
+    main.append(h("div", { class: "gal-h" },
+      h("div", {},
+        h("button", { class: "btn ghost", style: "padding-left:0", onclick: () => openGallery() }, "← All albums"),
+        h("h1", {}, p?.name || pid),
+        h("div", { class: "eyebrow", style: "margin-top:8px" }, `${list.length} photo${list.length === 1 ? "" : "s"}`)),
+      h("div", { class: "tools" },
+        p ? h("button", { class: "btn", onclick: () => openProject(p.id) }, "Open project") : null,
+        p ? h("button", { class: "btn primary", onclick: () => pickPhotos(p) }, "+ Add photos") : null)));
+    if (pieces.length) main.append(h("div", { class: "gal-f" },
+      [["", "All"], ...pieces.map(it => [it, pieceName(pid, it) || "Removed piece"])].map(([it, label]) =>
+        h("button", { "aria-pressed": String(state.albumPiece === it), onclick: () => { state.albumPiece = it; render(); } }, label))));
+    if (!list.length) { main.append(h("p", { class: "empty" }, q ? "No photos match that search." : "No photos in this album yet.")); return; }
+    // Grouped by day, newest first, so the album reads like the build's progress log.
+    let day = null, grid;
+    list.forEach((ph, i) => {
+      const d = dayLabel(ph.at);
+      if (d !== day) { day = d; main.append(h("div", { class: "gal-day" }, d)); grid = h("div", { class: "gal-grid" }); main.append(grid); }
+      grid.append(thumbBtn(ph, list, i, !state.albumPiece));
+    });
+    main.append(h("div", { style: "height:48px" }));
+    return;
+  }
+
+  const groups = new Map();
+  for (const ph of all) { if (!groups.has(ph.project)) groups.set(ph.project, []); groups.get(ph.project).push(ph); }
+  const albums = [...groups.entries()].map(([id, list]) => ({ id, list, p: state.hub.projects.find(pr => pr.id === id) }))
+    .filter(a => !q || `${a.p?.name || a.id} ${a.p?.client || ""}`.toLowerCase().includes(q));
+  main.append(h("div", { class: "gal-h" },
+    h("div", {}, h("div", { class: "eyebrow" }, "Every job, one album each"), h("h1", {}, "Gallery")),
+    h("div", { class: "tally" },
+      h("div", {}, h("b", {}, all.length), "photos"),
+      h("div", {}, h("b", {}, groups.size), "albums"))));
+  if (!albums.length) {
+    main.append(h("p", { class: "empty" }, q ? "No album matches that search." : "No photos yet. Open a project and tap “+ Add photos” to start its album."));
+    return;
+  }
+  main.append(h("div", { class: "albums" }, albums.map(a => {
+    const cov = a.list.slice(0, 3);
+    return h("button", { class: "album", onclick: () => openGallery(a.id) },
+      h("div", { class: "cov" + (cov.length === 2 ? " two" : "") }, cov.map(ph => h("img", { src: ph.thumb, alt: "", loading: "lazy" }))),
+      h("div", { class: "meta" }, h("b", {}, a.p?.name || a.id),
+        h("span", {}, [`${a.list.length} photo${a.list.length === 1 ? "" : "s"}`, `latest ${ago(a.list[0].at)}`, a.p?.archived ? "archived" : null].filter(Boolean).join(" · "))));
+  })));
+}
+
 // ---------- shop board ----------
 // Orders go Queued -> CNC -> Build -> Paint -> Completed -> Out the door, skipping shops a part doesn't need.
 // Status is queued | in-progress (with dept = the shop working on it) | ready-build | ready-paint (waiting for that shop) | done | out.
@@ -1305,9 +1644,10 @@ loadHub().then(() => Promise.all([loadOrders(), loadMe()])).then(() => {
   const fromHash = location.hash.slice(1);
   const boardHash = Object.entries(BOARDS).find(([, b]) => b.hash === fromHash || b.tvHash === fromHash);
   if (boardHash) state.board = boardHash[0];
-  state.current = boardHash ? "pickup"
+  const album = fromHash.match(/^gallery(?:\/(.+))?$/);
+  state.current = album ? "gallery" : boardHash ? "pickup"
     : state.hub.projects.some(p => p.id === fromHash) ? fromHash : (state.hub.projects.find(p => !p.archived) || state.hub.projects[0])?.id;
-  render();
+  if (album) openGallery(album[1] ? decodeURIComponent(album[1]) : null); else render();
   if (boardHash && boardHash[1].tvHash === fromHash) enterTv(boardHash[0]);
   // Keep the Pickup count fresh for anyone leaving the hub open.
   setInterval(async () => { if (!document.body.classList.contains("tv")) { await loadOrders(); if (state.current === "pickup" && !document.querySelector(".scrim")) render(); } }, 60000);

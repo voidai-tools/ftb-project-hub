@@ -78,3 +78,11 @@ Setup (done 2026-10-19 for ftbshop.fun):
 1. In Zero Trust, go to **Access > Applications** and add a self-hosted app for `ftbshop.fun` with an Allow rule for emails ending in `@ftb.design`.
 2. Copy the app's **Application Audience (AUD) Tag** (on the app's overview) and your team domain (Zero Trust **Settings > Custom Pages**, e.g. `ftb.cloudflareaccess.com`).
 3. Put them in `wrangler.toml` as `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN` (they aren't secret) and push. Until then, comments are read-only.
+
+## Job photos and the Gallery
+
+Every project page has a **Photos** strip above the pieces. Tap **+ Add photos** on a phone to take a picture or pick several from the camera roll, optionally choose which piece they show and add a caption, then **Upload**. Photos are shrunk on the phone first (about 2,500 px on the long side), so they upload fast and storage stays small. Tap any photo to see it full size; swipe or use the arrow keys to move through them. You can delete photos you uploaded.
+
+The **Gallery** tab collects every photo, one album per project (archived projects included). An album shows its photos grouped by day, newest first, and can be filtered by piece. Links like `ftbshop.fun/#gallery/<project-id>` open an album directly.
+
+Photos are stored in the Cloudflare R2 bucket `ftb-photos` (bound to the Worker as `PHOTOS` in `wrangler.toml`). Only signed-in team members can see the site, so "public" means everyone on the team sees every photo.
