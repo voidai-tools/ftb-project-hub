@@ -40,6 +40,8 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 
 **Paint notes:** each piece has a Paint notes box in its editor (colors, sheen, primer, masking). They show on the card under a red "Paint" label.
 
+**Archiving:** when a job wraps, turn on Edit, open **Project settings** and tick **Archived**. It leaves the top bar and moves under **Archive** at the end of the tabs, where you can search every archived project (names, notes, links, materials) and open it as normal. An archived project's page has an **Unarchive** button.
+
 ## Shop board and lobby TV
 
 The **Shop** tab has the same columns as the lobby TV: **CNC**, **Build**, **Paint** and **Completed**, plus a **Queued** column on the left that stays off the TV. Inside each shop column, jobs marked **Waiting** are ready for that shop and haven't been started; the rest are being worked on (Cutting, Building, Painting).

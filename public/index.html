@@ -78,6 +78,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
   font: 600 15px/1 var(--f-display); letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
 .tab:hover { color: var(--ink); background: var(--paper); }
 .tab[aria-selected="true"] { color: var(--layout); background: var(--layout-soft); }
+.tab.archived { font-style: italic; }
+.notice.arch { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.arch-list { display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.arch-row { display: grid; gap: 2px; text-align: left; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); border-radius: 8px; padding: 10px 12px; cursor: pointer; font: inherit; }
+.arch-row:hover { border-color: var(--layout); }
+.check { display: flex; gap: 8px; align-items: center; cursor: pointer; }
 .tools { display: flex; gap: 8px; align-items: center; }
 .search { width: 180px; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
 .btn { border: 1px solid var(--rule); background: var(--sheet); padding: 7px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; font-weight: 500; }
@@ -372,7 +378,39 @@ function viewerState(v) {
 }
 
 // ---------- render ----------
-function project() { return state.hub.projects.find(p => p.id === state.current) || state.hub.projects[0]; }
+function project() {
+  return state.hub.projects.find(p => p.id === state.current) || state.hub.projects.find(p => !p.archived) || state.hub.projects[0];
+}
+function openProject(id) { state.current = id; location.hash = id; render(); }
+
+function openArchive() {
+  const list = h("div", { class: "arch-list" });
+  const q = h("input", { class: "search", style: "width:100%", type: "search", placeholder: "Search archived projects", "aria-label": "Search archived projects" });
+  const draw = () => {
+    const term = q.value.trim().toLowerCase();
+    const hits = state.hub.projects.filter(pr => pr.archived && (!term || JSON.stringify(pr).toLowerCase().includes(term)))
+      .sort((a, b) => (b.archivedAt || "").localeCompare(a.archivedAt || ""));
+    list.replaceChildren(...(hits.length ? hits.map(pr => h("button", { class: "arch-row", onclick: () => { close(); openProject(pr.id); } },
+      h("b", {}, pr.name),
+      h("span", { class: "hint" }, [pr.client, `${(pr.sections || []).length} pieces`, pr.archivedAt ? `archived ${new Date(pr.archivedAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}` : null].filter(Boolean).join(" · "))))
+      : [h("p", { class: "hint" }, term ? "No archived project matches that." : "Nothing archived yet.")]));
+  };
+  q.addEventListener("input", draw);
+  draw();
+  const panel = h("div", { class: "panel editor" }, h("h3", {}, "Archived projects"),
+    h("p", { class: "hint" }, "Searches names, notes, links and materials. Open one to view it, or unarchive it from its page."), q, list,
+    h("div", { class: "foot" }, h("span"), h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Close"))));
+  const close = overlay(panel);
+  q.focus();
+}
+
+async function setArchived(p, on) {
+  if (on) { p.archived = true; p.archivedAt = new Date().toISOString(); } else { delete p.archived; delete p.archivedAt; }
+  await saveHub();
+  if (on) state.current = state.hub.projects.find(pr => !pr.archived)?.id || null;
+  location.hash = state.current || "";
+  render();
+}
 const pickupTab = () => h("button", { class: "tab pickup", role: "tab", "aria-selected": String(state.current === "pickup"),
   onclick: () => { state.current = "pickup"; location.hash = "pickup"; render(); } }, "Shop");
 
@@ -382,8 +420,11 @@ function render() {
   const p = onPickup ? null : project();
   if (p) state.current = p.id;
   const tabs = document.getElementById("tabs");
-  tabs.replaceChildren(pickupTab(), ...state.hub.projects.map(pr =>
-    h("button", { class: "tab", role: "tab", "aria-selected": String(pr.id === state.current), onclick: () => { state.current = pr.id; location.hash = pr.id; render(); } }, pr.name)),
+  // Archived projects stay off the bar (unless one is open) and live in the Archive menu.
+  const archived = state.hub.projects.filter(pr => pr.archived);
+  tabs.replaceChildren(pickupTab(), ...state.hub.projects.filter(pr => !pr.archived || pr.id === state.current).map(pr =>
+    h("button", { class: "tab" + (pr.archived ? " archived" : ""), role: "tab", "aria-selected": String(pr.id === state.current), onclick: () => openProject(pr.id) }, pr.name)),
+    ...(archived.length ? [h("button", { class: "tab", onclick: openArchive }, `Archive · ${archived.length}`)] : []),
     ...(state.editing ? [h("button", { class: "tab", onclick: () => openProjectEditor(null) }, "+ Project")] : []));
 
   const main = document.getElementById("main");
@@ -399,6 +440,8 @@ function render() {
   const viewers = sections.flatMap(s => s.viewers || []);
   const files = sections.flatMap(s => s.links || []).length;
   const builds = sections.filter(s => (s.viewers || []).length).reduce((n, s) => n + (s.qty || 1), 0);
+  if (p.archived) main.append(h("div", { class: "notice arch" }, h("span", {}, "This project is archived. It's hidden from the top bar but still searchable."),
+    h("button", { class: "btn", onclick: () => setArchived(p, false) }, "Unarchive")));
   main.append(h("div", { class: "head" },
     h("div", {},
       h("div", { class: "eyebrow" }, [p.client, p.status].filter(Boolean).join(" · ") || "Project"),
@@ -620,6 +663,7 @@ function openProjectEditor(p) {
   const name = h("input", { id: "p-name", value: p?.name || "" });
   const client = h("input", { id: "p-client", value: p?.client || "" });
   const status = h("input", { id: "p-status", value: p?.status || "", placeholder: "In production" });
+  const arch = h("input", { id: "p-arch", type: "checkbox", checked: !!p?.archived });
   const imp = h("input", { id: "p-import", type: "file", accept: ".html,.htm" });
   imp.onchange = async () => {
     const added = importBookmarks(await imp.files[0].text());
@@ -635,11 +679,15 @@ function openProjectEditor(p) {
     e.preventDefault();
     const vals = { name: name.value.trim() || "Untitled project", client: client.value.trim(), status: status.value.trim() };
     if (isNew) { const np = { id: uid(vals.name), ...vals, sections: projectTemplate() }; state.hub.projects.push(np); state.current = np.id; }
-    else Object.assign(p, vals);
+    else {
+      Object.assign(p, vals);
+      if (arch.checked !== !!p.archived) { close(); setArchived(p, arch.checked); return; }
+    }
     saveHub(); close(); render();
   } },
     h("h3", {}, isNew ? "New project" : "Project settings"),
     field("Project name", name), h("div", { class: "row" }, field("Client", client), field("Status", status)),
+    isNew ? null : h("label", { class: "check" }, arch, h("span", {}, "Archived ", h("span", { class: "hint" }, "hides it from the top bar; still searchable under Archive"))),
     isNew ? h("div", { class: "sub" }, h("b", {}, "Or import from start.me"),
       h("span", { class: "hint" }, "In start.me, export your bookmarks as an HTML file, then choose it here. Each page becomes a project and each widget a group."), imp) : null,
     h("div", { class: "foot" }, isNew ? h("span") : del,
@@ -1155,7 +1203,7 @@ document.getElementById("editBtn").addEventListener("click", e => {
 loadHub().then(() => Promise.all([loadOrders(), loadMe()])).then(() => {
   const fromHash = location.hash.slice(1);
   state.current = fromHash === "pickup" || fromHash === "tv" ? "pickup"
-    : state.hub.projects.some(p => p.id === fromHash) ? fromHash : state.hub.projects[0]?.id;
+    : state.hub.projects.some(p => p.id === fromHash) ? fromHash : (state.hub.projects.find(p => !p.archived) || state.hub.projects[0])?.id;
   render();
   if (fromHash === "tv") enterTv();
   // Keep the Pickup count fresh for anyone leaving the hub open.
