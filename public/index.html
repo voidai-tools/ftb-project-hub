@@ -298,7 +298,8 @@ body.tv .bar, body.tv #main { display: none; }
 .tvb-tag.none { background: var(--warn-soft); color: var(--warn); }
 .tvb-empty { font-size: 2vh; color: var(--ink-2); }
 /* job photos: a strip on each project page, and the Gallery tab with one album per project */
-.tab.gallery { margin-right: 6px; }
+.tab-sep { flex: none; align-self: center; width: 1px; height: 22px; background: var(--rule); margin: 0 8px; }
+.tools .tab.gallery { margin-right: 8px; }
 .photos { border: 1px solid var(--rule); background: var(--sheet); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; display: grid; gap: 8px; }
 .ph-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ph-h > b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
@@ -370,6 +371,7 @@ body.tv .bar, body.tv #main { display: none; }
   <div class="mark"><span class="logo" role="img" aria-label="FTB Design"></span><small>Project Hub</small></div>
   <nav class="tabs" id="tabs" role="tablist" aria-label="Projects"></nav>
   <div class="tools">
+    <button class="tab gallery" id="galBtn" aria-selected="false">Gallery</button>
     <div id="me"></div>
     <input class="search" id="q" type="search" placeholder="Search" aria-label="Search this project">
     <button class="btn" id="editBtn" aria-pressed="false">Edit</button>
@@ -503,7 +505,6 @@ async function setArchived(p, on) {
 }
 const pickupTab = () => h("button", { class: "tab pickup", role: "tab", "aria-selected": String(state.current === "pickup"),
   onclick: () => { state.current = "pickup"; location.hash = (BOARDS[state.board] || BOARDS.shop).hash; render(); } }, "Shop");
-const galleryTab = () => h("button", { class: "tab gallery", role: "tab", "aria-selected": String(state.current === "gallery"), onclick: () => openGallery() }, "Gallery");
 
 function render() {
   document.body.classList.toggle("editing", state.editing);
@@ -513,11 +514,12 @@ function render() {
   const tabs = document.getElementById("tabs");
   // Archived projects stay off the bar (unless one is open) and live in the Archive menu.
   const archived = state.hub.projects.filter(pr => pr.archived);
-  tabs.replaceChildren(pickupTab(), galleryTab(), ...state.hub.projects.filter(pr => !pr.archived || pr.id === state.current).map(pr =>
+  tabs.replaceChildren(pickupTab(), h("span", { class: "tab-sep", "aria-hidden": "true" }), ...state.hub.projects.filter(pr => !pr.archived || pr.id === state.current).map(pr =>
     h("button", { class: "tab" + (pr.archived ? " archived" : ""), role: "tab", "aria-selected": String(pr.id === state.current), onclick: () => openProject(pr.id) }, pr.name)),
     ...(archived.length ? [h("button", { class: "tab", onclick: openArchive }, `Archive · ${archived.length}`)] : []),
     ...(state.editing ? [h("button", { class: "tab", onclick: () => openProjectEditor(null) }, "+ Project")] : []));
 
+  document.getElementById("galBtn").setAttribute("aria-selected", String(onGallery));
   const main = document.getElementById("main");
   main.replaceChildren();
   if (state.mode === "preview") {
@@ -1633,6 +1635,7 @@ function exitTv() {
 }
 
 // ---------- boot ----------
+document.getElementById("galBtn").addEventListener("click", () => openGallery());
 document.getElementById("q").addEventListener("input", e => { state.query = e.target.value; render(); });
 document.getElementById("editBtn").addEventListener("click", e => {
   state.editing = !state.editing;
