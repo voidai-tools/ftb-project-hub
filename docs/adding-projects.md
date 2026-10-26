@@ -38,6 +38,8 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 | 3D viewers | uploaded model (permanent) or an Autodesk share link (can expire) |
 | Files + links | packet page, .3dm / .skp downloads, cut files, PDFs |
 
+**Paint notes:** each piece has a Paint notes box in its editor (colors, sheen, primer, masking). They show on the card under a red "Paint" label.
+
 ## Shop board and lobby TV
 
 The **Shop** tab has the same columns as the lobby TV: **CNC**, **Build**, **Paint** and **Completed**, plus a **Queued** column on the left that stays off the TV. Inside each shop column, jobs marked **Waiting** are ready for that shop and haven't been started; the rest are being worked on (Cutting, Building, Painting).

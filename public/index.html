@@ -127,6 +127,8 @@ body.editing .card-edit { display: inline-flex; }
 
 .body { padding: 12px 14px 14px; display: grid; gap: 12px; }
 .notes { margin: 0; padding-left: 16px; color: var(--ink); font-size: 13px; display: grid; gap: 3px; }
+.paint { border-left: 3px solid #b5413a; padding: 2px 0 2px 10px; display: grid; gap: 4px; }
+.paint .lbl { font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; color: #b5413a; text-transform: uppercase; }
 .mats { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .mats .lbl { font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; color: var(--ink-2); text-transform: uppercase; }
 .mat { font: 500 12px/1 var(--f-mono); border: 1px solid var(--rule); padding: 5px 7px; border-radius: 4px; }
@@ -419,6 +421,7 @@ function render() {
 function card(p, s) {
   const vs = s.viewers || [];
   const notes = (s.notes || "").split("\n").map(x => x.trim()).filter(Boolean);
+  const paint = (s.paint || "").split("\n").map(x => x.trim()).filter(Boolean);
   return h("article", { class: "card" },
     h("div", { class: "card-h" },
       h("h2", {}, s.title),
@@ -430,8 +433,9 @@ function card(p, s) {
         h("button", { class: "icon-btn", title: "Duplicate", "aria-label": `Duplicate ${s.title}`, onclick: () => duplicate(p, s) }, "⧉"),
         h("button", { class: "icon-btn", title: "Edit", "aria-label": `Edit ${s.title}`, onclick: () => openSectionEditor(p, s) }, "✎"))),
     vs.length ? h("div", { class: "viewers" + (vs.length > 1 ? " two" : "") }, vs.map(v => vtile(s, v))) : null,
-    (notes.length || (s.materials || []).length || (s.links || []).length) ? h("div", { class: "body" },
+    (notes.length || paint.length || (s.materials || []).length || (s.links || []).length) ? h("div", { class: "body" },
       notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
+      paint.length ? h("div", { class: "paint" }, h("span", { class: "lbl" }, "Paint"), h("ul", { class: "notes" }, paint.map(n => h("li", {}, n)))) : null,
       (s.materials || []).length ? h("div", { class: "mats" }, h("span", { class: "lbl" }, "Stock"), s.materials.map(m => h("span", { class: "mat" }, m))) : null,
       (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null) : null,
     commentsBlock(p, s));
@@ -551,6 +555,7 @@ function openSectionEditor(p, s) {
   const qty = h("input", { id: "f-qty", type: "number", min: "1", value: draft.qty || 1 });
   const shared = h("input", { id: "f-shared", type: "checkbox" }); shared.checked = !!draft.shared;
   const notes = h("textarea", { id: "f-notes", rows: "4", placeholder: "One build note per line" }); notes.value = draft.notes || "";
+  const paint = h("textarea", { id: "f-paint", rows: "3", placeholder: "Colors, sheen, primer, masking — one per line" }); paint.value = draft.paint || "";
   const mats = h("input", { id: "f-mats", value: (draft.materials || []).join(", "), placeholder: '3/4" MDF, 1/2" MDF' });
   const vbox = h("div", { class: "sub" }), lbox = h("div", { class: "sub" });
 
@@ -591,8 +596,9 @@ function openSectionEditor(p, s) {
     e.preventDefault();
     Object.assign(draft, {
       title: title.value.trim() || "Untitled", qty: Math.max(1, +qty.value || 1), shared: shared.checked,
-      notes: notes.value.trim(), materials: mats.value.split(",").map(x => x.trim()).filter(Boolean),
+      notes: notes.value.trim(), paint: paint.value.trim(), materials: mats.value.split(",").map(x => x.trim()).filter(Boolean),
     });
+    if (!draft.paint) delete draft.paint;
     if (!draft.materials.length) delete draft.materials;
     if (draft.qty === 1) delete draft.qty;
     if (isNew) { draft.id = uid(draft.title); (p.sections ||= []).push(draft); } else Object.assign(s, draft);
@@ -601,7 +607,7 @@ function openSectionEditor(p, s) {
     h("h3", {}, isNew ? "New piece" : "Edit piece"),
     field("Name", title),
     h("div", { class: "row" }, field("Build quantity", qty), h("label", { class: "field" }, h("span", {}, "Shared with client"), shared)),
-    field("Build notes", notes), field("Stock / materials", mats),
+    field("Build notes", notes), field("Paint notes", paint), field("Stock / materials", mats),
     vbox, lbox,
     h("div", { class: "foot" }, isNew ? h("span") : del,
       h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
