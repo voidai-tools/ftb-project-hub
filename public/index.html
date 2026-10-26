@@ -104,7 +104,20 @@ h1 { font: 700 clamp(32px, 5vw, 52px)/.95 var(--f-display); letter-spacing: .01e
 .tally b { display: block; font: 600 22px/1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* board */
-.board { columns: 340px; column-gap: 16px; padding-bottom: 48px; }
+/* Project pages: cards fill columns down the screen, then continue to the right (phones keep one stacked column). */
+.board { display: flex; flex-flow: column wrap; align-content: flex-start; gap: 16px; height: 70vh; overflow-x: auto; overflow-y: hidden;
+  scroll-behavior: smooth; scroll-snap-type: x proximity; padding-bottom: 12px; }
+.board > .card, .board > .add-sec { width: 360px; max-height: 100%; margin: 0; scroll-snap-align: start; }
+.board > .card { overflow-y: auto; }
+.board > .card.flash { outline: 3px solid var(--layout); outline-offset: -3px; }
+.pnav { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.pnav .chips { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; scroll-behavior: smooth; }
+.pnav .chips::-webkit-scrollbar { display: none; }
+.pnav .chip-nav { border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); border-radius: 999px; padding: 5px 11px; font: 500 12.5px/1 var(--f-body); white-space: nowrap; cursor: pointer; }
+.pnav .chip-nav:hover { color: var(--ink); border-color: var(--ink-2); }
+.pnav .chip-nav.on { color: var(--layout); border-color: var(--layout); background: var(--layout-soft); }
+.pnav .arrow { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); cursor: pointer; font-size: 16px; }
+.pnav .arrow:disabled { opacity: .35; cursor: default; }
 .card { break-inside: avoid; margin-bottom: 16px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
 .card-h { display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px; }
 .card-h h2 { font: 700 19px/1.1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; margin: 0; flex: 1; min-width: 0; text-wrap: balance; }
@@ -205,6 +218,9 @@ body.editing .add-sec { display: block; }
   .search { width: 120px; }
   .viewer-panel { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) auto; overflow: auto; }
   .vside { border-left: 0; border-top: 1px solid var(--rule); }
+  .board { display: block; height: auto !important; overflow: visible; padding-bottom: 48px; }
+  .board > .card, .board > .add-sec { width: auto; max-height: none; margin-bottom: 16px; }
+  .pnav { display: none; }
 }
 /* shop board */
 .lanes { display: grid; grid-template-columns: .8fr 1fr 1fr 1fr .9fr; gap: 16px; padding-bottom: 48px; align-items: start; }
@@ -455,11 +471,57 @@ function render() {
   const q = state.query.trim().toLowerCase();
   const match = s => !q || JSON.stringify(s).toLowerCase().includes(q);
   const board = h("div", { class: "board" });
-  if (!state.counts[p.id]) loadCounts(p.id);
-  sections.filter(match).forEach(s => board.append(card(p, s)));
+  // Load comment counts after this render finishes (loading re-renders the page).
+  if (!state.counts[p.id]) { state.counts[p.id] = {}; setTimeout(() => loadCounts(p.id)); }
+  const shown = sections.filter(match);
+  shown.forEach(s => board.append(card(p, s)));
   board.append(h("button", { class: "add-sec", onclick: () => openSectionEditor(p, null) }, "+ Add piece or link group"));
-  main.append(board);
+  main.append(projectNav(board, shown), board);
+  fitBoard();
 }
+
+// Bar above the board: arrows page left/right, and a chip per piece jumps to it. Chips light up for pieces on screen.
+function projectNav(board, shown) {
+  const prev = h("button", { class: "arrow", "aria-label": "Scroll left", onclick: () => board.scrollBy({ left: -board.clientWidth * .9 }) }, "←");
+  const next = h("button", { class: "arrow", "aria-label": "Scroll right", onclick: () => board.scrollBy({ left: board.clientWidth * .9 }) }, "→");
+  const chips = shown.map((s, i) => h("button", { class: "chip-nav", onclick: () => {
+    const el = board.children[i];
+    board.scrollTo({ left: el.offsetLeft - board.offsetLeft });
+    el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1200);
+  } }, s.title));
+  const update = () => {
+    prev.disabled = board.scrollLeft <= 2;
+    next.disabled = board.scrollLeft + board.clientWidth >= board.scrollWidth - 2;
+    const l = board.scrollLeft, r = l + board.clientWidth;
+    chips.forEach((c, i) => {
+      const el = board.children[i], x = el.offsetLeft - board.offsetLeft;
+      c.classList.toggle("on", x + el.offsetWidth > l + 20 && x < r - 20);
+    });
+    // Keep the lit chips in view as the board moves.
+    const first = chips.find(c => c.classList.contains("on"));
+    if (first) first.parentElement.scrollTo({ left: first.offsetLeft - first.parentElement.offsetLeft - 8 });
+  };
+  board.addEventListener("scroll", update, { passive: true });
+  // A mouse wheel scrolls the board sideways, unless the card under the pointer can scroll itself.
+  board.addEventListener("wheel", e => {
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    const c = e.target.closest(".card");
+    if (c && c.scrollHeight > c.clientHeight + 1) return;
+    if (board.scrollWidth <= board.clientWidth) return;
+    e.preventDefault();
+    board.scrollBy({ left: e.deltaY, behavior: "auto" });
+  }, { passive: false });
+  requestAnimationFrame(update);
+  return h("nav", { class: "pnav", "aria-label": "Pieces in this project" }, prev, h("div", { class: "chips" }, chips), next);
+}
+
+// The board fills the rest of the window so a full screen of cards shows before it continues right.
+function fitBoard() {
+  const board = document.querySelector(".board");
+  if (!board) return;
+  board.style.height = Math.max(420, innerHeight - (board.getBoundingClientRect().top + scrollY) - 16) + "px";
+}
+addEventListener("resize", fitBoard);
 
 function card(p, s) {
   const vs = s.viewers || [];
