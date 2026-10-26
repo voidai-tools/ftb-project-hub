@@ -40,7 +40,7 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 
 **Paint notes:** each piece has a Paint notes box in its editor (colors, sheen, primer, masking). They show on the card under a red "Paint" label.
 
-**Archiving:** when a job wraps, turn on Edit, open **Project settings** and tick **Archived**. It leaves the top bar and moves under **Archive** at the end of the tabs, where you can search every archived project (names, notes, links, materials) and open it as normal. An archived project's page has an **Unarchive** button.
+**Archiving:** when a job wraps, turn on Edit, open **Project settings** and tick **Archived**. It leaves the top bar and moves into **Project Archive** (top right, next to Gallery): a folder for each archived project, grouped by the year it was archived, with its latest photo and first few pieces on the folder. Search there covers names, notes, links and materials; click a folder to open the project as normal. An archived project's page has **Back to archive** and **Unarchive** buttons.
 
 **Project pages** fill the screen with columns of cards, then continue to the right. Use the ← → arrows or a mouse wheel to move sideways, or click a piece's name in the bar above the cards to jump straight to it. Phones still show one long column.
 
@@ -83,6 +83,6 @@ Setup (done 2026-10-19 for ftbshop.fun):
 
 Every project page has a **Photos** strip above the pieces. Tap **+ Add photos** on a phone to take a picture or pick several from the camera roll, optionally choose which piece they show and add a caption, then **Upload**. Photos are shrunk on the phone first (about 2,500 px on the long side), so they upload fast and storage stays small. Tap any photo to see it full size; swipe or use the arrow keys to move through them. You can delete photos you uploaded.
 
-The **Gallery** tab collects every photo, one album per project (archived projects included). An album shows its photos grouped by day, newest first, and can be filtered by piece. Links like `ftbshop.fun/#gallery/<project-id>` open an album directly.
+The **Gallery** button (top right) collects every photo, one album per project (archived projects included). An album shows its photos grouped by day, newest first, and can be filtered by piece. Links like `ftbshop.fun/#gallery/<project-id>` open an album directly.
 
 Photos are stored in the Cloudflare R2 bucket `ftb-photos` (bound to the Worker as `PHOTOS` in `wrangler.toml`). Only signed-in team members can see the site, so "public" means everyone on the team sees every photo.

@@ -80,9 +80,25 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .tab[aria-selected="true"] { color: var(--layout); background: var(--layout-soft); }
 .tab.archived { font-style: italic; }
 .notice.arch { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.arch-list { display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
-.arch-row { display: grid; gap: 2px; text-align: left; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); border-radius: 8px; padding: 10px 12px; cursor: pointer; font: inherit; }
-.arch-row:hover { border-color: var(--layout); }
+/* Project Archive: manila-folder cards */
+.folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 22px 16px; }
+.folder { --fold: #d9b779; --fold-2: #ead2a2; position: relative; display: flex; flex-direction: column; border: 0; background: none; padding: 18px 0 0; cursor: pointer; text-align: left; color: #2b2214; font: inherit; }
+.folder-tab { position: absolute; top: 0; left: 0; max-width: 60%; height: 24px; padding: 5px 14px 0 12px; border-radius: 8px 10px 0 0; background: var(--fold);
+  font: 600 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-body { flex: 1; position: relative; display: grid; gap: 8px; align-content: start; min-height: 170px; padding: 14px; border-radius: 0 10px 10px 10px; background: linear-gradient(var(--fold-2), var(--fold));
+  box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 10px 22px -14px rgba(60,40,10,.6); transition: transform .15s ease; }
+.folder[hidden], .folders[hidden], .gal-day[hidden] { display: none; }
+.folder:hover .folder-body { transform: translateY(-3px); }
+.folder:hover .folder-tab { filter: brightness(1.05); }
+.folder-body b { font: 700 21px/1.05 var(--f-display); letter-spacing: .03em; text-transform: uppercase; }
+.folder-cov { width: 100%; aspect-ratio: 16 / 7; object-fit: cover; border-radius: 4px; display: block; border: 3px solid #fffdf7; box-shadow: 0 2px 6px rgba(0,0,0,.25); transform: rotate(-1deg); }
+.folder-files { display: grid; gap: 3px; }
+.folder-files span { font: 500 12px/1.25 var(--f-mono); background: #fffdf7; padding: 3px 6px; border-radius: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
+.folder-files .more { background: none; box-shadow: none; padding-left: 0; }
+.folder .hint { color: #5e4a28; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .folder { --fold: #a8854a; --fold-2: #c19d60; } }
+:root[data-theme="dark"] .folder { --fold: #a8854a; --fold-2: #c19d60; }
+.folder .folder-body .hint { color: #4a3a1e; }
 .check { display: flex; gap: 8px; align-items: center; cursor: pointer; }
 .tools { display: flex; gap: 8px; align-items: center; }
 .search { width: 180px; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); }
@@ -216,6 +232,10 @@ body.editing .add-sec { display: block; }
   .tabs { order: 3; flex-basis: 100%; }
   .tools { margin-left: auto; }
   .search { width: 120px; }
+  .bar-in .tools { flex-basis: 100%; order: 2; gap: 6px; min-width: 0; }
+  .bar-in .tools .search { flex: 1; width: 0; min-width: 0; }
+  .tools .tab.gallery { margin-right: 0; padding-inline: 8px; }
+  .wide { display: none; }
   .viewer-panel { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 1fr) auto; overflow: auto; }
   .vside { border-left: 0; border-top: 1px solid var(--rule); }
   .board { display: block; height: auto !important; overflow: visible; padding-bottom: 48px; }
@@ -371,6 +391,7 @@ body.tv .bar, body.tv #main { display: none; }
   <div class="mark"><span class="logo" role="img" aria-label="FTB Design"></span><small>Project Hub</small></div>
   <nav class="tabs" id="tabs" role="tablist" aria-label="Projects"></nav>
   <div class="tools">
+    <button class="tab gallery" id="archBtn" aria-selected="false"><span class="wide">Project </span>Archive</button>
     <button class="tab gallery" id="galBtn" aria-selected="false">Gallery</button>
     <div id="me"></div>
     <input class="search" id="q" type="search" placeholder="Search" aria-label="Search this project">
@@ -476,24 +497,54 @@ function project() {
 function openProject(id) { state.current = id; location.hash = id; render(); }
 
 function openArchive() {
-  const list = h("div", { class: "arch-list" });
-  const q = h("input", { class: "search", style: "width:100%", type: "search", placeholder: "Search archived projects", "aria-label": "Search archived projects" });
-  const draw = () => {
-    const term = q.value.trim().toLowerCase();
-    const hits = state.hub.projects.filter(pr => pr.archived && (!term || JSON.stringify(pr).toLowerCase().includes(term)))
-      .sort((a, b) => (b.archivedAt || "").localeCompare(a.archivedAt || ""));
-    list.replaceChildren(...(hits.length ? hits.map(pr => h("button", { class: "arch-row", onclick: () => { close(); openProject(pr.id); } },
-      h("b", {}, pr.name),
-      h("span", { class: "hint" }, [pr.client, `${(pr.sections || []).length} pieces`, pr.archivedAt ? `archived ${new Date(pr.archivedAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}` : null].filter(Boolean).join(" · "))))
-      : [h("p", { class: "hint" }, term ? "No archived project matches that." : "Nothing archived yet.")]));
+  state.current = "archive"; location.hash = "archive";
+  render();
+  if (!state.allPhotos) refreshGallery();   // folder covers use each project's latest photo
+}
+
+// Project Archive: one folder per archived project, newest archived first, grouped by year.
+function renderArchive(main) {
+  const list = state.hub.projects.filter(pr => pr.archived).sort((a, b) => (b.archivedAt || "").localeCompare(a.archivedAt || ""));
+  const q = h("input", { class: "search", type: "search", placeholder: "Search archived projects", "aria-label": "Search archived projects", value: state.archQuery || "" });
+  main.append(h("div", { class: "gal-h" },
+    h("div", {}, h("h1", {}, "Project Archive")),
+    h("div", { class: "tools" }, h("div", { class: "tally" }, h("div", {}, h("b", {}, list.length), "projects")), q)));
+  if (!list.length) {
+    main.append(h("p", { class: "empty" }, "Nothing archived yet. To archive a project, turn on Edit, open Project settings and tick Archived."));
+    return;
+  }
+  const none = h("p", { class: "empty", hidden: true }, "No archived project matches that.");
+  const folders = [];
+  let year = null, grid;
+  for (const pr of list) {
+    const y = pr.archivedAt ? String(new Date(pr.archivedAt).getFullYear()) : "Undated";
+    if (y !== year) { year = y; const head = h("div", { class: "gal-day" }, y); grid = h("div", { class: "folders" }); main.append(head, grid); grid.head = head; }
+    const pieces = (pr.sections || []).map(sec => sec.title);
+    const photos = (state.allPhotos || []).filter(ph => ph.project === pr.id);
+    const f = h("button", { class: "folder", onclick: () => openProject(pr.id) },
+      h("span", { class: "folder-tab" }, pr.client || "Project"),
+      h("span", { class: "folder-body" },
+        photos[0] ? h("img", { class: "folder-cov", src: photos[0].thumb, alt: "", loading: "lazy" }) : null,
+        h("b", {}, pr.name),
+        h("span", { class: "folder-files" }, pieces.slice(0, 4).map(t => h("span", {}, t)), pieces.length > 4 ? h("span", { class: "more" }, `+${pieces.length - 4} more`) : null),
+        h("span", { class: "hint" }, [`${pieces.length} piece${pieces.length === 1 ? "" : "s"}`, photos.length ? `${photos.length} photo${photos.length === 1 ? "" : "s"}` : null,
+          pr.archivedAt ? `archived ${new Date(pr.archivedAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}` : null].filter(Boolean).join(" · "))));
+    f.text = JSON.stringify(pr).toLowerCase();
+    f.grid = grid;
+    folders.push(f);
+    grid.append(f);
+  }
+  main.append(none, h("div", { style: "height:48px" }));
+  // Filter in place so the box keeps focus while typing.
+  const filter = () => {
+    const term = (state.archQuery = q.value).trim().toLowerCase();
+    folders.forEach(f => { f.hidden = !!term && !f.text.includes(term); });
+    const grids = new Set(folders.map(f => f.grid));
+    grids.forEach(g => { const any = [...g.children].some(c => !c.hidden); g.hidden = !any; g.head.hidden = !any; });
+    none.hidden = folders.some(f => !f.hidden);
   };
-  q.addEventListener("input", draw);
-  draw();
-  const panel = h("div", { class: "panel editor" }, h("h3", {}, "Archived projects"),
-    h("p", { class: "hint" }, "Searches names, notes, links and materials. Open one to view it, or unarchive it from its page."), q, list,
-    h("div", { class: "foot" }, h("span"), h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Close"))));
-  const close = overlay(panel);
-  q.focus();
+  q.addEventListener("input", filter);
+  filter();
 }
 
 async function setArchived(p, on) {
@@ -508,18 +559,17 @@ const pickupTab = () => h("button", { class: "tab pickup", role: "tab", "aria-se
 
 function render() {
   document.body.classList.toggle("editing", state.editing);
-  const onPickup = state.current === "pickup", onGallery = state.current === "gallery";
-  const p = onPickup || onGallery ? null : project();
+  const onPickup = state.current === "pickup", onGallery = state.current === "gallery", onArchive = state.current === "archive";
+  const p = onPickup || onGallery || onArchive ? null : project();
   if (p) state.current = p.id;
   const tabs = document.getElementById("tabs");
   // Archived projects stay off the bar (unless one is open) and live in the Archive menu.
-  const archived = state.hub.projects.filter(pr => pr.archived);
   tabs.replaceChildren(pickupTab(), h("span", { class: "tab-sep", "aria-hidden": "true" }), ...state.hub.projects.filter(pr => !pr.archived || pr.id === state.current).map(pr =>
     h("button", { class: "tab" + (pr.archived ? " archived" : ""), role: "tab", "aria-selected": String(pr.id === state.current), onclick: () => openProject(pr.id) }, pr.name)),
-    ...(archived.length ? [h("button", { class: "tab", onclick: openArchive }, `Archive · ${archived.length}`)] : []),
     ...(state.editing ? [h("button", { class: "tab", onclick: () => openProjectEditor(null) }, "+ Project")] : []));
 
   document.getElementById("galBtn").setAttribute("aria-selected", String(onGallery));
+  document.getElementById("archBtn").setAttribute("aria-selected", String(onArchive || !!p?.archived));
   const main = document.getElementById("main");
   main.replaceChildren();
   if (state.mode === "preview") {
@@ -528,13 +578,15 @@ function render() {
   }
   if (onPickup) { renderPickup(main); return; }
   if (onGallery) { renderGallery(main); return; }
+  if (onArchive) { renderArchive(main); return; }
   if (!p) { main.append(h("p", { class: "empty" }, "No projects yet. Turn on Edit and add one, or import your start.me bookmarks.")); return; }
 
   const sections = p.sections || [];
   const viewers = sections.flatMap(s => s.viewers || []);
   const files = sections.flatMap(s => s.links || []).length;
   const builds = sections.filter(s => (s.viewers || []).length).reduce((n, s) => n + (s.qty || 1), 0);
-  if (p.archived) main.append(h("div", { class: "notice arch" }, h("span", {}, "This project is archived. It's hidden from the top bar but still searchable."),
+  if (p.archived) main.append(h("div", { class: "notice arch" }, h("span", {}, "This project is archived. It's hidden from the top bar and lives in the Project Archive."),
+    h("button", { class: "btn", onclick: openArchive }, "← Back to archive"),
     h("button", { class: "btn", onclick: () => setArchived(p, false) }, "Unarchive")));
   main.append(h("div", { class: "head" },
     h("div", {},
@@ -1097,7 +1149,7 @@ async function refreshPhotos(pid) {
 async function refreshGallery() {
   state.allPhotos = await loadPhotos(null);
   for (const pid of Object.keys(state.photos)) state.photos[pid] = state.allPhotos.filter(ph => ph.project === pid);
-  if (state.current === "gallery" && !document.querySelector(".scrim, .lightbox")) render();
+  if ((state.current === "gallery" || state.current === "archive") && !document.querySelector(".scrim, .lightbox")) render();
 }
 
 async function shrink(file, max, quality) {
@@ -1329,7 +1381,7 @@ function renderGallery(main) {
   const albums = [...groups.entries()].map(([id, list]) => ({ id, list, p: state.hub.projects.find(pr => pr.id === id) }))
     .filter(a => !q || `${a.p?.name || a.id} ${a.p?.client || ""}`.toLowerCase().includes(q));
   main.append(h("div", { class: "gal-h" },
-    h("div", {}, h("div", { class: "eyebrow" }, "Every job, one album each"), h("h1", {}, "Gallery")),
+    h("div", {}, h("h1", {}, "Gallery")),
     h("div", { class: "tally" },
       h("div", {}, h("b", {}, all.length), "photos"),
       h("div", {}, h("b", {}, groups.size), "albums"))));
@@ -1636,6 +1688,7 @@ function exitTv() {
 
 // ---------- boot ----------
 document.getElementById("galBtn").addEventListener("click", () => openGallery());
+document.getElementById("archBtn").addEventListener("click", () => openArchive());
 document.getElementById("q").addEventListener("input", e => { state.query = e.target.value; render(); });
 document.getElementById("editBtn").addEventListener("click", e => {
   state.editing = !state.editing;
@@ -1648,9 +1701,9 @@ loadHub().then(() => Promise.all([loadOrders(), loadMe()])).then(() => {
   const boardHash = Object.entries(BOARDS).find(([, b]) => b.hash === fromHash || b.tvHash === fromHash);
   if (boardHash) state.board = boardHash[0];
   const album = fromHash.match(/^gallery(?:\/(.+))?$/);
-  state.current = album ? "gallery" : boardHash ? "pickup"
+  state.current = album ? "gallery" : fromHash === "archive" ? "archive" : boardHash ? "pickup"
     : state.hub.projects.some(p => p.id === fromHash) ? fromHash : (state.hub.projects.find(p => !p.archived) || state.hub.projects[0])?.id;
-  if (album) openGallery(album[1] ? decodeURIComponent(album[1]) : null); else render();
+  if (album) openGallery(album[1] ? decodeURIComponent(album[1]) : null); else if (fromHash === "archive") openArchive(); else render();
   if (boardHash && boardHash[1].tvHash === fromHash) enterTv(boardHash[0]);
   // Keep the Pickup count fresh for anyone leaving the hub open.
   setInterval(async () => { if (!document.body.classList.contains("tv")) { await loadOrders(); if (state.current === "pickup" && !document.querySelector(".scrim")) render(); } }, 60000);
