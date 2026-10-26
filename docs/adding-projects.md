@@ -42,6 +42,12 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 
 **Archiving:** when a job wraps, turn on Edit, open **Project settings** and tick **Archived**. It leaves the top bar and moves under **Archive** at the end of the tabs, where you can search every archived project (names, notes, links, materials) and open it as normal. An archived project's page has an **Unarchive** button.
 
+**Project pages** fill the screen with columns of cards, then continue to the right. Use the ← → arrows or a mouse wheel to move sideways, or click a piece's name in the bar above the cards to jump straight to it. Phones still show one long column.
+
+## 3D Print / Trophies board
+
+The Shop tab has two boards: **Shop** and **3D Print / Trophies** (switch at the top). The print board runs Printing → Post-processing → Assembly → Paint → Completed and works the same way as the Shop board. Its lobby view is `https://ftbshop.fun/#tv-print`.
+
 ## Shop board and lobby TV
 
 The **Shop** tab has the same columns as the lobby TV: **CNC**, **Build**, **Paint** and **Completed**, plus a **Queued** column on the left that stays off the TV. Inside each shop column, jobs marked **Waiting** are ready for that shop and haven't been started; the rest are being worked on (Cutting, Building, Painting).

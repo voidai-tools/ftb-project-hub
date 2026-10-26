@@ -146,8 +146,8 @@ body.editing .card-edit { display: inline-flex; }
 
 .body { padding: 12px 14px 14px; display: grid; gap: 12px; }
 .notes { margin: 0; padding-left: 16px; color: var(--ink); font-size: 13px; display: grid; gap: 3px; }
-.paint { border-left: 3px solid #b5413a; padding: 2px 0 2px 10px; display: grid; gap: 4px; }
-.paint .lbl { font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; color: #b5413a; text-transform: uppercase; }
+.paint-notes { border-left: 3px solid #b5413a; padding: 2px 0 2px 10px; display: grid; gap: 4px; }
+.paint-notes .lbl { font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; color: #b5413a; text-transform: uppercase; }
 .mats { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .mats .lbl { font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; color: var(--ink-2); text-transform: uppercase; }
 .mat { font: 500 12px/1 var(--f-mono); border: 1px solid var(--rule); padding: 5px 7px; border-radius: 4px; }
@@ -223,7 +223,7 @@ body.editing .add-sec { display: block; }
   .pnav { display: none; }
 }
 /* shop board */
-.lanes { display: grid; grid-template-columns: .8fr 1fr 1fr 1fr .9fr; gap: 16px; padding-bottom: 48px; align-items: start; }
+.lanes { display: grid; grid-template-columns: .8fr repeat(var(--n, 3), minmax(0, 1fr)) .9fr; gap: 16px; padding-bottom: 48px; align-items: start; }
 .lane { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .lane-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 3px solid var(--lane, var(--rule)); padding-bottom: 6px; }
 .lane-h b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--lane, var(--ink)); }
@@ -231,13 +231,20 @@ body.editing .add-sec { display: block; }
 .lane.cnc { --lane: #2350c8; }
 .lane.build { --lane: #9a6a1f; }
 .lane.paint { --lane: #b5413a; }
+.lane.print { --lane: #0f7c8c; }
+.lane.post { --lane: #6b5bd6; }
+.lane.assembly { --lane: #9a6a1f; }
+.seg { display: inline-flex; gap: 4px; padding: 4px; margin-top: 20px; border: 1px solid var(--rule); border-radius: 10px; background: var(--sheet); }
+.seg button { border: 0; background: none; padding: 7px 12px; border-radius: 7px; cursor: pointer; font: 600 14px/1 var(--f-body); color: var(--ink-2); display: inline-flex; gap: 8px; align-items: center; }
+.seg button[aria-selected="true"] { background: var(--layout-soft); color: var(--layout); }
+.seg b { font: 600 11px/1 var(--f-mono); background: var(--paper); border-radius: 999px; padding: 3px 6px; }
 .lane.done { --lane: var(--ok); }
 .lane.queued { --lane: var(--ink-2); }
 .lane.queued .order { box-shadow: none; background: transparent; border-style: dashed; }
 .order { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; box-shadow: var(--shadow); }
 .order.stale { border-color: var(--warn); }
 .order-t { display: flex; gap: 8px; align-items: start; }
-.order-t b { flex: 1; min-width: 0; font-weight: 600; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+.order-t b { flex: 1; min-width: 0; font-weight: 600; font-size: 15px; line-height: 1.25; overflow-wrap: break-word; hyphens: auto; }
 .order-m { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12.5px; color: var(--ink-2); }
 .order-m strong { color: var(--ink); font-weight: 600; }
 .age { font: 500 11px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; background: var(--paper); color: var(--ink-2); white-space: nowrap; }
@@ -268,11 +275,14 @@ body.tv .bar, body.tv #main { display: none; }
 .tvb-h h1 { font-size: 5.2vh; margin: 0; display: flex; align-items: center; gap: 2vh; }
 .tvb-h .logo { height: 7vh; }
 .tvb-h .clock { font: 600 4.4vh/1 var(--f-display); color: var(--ink-2); font-variant-numeric: tabular-nums; }
-.tvb-cols { display: grid; grid-template-columns: 1fr 1fr 1fr .8fr; gap: 2vw; min-height: 0; align-items: start; }
+.tvb-cols { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)) .8fr; gap: 2vw; min-height: 0; align-items: start; }
 .tvb-col h2 { font: 700 3.6vh/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 1.6vh; padding-bottom: 1vh; border-bottom: .4vh solid var(--accent-col, var(--rule)); }
 .tvb-col.cnc { --accent-col: #5b84ff; }
 .tvb-col.build { --accent-col: #d9a441; }
 .tvb-col.paint { --accent-col: #ff7a6b; }
+.tvb-col.print { --accent-col: #3fc1d4; }
+.tvb-col.post { --accent-col: #a99bff; }
+.tvb-col.assembly { --accent-col: #d9a441; }
 .tvb-col.done { --accent-col: var(--ok); }
 .tvb-col.done h2 { color: var(--ok); font-size: 2.8vh; }
 .tvb-list { display: grid; gap: 1.2vh; }
@@ -311,7 +321,7 @@ body.tv .bar, body.tv #main { display: none; }
 // ---------- state + storage ----------
 const API = "/api";
 const state = { hub: { projects: [] }, current: null, editing: false, query: "", mode: "live",
-  me: null, counts: {}, threads: {}, open: new Set(), drafts: {} };
+  me: null, counts: {}, threads: {}, open: new Set(), drafts: {}, board: "shop" };
 
 async function loadHub() {
   try {
@@ -428,7 +438,7 @@ async function setArchived(p, on) {
   render();
 }
 const pickupTab = () => h("button", { class: "tab pickup", role: "tab", "aria-selected": String(state.current === "pickup"),
-  onclick: () => { state.current = "pickup"; location.hash = "pickup"; render(); } }, "Shop");
+  onclick: () => { state.current = "pickup"; location.hash = (BOARDS[state.board] || BOARDS.shop).hash; render(); } }, "Shop");
 
 function render() {
   document.body.classList.toggle("editing", state.editing);
@@ -540,7 +550,7 @@ function card(p, s) {
     vs.length ? h("div", { class: "viewers" + (vs.length > 1 ? " two" : "") }, vs.map(v => vtile(s, v))) : null,
     (notes.length || paint.length || (s.materials || []).length || (s.links || []).length) ? h("div", { class: "body" },
       notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
-      paint.length ? h("div", { class: "paint" }, h("span", { class: "lbl" }, "Paint"), h("ul", { class: "notes" }, paint.map(n => h("li", {}, n)))) : null,
+      paint.length ? h("div", { class: "paint-notes" }, h("span", { class: "lbl" }, "Paint"), h("ul", { class: "notes" }, paint.map(n => h("li", {}, n)))) : null,
       (s.materials || []).length ? h("div", { class: "mats" }, h("span", { class: "lbl" }, "Stock"), s.materials.map(m => h("span", { class: "mat" }, m))) : null,
       (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null) : null,
     commentsBlock(p, s));
@@ -1013,6 +1023,9 @@ function exampleOrders() {
     { id: "ex-comic", title: "Comic display shell", dept: "Build", project: stuart, status: "in-progress", statusAt: ago(2.5), example: true },
     { id: "ex-corners", title: "Skyscraper corner details", qty: 8, dept: "CNC", project: stuart, location: "Paint cart", status: "ready-paint", statusAt: ago(2), example: true },
     { id: "ex-frame", title: "Comic display stick framing", dept: "Build", status: "queued", statusAt: ago(5), example: true },
+    { id: "ex-trophy", title: "Faye Webster trophy tops", qty: 12, board: "print", dept: "Print", project: "Faye Webster Trophies", status: "in-progress", statusAt: ago(6), example: true },
+    { id: "ex-bases", title: "Trophy bases", qty: 12, board: "print", dept: "Print", status: "p-ready-post", statusAt: ago(1), example: true },
+    { id: "ex-plaques", title: "Trophy plaques", qty: 12, board: "print", dept: "Print", status: "p-ready-assembly", location: "Bench 2", statusAt: ago(2), example: true },
   ];
 }
 
@@ -1022,7 +1035,7 @@ async function loadOrders() {
     try { state.orders = (await (await fetch(`${API}/orders`)).json()).orders || []; } catch { state.orders ||= []; }
   } else {
     let local = null;
-    try { local = JSON.parse(localStorage.getItem("ftb-orders-v2") || "null"); } catch {}
+    try { local = JSON.parse(localStorage.getItem("ftb-orders-v3") || "null"); } catch {}
     state.orders = local || exampleOrders();
   }
 }
@@ -1034,14 +1047,14 @@ async function saveOrder(o) {
     const res = await fetch(`${API}/orders/${o.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
     if (!res.ok) { toast("Couldn't save the order. Try again."); return; }
   } else {
-    try { localStorage.setItem("ftb-orders-v2", JSON.stringify(state.orders)); } catch {}
+    try { localStorage.setItem("ftb-orders-v3", JSON.stringify(state.orders)); } catch {}
   }
 }
 
 async function deleteOrder(o) {
   state.orders = state.orders.filter(x => x.id !== o.id);
   if (state.mode === "live") await fetch(`${API}/orders/${o.id}`, { method: "DELETE" });
-  else try { localStorage.setItem("ftb-orders-v2", JSON.stringify(state.orders)); } catch {}
+  else try { localStorage.setItem("ftb-orders-v3", JSON.stringify(state.orders)); } catch {}
 }
 
 function waited(iso) {
@@ -1056,27 +1069,45 @@ const isStale = o => o.status === "done" && !o.outTag && Date.now() - new Date(o
 const byOldest = (a, b) => new Date(a.statusAt) - new Date(b.statusAt);
 
 // The board and the TV share these columns. Each shop lists the jobs waiting for it first, then the ones it's working on.
-const SHOP_COLS = [
-  { dept: "CNC", cls: "cnc", waiting: null, doing: "Cutting", to: null, empty: "Nothing on the machines." },
-  { dept: "Build", cls: "build", waiting: "ready-build", doing: "Building", to: "To build", empty: "Nothing in build." },
-  { dept: "Paint", cls: "paint", waiting: "ready-paint", doing: "Painting", to: "To paint", empty: "Nothing in paint." },
-];
-// Which shop column an order sits in (-1 when it's queued, completed or gone). Old "Other" jobs show under Build.
+// Two boards share the same flow: the Shop (CNC → Build → Paint) and 3D Print / Trophies
+// (Printing → Post-processing → Assembly → Paint). Orders without a board are Shop orders.
+const BOARDS = {
+  shop: { name: "Shop", title: "Shop board", tv: "Shop", hash: "pickup", tvHash: "tv", cols: [
+    { dept: "CNC", title: "CNC", cls: "cnc", waiting: null, doing: "Cutting", start: "Start CNC", to: null, empty: "Nothing on the machines." },
+    { dept: "Build", title: "Build", cls: "build", waiting: "ready-build", doing: "Building", start: "Start build", to: "To build", empty: "Nothing in build." },
+    { dept: "Paint", title: "Paint", cls: "paint", waiting: "ready-paint", doing: "Painting", start: "Start paint", to: "To paint", empty: "Nothing in paint." },
+  ] },
+  print: { name: "3D Print / Trophies", title: "3D print board", tv: "3D Print", hash: "print", tvHash: "tv-print", cols: [
+    { dept: "Print", title: "Printing", cls: "print", waiting: null, doing: "Printing", start: "Start print", to: null, empty: "Nothing on the printers." },
+    { dept: "Post", title: "Post-processing", cls: "post", waiting: "p-ready-post", doing: "Sanding", start: "Start post", to: "To post-processing", empty: "Nothing in post-processing." },
+    { dept: "Assembly", title: "Assembly", cls: "assembly", waiting: "p-ready-assembly", doing: "Assembling", start: "Start assembly", to: "To assembly", empty: "Nothing in assembly." },
+    { dept: "Paint", title: "Paint", cls: "paint", waiting: "p-ready-paint", doing: "Painting", start: "Start paint", to: "To paint", empty: "Nothing in paint." },
+  ] },
+};
+const boardOf = o => (BOARDS[o.board] ? o.board : "shop");
+const colsOf = o => BOARDS[boardOf(o)].cols;
+const onBoard = (all, b) => all.filter(o => boardOf(o) === b);
+// Which column an order sits in (-1 when it's queued, completed or gone). In-progress jobs with an unknown shop show in the second column.
 function colOf(o) {
-  if (o.status === "in-progress") { const i = SHOP_COLS.findIndex(c => c.dept === o.dept); return i < 0 ? 1 : i; }
-  return SHOP_COLS.findIndex(c => c.waiting && c.waiting === o.status);
+  const cols = colsOf(o);
+  if (o.status === "in-progress") { const i = cols.findIndex(c => c.dept === o.dept); return i < 0 ? 1 : i; }
+  return cols.findIndex(c => c.waiting && c.waiting === o.status);
 }
 const shopList = (all, i) => [...all.filter(o => o.status !== "in-progress" && colOf(o) === i).sort(byOldest),
   ...all.filter(o => o.status === "in-progress" && colOf(o) === i).sort(byOldest)];
 
 function renderPickup(main) {
-  const orders = state.orders || [];
+  const bid = BOARDS[state.board] ? state.board : "shop", board = BOARDS[bid];
+  const orders = onBoard(state.orders || [], bid);
   const dayAgo = Date.now() - 24 * 3600e3;
+  main.append(h("div", { class: "seg", role: "tablist", "aria-label": "Boards" }, Object.entries(BOARDS).map(([k, bd]) =>
+    h("button", { role: "tab", "aria-selected": String(k === bid), onclick: () => { state.board = k; location.hash = bd.hash; render(); } }, bd.name,
+      h("b", {}, onBoard(state.orders || [], k).filter(o => !["done", "out"].includes(o.status)).length)))));
   main.append(h("div", { class: "head" },
-    h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, "Shop board")),
+    h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, board.title)),
     h("div", { class: "tools" },
-      state.mode === "live" ? ticktickButton() : null,
-      h("a", { class: "btn", href: "#tv", onclick: e => { e.preventDefault(); enterTv(); } }, "TV view"),
+      state.mode === "live" && bid === "shop" ? ticktickButton() : null,
+      h("a", { class: "btn", href: `#${board.tvHash}`, onclick: e => { e.preventDefault(); enterTv(bid); } }, "TV view"),
       h("button", { class: "btn primary", onclick: () => openOrderEditor(null) }, "+ Order"))));
   if (state.mode === "preview" && orders.some(o => o.example)) {
     main.append(h("p", { class: "hint" }, "These orders are examples. Add your own with + Order; changes stay in this browser until the hub is deployed."));
@@ -1090,28 +1121,30 @@ function renderPickup(main) {
   const outList = out.length ? h("details", { class: "outs" }, h("summary", {}, `Out the door today · ${out.length}`),
     h("ul", {}, out.map(o => h("li", {}, h("span", {}, o.title, o.outTag ? ` · ${o.outTag}` : ""),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"))))) : null;
-  main.append(h("div", { class: "lanes" },
+  main.append(h("div", { class: "lanes", style: `--n:${board.cols.length}` },
     lane("queued", "Queued", "not on TV", queued, "Nothing waiting to start."),
-    SHOP_COLS.map((c, i) => lane(c.cls, c.dept, "", shopList(orders, i), c.empty)),
+    board.cols.map((c, i) => lane(c.cls, c.title, "", shopList(orders, i), c.empty)),
     lane("done", "Completed", "", done, "Nothing finished yet.", outList)));
 }
 
 // Where an order can go from here: a later shop, or straight to Completed.
 function laterMoves(o) {
-  const at = o.status === "queued" ? SHOP_COLS.findIndex(c => c.dept === o.dept) : colOf(o);
-  return [...SHOP_COLS.filter((c, i) => c.waiting && i > at).map(c => ({ to: c.waiting, label: c.to })), { to: "done", label: "Completed" }];
+  const cols = colsOf(o);
+  const at = o.status === "queued" ? cols.findIndex(c => c.dept === o.dept) : colOf(o);
+  return [...cols.filter((c, i) => c.waiting && i > at).map(c => ({ to: c.waiting, label: c.to })), { to: "done", label: "Completed" }];
 }
 
 function orderCard(o) {
-  const col = SHOP_COLS[colOf(o)];
-  const chip = o.status === "queued" ? h("span", { class: "chip" }, `For ${o.dept || "CNC"}`)
+  const cols = colsOf(o), col = cols[colOf(o)];
+  const firstUp = cols.find(c => c.dept === o.dept) || cols[0];
+  const chip = o.status === "queued" ? h("span", { class: "chip" }, `For ${firstUp.title}`)
     : o.status === "in-progress" ? h("span", { class: "chip doing" }, col.doing)
     : col ? h("span", { class: "chip waiting" }, "Waiting") : null;
   const btn = (label, to, primary) => h("button", { class: "btn" + (primary ? " primary" : ""), onclick: () => advance(o, to) }, label);
   let actions = [];
-  if (o.status === "queued") actions = [btn(`Start ${(o.dept || "CNC").toLowerCase()}`, "in-progress", true)];
+  if (o.status === "queued") actions = [btn(firstUp.start, "in-progress", true)];
   else if (o.status === "in-progress") actions = laterMoves(o).map(m => btn(m.label, m.to, m.to === "done"));
-  else if (col) actions = [...laterMoves(o).map(m => btn(m.label, m.to)), btn(`Start ${col.dept.toLowerCase()}`, "in-progress", true)];
+  else if (col) actions = [...laterMoves(o).map(m => btn(m.label, m.to)), btn(col.start, "in-progress", true)];
   else if (o.status === "done") actions = [btn("Out the door", "out")];
   return h("article", { class: "order" + (isStale(o) ? " stale" : "") },
     h("div", { class: "order-t" }, h("b", {}, o.title, o.qty > 1 ? ` ×${o.qty}` : ""), chip),
@@ -1149,7 +1182,7 @@ async function setTag(o, t) {
 
 async function advance(o, to) {
   const moved = { ...o, status: to, statusAt: new Date().toISOString() };
-  const waitingFor = SHOP_COLS.find(c => c.waiting === o.status);
+  const waitingFor = colsOf(o).find(c => c.waiting === o.status);
   if (waitingFor) moved.dept = waitingFor.dept; // the shop it was waiting for owns it from here
   await saveOrder(moved);
   toast(`${o.title}: ${placeOf(moved).label}`);
@@ -1157,27 +1190,31 @@ async function advance(o, to) {
 }
 
 // Every spot an order can be, as one list for the editor.
-const PLACES = [
-  { label: "Queued for CNC", status: "queued", dept: "CNC" },
-  { label: "Queued for build", status: "queued", dept: "Build" },
-  { label: "Queued for paint", status: "queued", dept: "Paint" },
-  { label: "CNC · cutting", status: "in-progress", dept: "CNC" },
-  { label: "Build · waiting", status: "ready-build" },
-  { label: "Build · building", status: "in-progress", dept: "Build" },
-  { label: "Paint · waiting", status: "ready-paint" },
-  { label: "Paint · painting", status: "in-progress", dept: "Paint" },
-  { label: "Completed", status: "done" },
-  { label: "Out the door", status: "out" },
-];
-const placeOf = o => PLACES.find(p => p.status === o.status && (!p.dept || p.dept === o.dept))
-  || PLACES.find(p => p.status === o.status && p.dept === "Build") || PLACES.find(p => p.status === o.status) || PLACES[0];
+function placesFor(bid) {
+  const cols = BOARDS[bid].cols;
+  return [
+    ...cols.map(c => ({ label: `Queued for ${c.title.toLowerCase().replace("cnc", "CNC")}`, status: "queued", dept: c.dept })),
+    ...cols.flatMap(c => [
+      ...(c.waiting ? [{ label: `${c.title} · waiting`, status: c.waiting }] : []),
+      { label: `${c.title} · ${c.doing.toLowerCase()}`, status: "in-progress", dept: c.dept }]),
+    { label: "Completed", status: "done" },
+    { label: "Out the door", status: "out" },
+  ];
+}
+function placeOf(o) {
+  const places = placesFor(boardOf(o));
+  return places.find(p => p.status === o.status && (!p.dept || p.dept === o.dept))
+    || places.find(p => p.status === o.status && p.dept === colsOf(o)[1]?.dept) || places.find(p => p.status === o.status) || places[0];
+}
 
 function openOrderEditor(o) {
   const isNew = !o;
-  const d = o ? { ...o } : { status: "queued", dept: "CNC" };
+  const bid = o ? boardOf(o) : (BOARDS[state.board] ? state.board : "shop");
+  const d = o ? { ...o } : { status: "queued", dept: BOARDS[bid].cols[0].dept, ...(bid === "shop" ? {} : { board: bid }) };
+  const PLACES = placesFor(bid);
   const title = h("input", { id: "o-title", value: d.title || "", placeholder: "Tiny Onion Sign", required: true });
   const qty = h("input", { id: "o-qty", type: "number", min: "1", value: d.qty || 1 });
-  const here = placeOf(d);
+  const here = PLACES.find(x => x.label === placeOf(d).label);
   const place = h("select", { id: "o-place" }, PLACES.map((p, i) => h("option", { value: i, selected: p === here }, p.label)));
   const outTag = h("select", { id: "o-out" }, h("option", { value: "" }, "Not decided"), OUT_TAGS.map(t => h("option", { value: t, selected: t === d.outTag }, t)));
   const who = h("input", { id: "o-for", value: d.for || "", placeholder: "Who's waiting on it" });
@@ -1200,7 +1237,7 @@ function openOrderEditor(o) {
     delete next.example;
     await saveOrder(next); close(); render();
   } },
-    h("h3", {}, isNew ? "New order" : "Edit order"),
+    h("h3", {}, isNew ? `New order · ${BOARDS[bid].name}` : "Edit order"),
     field("What is it", title),
     h("div", { class: "row" }, field("Where is it", place), field("Qty", qty)),
     h("div", { class: "row" }, field("For", who), field("Where it is", loc)),
@@ -1215,20 +1252,22 @@ function openOrderEditor(o) {
 // Lobby TV: CNC, Build and Paint across the screen, a narrow Completed column with where each piece goes next.
 // Queued orders stay off the TV. Refreshes every 30 seconds.
 let tvTimer;
-function enterTv() {
-  location.hash = "tv";
+function enterTv(bid = "shop") {
+  const board = BOARDS[bid] || BOARDS.shop;
+  state.board = bid;
+  location.hash = board.tvHash;
   document.body.classList.add("tv");
   const host = h("div", { class: "tvb wrap", id: "tvb" });
   document.getElementById("tvb")?.remove();
   document.body.append(host);
   const draw = () => {
     const now = new Date();
-    const all = state.orders || [];
+    const all = onBoard(state.orders || [], bid);
     const item = o => h("div", { class: "tvb-item" },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
       [o.for ? `For ${o.for}` : null, o.location].some(Boolean) ? h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location].filter(Boolean).join(" · ")) : null,
       o.status === "in-progress"
-        ? h("div", { class: "wait" }, `${SHOP_COLS[colOf(o)].doing} · ${waited(o.statusAt)}`)
+        ? h("div", { class: "wait" }, `${colsOf(o)[colOf(o)].doing} · ${waited(o.statusAt)}`)
         : h("div", { class: "wait waiting" }, `Waiting · ${waited(o.statusAt)}`));
     const doneItem = o => h("div", { class: "tvb-item" },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
@@ -1237,9 +1276,9 @@ function enterTv() {
       h("div", { class: "tvb-list" }, list.length ? list.slice(0, max).map(render) : h("div", { class: "tvb-empty" }, empty)));
     const done = all.filter(o => o.status === "done").sort(byOldest);
     host.replaceChildren(
-      h("div", { class: "tvb-h" }, h("h1", {}, h("span", { class: "logo", role: "img", "aria-label": "FTB Design" }), "Shop"), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
-      h("div", { class: "tvb-cols" },
-        SHOP_COLS.map((c, i) => col(c.cls, c.dept, shopList(all, i), item, c.empty, 6)),
+      h("div", { class: "tvb-h" }, h("h1", {}, h("span", { class: "logo", role: "img", "aria-label": "FTB Design" }), board.tv), h("div", { class: "clock" }, now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))),
+      h("div", { class: "tvb-cols", style: `--n:${board.cols.length}` },
+        board.cols.map((c, i) => col(c.cls, c.title, shopList(all, i), item, c.empty, 6)),
         col("done", "Completed", done, doneItem, "Nothing finished yet.", 10)));
   };
   draw();
@@ -1251,7 +1290,7 @@ function exitTv() {
   clearInterval(tvTimer);
   document.body.classList.remove("tv");
   document.getElementById("tvb")?.remove();
-  state.current = "pickup"; location.hash = "pickup"; render();
+  state.current = "pickup"; location.hash = (BOARDS[state.board] || BOARDS.shop).hash; render();
 }
 
 // ---------- boot ----------
@@ -1264,10 +1303,12 @@ document.getElementById("editBtn").addEventListener("click", e => {
 });
 loadHub().then(() => Promise.all([loadOrders(), loadMe()])).then(() => {
   const fromHash = location.hash.slice(1);
-  state.current = fromHash === "pickup" || fromHash === "tv" ? "pickup"
+  const boardHash = Object.entries(BOARDS).find(([, b]) => b.hash === fromHash || b.tvHash === fromHash);
+  if (boardHash) state.board = boardHash[0];
+  state.current = boardHash ? "pickup"
     : state.hub.projects.some(p => p.id === fromHash) ? fromHash : (state.hub.projects.find(p => !p.archived) || state.hub.projects[0])?.id;
   render();
-  if (fromHash === "tv") enterTv();
+  if (boardHash && boardHash[1].tvHash === fromHash) enterTv(boardHash[0]);
   // Keep the Pickup count fresh for anyone leaving the hub open.
   setInterval(async () => { if (!document.body.classList.contains("tv")) { await loadOrders(); if (state.current === "pickup" && !document.querySelector(".scrim")) render(); } }, 60000);
 });
