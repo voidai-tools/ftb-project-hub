@@ -102,3 +102,5 @@ Open a piece's 3D viewer and use **+ Add assembly GIF** in the side panel to att
 ## Piece status tags
 
 Every piece with a 3D model slot has a status tag next to its title: Design, Sent To CNC, Printing, Building, Painting or Complete. Click it to change it (no Edit mode needed); "+ Status" means none is set. The piece chips in the nav bar show the status color as a dot.
+
+Videos work too: pick them alongside photos in **+ Add photos**. They upload as-is (MP4, MOV or WebM, up to 100 MB each) with a progress percentage, show a ▶ badge in strips and albums, and play in the full-size viewer.

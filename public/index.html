@@ -353,10 +353,13 @@ body.tv .bar, body.tv #main { display: none; }
 .thumb { position: relative; border: 0; padding: 0; border-radius: 6px; overflow: hidden; cursor: zoom-in; background: var(--paper); }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s ease; }
 .thumb:hover img { transform: scale(1.04); }
+.thumb .play { position: absolute; inset: 0; margin: auto; width: 30px; height: 30px; border-radius: 50%; background: rgba(10,14,20,.6); color: #fff; display: grid; place-items: center; font-size: 12px; padding-left: 2px; pointer-events: none; }
+.ph-row .thumb .play { width: 20px; height: 20px; font-size: 9px; }
 .thumb .pc { position: absolute; left: 4px; bottom: 4px; max-width: calc(100% - 8px); font: 500 10px/1 var(--f-mono); background: rgba(10,14,20,.7); color: #fff; padding: 3px 5px; border-radius: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ph-more { flex: none; height: 44px; aspect-ratio: 4 / 3; border: 1px dashed var(--rule); border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font: 600 14px/1.2 var(--f-display); letter-spacing: .05em; text-transform: uppercase; }
 .ph-more:hover { color: var(--layout); border-color: var(--layout); }
 .up-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.up-grid video { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; background: #000; }
 .up-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; background: var(--paper); }
 .up-grid .busy { opacity: .45; }
 .up-grid .ok { outline: 3px solid var(--ok); outline-offset: -3px; }
@@ -384,7 +387,7 @@ body.tv .bar, body.tv #main { display: none; }
 /* full-size photo viewer */
 .lightbox { position: fixed; inset: 0; z-index: 25; background: rgba(6, 8, 12, .94); color: #f1f3f5; display: grid; grid-template-rows: 1fr auto; }
 .lb-stage { position: relative; min-height: 0; }
-.lb-stage img { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); bottom: 0; left: 56px; width: calc(100% - 112px); height: calc(100% - max(12px, env(safe-area-inset-top, 0px))); object-fit: contain; }
+.lb-stage img, .lb-stage video { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); bottom: 0; left: 56px; width: calc(100% - 112px); height: calc(100% - max(12px, env(safe-area-inset-top, 0px))); object-fit: contain; }
 .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.4); color: #fff; font-size: 18px; cursor: pointer; }
 .lb-nav.prev { left: 8px; } .lb-nav.next { right: 8px; }
 .lb-nav:disabled { opacity: .25; cursor: default; }
@@ -401,7 +404,7 @@ body.tv .bar, body.tv #main { display: none; }
   .gal-grid .thumb { border-radius: 2px; }
   .albums { grid-template-columns: 1fr 1fr; gap: 10px; }
   .album .meta b { font-size: 16px; }
-  .lb-stage img { left: 0; width: 100%; }
+  .lb-stage img, .lb-stage video { left: 0; width: 100%; }
   .lb-nav { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -1346,7 +1349,64 @@ async function shrink(file, max, quality) {
 }
 const dataUrl = blob => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
 
-async function uploadPhoto(file, project, item, caption) {
+// A still from the video for thumbnails; a plain dark tile if this browser can't decode the format.
+async function videoFrame(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const v = h("video", { muted: true, playsinline: true, preload: "auto", src: url });
+    await new Promise((res, rej) => {
+      const t = setTimeout(() => rej(new Error("timeout")), 8000);
+      v.onloadeddata = () => { v.currentTime = Math.min(0.5, (v.duration || 1) / 2); };
+      v.onseeked = () => { clearTimeout(t); res(); };
+      v.onerror = () => { clearTimeout(t); rej(new Error("decode")); };
+    });
+    const k = Math.min(1, 640 / Math.max(v.videoWidth, v.videoHeight));
+    const c = h("canvas", { width: Math.round(v.videoWidth * k), height: Math.round(v.videoHeight * k) });
+    c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+    return { blob: await new Promise(r => c.toBlob(r, "image/jpeg", .74)), w: v.videoWidth, h: v.videoHeight };
+  } catch {
+    const c = h("canvas", { width: 640, height: 360 });
+    const g = c.getContext("2d");
+    g.fillStyle = "#1b1f24"; g.fillRect(0, 0, 640, 360);
+    g.fillStyle = "#fff"; g.font = "600 28px sans-serif"; g.textAlign = "center"; g.fillText("Video", 320, 190);
+    return { blob: await new Promise(r => c.toBlob(r, "image/jpeg", .8)), w: 0, h: 0 };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+// Videos go straight up as the request body (no re-encoding), with upload progress, then their thumbnail.
+async function uploadVideo(file, project, item, caption, progress) {
+  if (state.mode === "live" && file.size > 100 * 1024 * 1024) throw new Error(`${file.name} is over 100 MB`);
+  const frame = await videoFrame(file);
+  if (state.mode !== "live") {
+    if (file.size > 3e6) throw new Error("The preview can only hold videos under 3 MB");
+    const at = new Date().toISOString();
+    const photo = { id: `${at.replace(/[:.]/g, "-")}-${Math.random().toString(36).slice(2, 6)}`, project, item, caption, at, video: true,
+      email: state.me.email, name: state.me.name, w: frame.w, h: frame.h, full: await dataUrl(file), thumb: await dataUrl(frame.blob) };
+    if (!saveLocalPhotos([...localPhotos(), photo])) throw new Error("This browser is out of room for preview videos");
+    return photo;
+  }
+  const qs = new URLSearchParams({ project, item, caption, w: frame.w, h: frame.h });
+  const photo = await new Promise((res, rej) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", `${API}/photos/video?${qs}`);
+    x.setRequestHeader("Content-Type", file.type === "video/x-m4v" ? "video/x-m4v" : file.type || "video/mp4");
+    x.upload.onprogress = e => { if (e.lengthComputable) progress?.(Math.round(e.loaded / e.total * 100)); };
+    x.onload = () => {
+      let body = {};
+      try { body = JSON.parse(x.responseText); } catch {}
+      x.status < 300 ? res(body.photo) : rej(new Error(body.error || `Upload failed (${x.status})`));
+    };
+    x.onerror = () => rej(new Error("Upload failed. Check your connection."));
+    x.send(file);
+  });
+  await fetch(`${API}/photos/${project}/${photo.id}/thumb`, { method: "PUT", headers: { "Content-Type": "image/jpeg" }, body: frame.blob }).catch(() => {});
+  return photo;
+}
+
+async function uploadPhoto(file, project, item, caption, progress) {
+  if (file.type.startsWith("video/")) return uploadVideo(file, project, item, caption, progress);
   if (state.mode === "live") {
     const full = await shrink(file, 2560, .82), thumb = await shrink(file, 640, .74);
     const form = new FormData();
@@ -1404,7 +1464,7 @@ const canUpload = () => state.me?.signedIn;
 // Pick photos (a phone offers the camera or the library), then tag the piece and add a caption before uploading.
 function pickPhotos(p, item) {
   if (!canUpload()) { toast(state.me?.setup ? "Sign in to add photos." : "Photo uploads open once team sign-in is set up."); return; }
-  const input = h("input", { type: "file", accept: "image/*", multiple: true, style: "display:none" });
+  const input = h("input", { type: "file", accept: "image/*,video/*", multiple: true, style: "display:none" });
   input.addEventListener("change", () => { const files = [...input.files]; input.remove(); if (files.length) openUploader(p, files, item); });
   document.body.append(input);
   input.click();
@@ -1412,7 +1472,9 @@ function pickPhotos(p, item) {
 
 function openUploader(p, files, item = "") {
   const urls = files.map(f => URL.createObjectURL(f));
-  const imgs = urls.map(u => h("img", { src: u, alt: "" }));
+  const imgs = urls.map((u, i) => files[i].type.startsWith("video/")
+    ? h("video", { src: u + "#t=0.1", muted: true, playsinline: true, preload: "metadata" })
+    : h("img", { src: u, alt: "" }));
   const piece = h("select", {}, h("option", { value: "" }, "Whole project"),
     (p.sections || []).map(s => h("option", { value: s.id, selected: s.id === item }, s.title)));
   const caption = h("textarea", { rows: "2", maxlength: "300", placeholder: "Optional, e.g. first coat of primer on the arch" });
@@ -1429,7 +1491,8 @@ function openUploader(p, files, item = "") {
       status.textContent = `Uploading ${i + 1} of ${files.length}…`;
       imgs[i].classList.add("busy");
       try {
-        const ph = await uploadPhoto(f, p.id, piece.value, caption.value.trim());
+        const ph = await uploadPhoto(f, p.id, piece.value, caption.value.trim(),
+          pct => { status.textContent = `Uploading ${i + 1} of ${files.length}… ${pct}%`; });
         (state.photos[p.id] ||= []).unshift(ph);
         state.allPhotos?.unshift(ph);
         imgs[i].classList.replace("busy", "ok");
@@ -1440,11 +1503,11 @@ function openUploader(p, files, item = "") {
       }
     }
     close();
-    toast(failed.length ? `${done} uploaded, ${failed.length} failed: ${failed[0]}` : `${done} photo${done > 1 ? "s" : ""} added`);
+    toast(failed.length ? `${done} uploaded, ${failed.length} failed: ${failed[0]}` : `${done} added`);
     render();
   } },
-    h("h3", {}, "Add photos"),
-    h("p", { class: "hint" }, `To ${p.name}. Photos are shrunk on this device before uploading, so they go up fast.`),
+    h("h3", {}, "Add photos & videos"),
+    h("p", { class: "hint" }, `To ${p.name}. Photos are shrunk on this device before uploading, so they go up fast. Videos go up as they are, up to 100 MB each.`),
     h("div", { class: "up-grid" }, imgs),
     field("Which piece (optional)", piece),
     field("Caption (optional)", caption),
@@ -1457,7 +1520,8 @@ function openUploader(p, files, item = "") {
 function thumbBtn(ph, list, i, showPiece) {
   const pc = showPiece && ph.item ? pieceName(ph.project, ph.item) : "";
   return h("button", { class: "thumb", "aria-label": `Open photo${ph.caption ? `: ${ph.caption}` : ""}`, onclick: () => openLightbox(list, i) },
-    h("img", { src: ph.thumb, alt: ph.caption || "", loading: "lazy" }), pc ? h("span", { class: "pc" }, pc) : null);
+    h("img", { src: ph.thumb, alt: ph.caption || "", loading: "lazy" }), ph.video ? h("span", { class: "play", "aria-hidden": "true" }, "▶") : null,
+    pc ? h("span", { class: "pc" }, pc) : null);
 }
 
 // Slim bar on each project page: newest photos in a row, then Album and a small add button.
@@ -1478,19 +1542,26 @@ function photoStrip(p) {
 function openLightbox(list, start) {
   let i = start;
   const img = h("img", { alt: "" });
+  const vid = h("video", { controls: true, playsinline: true, hidden: true });
   const info = h("div", { class: "lb-info" });
   const prev = h("button", { class: "lb-nav prev", "aria-label": "Previous photo", onclick: () => go(-1) }, "←");
   const next = h("button", { class: "lb-nav next", "aria-label": "Next photo", onclick: () => go(1) }, "→");
   const box = h("div", { class: "lightbox", role: "dialog", "aria-label": "Photo" },
     h("div", { class: "lb-stage", onclick: e => { if (e.target.classList.contains("lb-stage")) close(); } },
-      img, prev, next, h("button", { class: "lb-x", "aria-label": "Close", onclick: () => close() }, "×")),
+      img, vid, prev, next, h("button", { class: "lb-x", "aria-label": "Close", onclick: () => close() }, "×")),
     info);
   function draw() {
     const ph = list[i];
-    img.src = ph.thumb;          // show the thumbnail at once, then swap in the full photo
-    const full = new Image();
-    full.onload = () => { if (list[i] === ph) img.src = ph.full; };
-    full.src = ph.full;
+    vid.pause();
+    img.hidden = !!ph.video; vid.hidden = !ph.video;
+    if (ph.video) { vid.poster = ph.thumb; vid.src = ph.full; vid.play().catch(() => {}); }
+    else {
+      vid.removeAttribute("src");
+      img.src = ph.thumb;          // show the thumbnail at once, then swap in the full photo
+      const full = new Image();
+      full.onload = () => { if (list[i] === ph) img.src = ph.full; };
+      full.src = ph.full;
+    }
     img.alt = ph.caption || "Job photo";
     prev.disabled = i === 0; next.disabled = i === list.length - 1;
     const pr = state.hub.projects.find(p => p.id === ph.project);
@@ -1522,7 +1593,7 @@ function openLightbox(list, start) {
   let x0 = null;
   box.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
   box.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); x0 = null; });
-  function close() { box.remove(); document.removeEventListener("keydown", key, true); render(); }
+  function close() { vid.pause(); box.remove(); document.removeEventListener("keydown", key, true); render(); }
   document.addEventListener("keydown", key, true);
   document.body.append(box);
   draw();
@@ -1535,6 +1606,10 @@ function openGallery(pid = null) {
   refreshGallery();
 }
 
+const mediaCount = list => {
+  const v = list.filter(ph => ph.video).length, n = list.length - v;
+  return [n || !v ? `${n} photo${n === 1 ? "" : "s"}` : null, v ? `${v} video${v === 1 ? "" : "s"}` : null].filter(Boolean).join(" · ");
+};
 const dayLabel = iso => new Date(iso).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" });
 
 function renderGallery(main) {
@@ -1552,7 +1627,7 @@ function renderGallery(main) {
       h("div", {},
         h("button", { class: "btn ghost", style: "padding-left:0", onclick: () => openGallery() }, "← All albums"),
         h("h1", {}, p?.name || pid),
-        h("div", { class: "eyebrow", style: "margin-top:8px" }, `${list.length} photo${list.length === 1 ? "" : "s"}`)),
+        h("div", { class: "eyebrow", style: "margin-top:8px" }, mediaCount(list))),
       h("div", { class: "tools" },
         p ? h("button", { class: "btn", onclick: () => openProject(p.id) }, "Open project") : null,
         p ? h("button", { class: "btn primary", onclick: () => pickPhotos(p) }, "+ Add photos") : null)));
