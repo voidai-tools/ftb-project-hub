@@ -136,10 +136,17 @@ h1 { font: 700 clamp(32px, 5vw, 52px)/.95 var(--f-display); letter-spacing: .01e
 .pnav .arrow:disabled { opacity: .35; cursor: default; }
 .card { break-inside: avoid; margin-bottom: 16px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
 .card-h { display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px; }
-.card-h h2 { font: 700 19px/1.1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; margin: 0; flex: 1; min-width: 0; text-wrap: balance; }
+.card-h h2 { font: 700 19px/1.1 var(--f-display); letter-spacing: .04em; text-transform: uppercase; margin: 0; flex: 0 1 auto; min-width: 0; text-wrap: balance; }
+.card-h .sp { flex: 1; }
 .chip { font: 500 11px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; background: var(--paper); color: var(--ink-2); white-space: nowrap; }
 .chip.qty { background: var(--ink); color: var(--sheet); }
 .chip.shared { background: var(--layout-soft); color: var(--layout); }
+.stage { flex: none; appearance: none; -webkit-appearance: none; border: 0; border-radius: 999px; padding: 4px 10px; cursor: pointer;
+  font: 600 10.5px/1.2 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; background: var(--st); color: #fff; max-width: 130px; field-sizing: content; }
+.stage.none { background: none; color: var(--ink-2); border: 1px dashed var(--rule); }
+.stage.none:hover { color: var(--ink); border-color: var(--ink-2); }
+.stage option { color: var(--ink); background: var(--sheet); text-transform: none; font-family: var(--f-body); }
+.pnav .chip-nav .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--st); margin-right: 6px; vertical-align: 1px; }
 .card-edit { display: none; }
 body.editing .card-edit { display: inline-flex; }
 .icon-btn { border: 0; background: none; padding: 4px; border-radius: 4px; cursor: pointer; color: var(--ink-2); display: inline-flex; }
@@ -637,7 +644,7 @@ function projectNav(board, shown) {
     const el = board.children[i];
     board.scrollTo({ left: el.offsetLeft - board.offsetLeft });
     el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1200);
-  } }, s.title));
+  } }, stageOf(s) ? h("span", { class: "dot", style: `--st:${stageOf(s).color}`, title: stageOf(s).label }) : null, s.title));
   const update = () => {
     prev.disabled = board.scrollLeft <= 2;
     next.disabled = board.scrollLeft + board.clientWidth >= board.scrollWidth - 2;
@@ -672,6 +679,28 @@ function fitBoard() {
 }
 addEventListener("resize", fitBoard);
 
+// Where each piece is in production. Set from the tag on its card (no Edit mode needed).
+const STAGES = [
+  { id: "design", label: "Design", color: "#6b5bd6" },
+  { id: "cnc", label: "Sent To CNC", color: "#2350c8" },
+  { id: "printing", label: "Printing", color: "#0f7c8c" },
+  { id: "building", label: "Building", color: "#9a6a1f" },
+  { id: "painting", label: "Painting", color: "#b5413a" },
+  { id: "complete", label: "Complete", color: "#1d7a4a" },
+];
+const stageOf = s => STAGES.find(x => x.id === s.stage);
+function stageTag(p, s) {
+  const st = stageOf(s);
+  const sel = h("select", { class: "stage" + (st ? "" : " none"), style: st ? `--st:${st.color}` : null, "aria-label": `Status of ${s.title}`,
+    onchange: async e => {
+      if (e.target.value) { s.stage = e.target.value; s.stageAt = new Date().toISOString(); } else { delete s.stage; delete s.stageAt; }
+      await saveHub(); render();
+    } },
+    h("option", { value: "" }, st ? "No status" : "+ Status"),
+    STAGES.map(x => h("option", { value: x.id, selected: x.id === s.stage }, x.label)));
+  return sel;
+}
+
 function card(p, s) {
   const vs = s.viewers || [];
   const notes = (s.notes || "").split("\n").map(x => x.trim()).filter(Boolean);
@@ -679,6 +708,8 @@ function card(p, s) {
   return h("article", { class: "card" },
     h("div", { class: "card-h" },
       h("h2", {}, s.title),
+      (s.viewers || []).length || s.stage ? stageTag(p, s) : null,
+      h("span", { class: "sp" }),
       s.shared ? h("span", { class: "chip shared" }, "Shared") : null,
       s.qty > 1 ? h("span", { class: "chip qty", title: `Build ${s.qty}` }, `×${s.qty}`) : null,
       h("span", { class: "card-edit" },

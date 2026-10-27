@@ -98,3 +98,7 @@ Each piece can carry reference images, such as a screenshot from the build packe
 ## Assembly instruction GIFs
 
 Open a piece's 3D viewer and use **+ Add assembly GIF** in the side panel to attach an animated GIF of the assembly steps (up to 30 MB). It shows in the panel and opens full size when clicked; **Replace** and **Remove** sit next to it. GIFs are stored in R2 as-is, so they stay animated.
+
+## Piece status tags
+
+Every piece with a 3D model slot has a status tag next to its title: Design, Sent To CNC, Printing, Building, Painting or Complete. Click it to change it (no Edit mode needed); "+ Status" means none is set. The piece chips in the nav bar show the status color as a dot.
