@@ -94,3 +94,7 @@ When Ben posts a new project in the project chat, Claude adds it to `data/additi
 ## Reference images on pieces
 
 Each piece can carry reference images, such as a screenshot from the build packet. Turn on **Edit**, click ✎ on the piece, then paste a screenshot anywhere in the editor (Ctrl+V or ⌘V) or click **+ Image**, and Save. The image shows on the card under the 3D viewer; click it to see it full size. Reference images are stored in R2 under `refs/` and stay out of the Gallery.
+
+## Assembly instruction GIFs
+
+Open a piece's 3D viewer and use **+ Add assembly GIF** in the side panel to attach an animated GIF of the assembly steps (up to 30 MB). It shows in the panel and opens full size when clicked; **Replace** and **Remove** sit next to it. GIFs are stored in R2 as-is, so they stay animated.

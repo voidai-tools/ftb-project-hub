@@ -7,14 +7,16 @@
 //   GET    /api/photos/file/<key>              -> the image (photos/... or thumbs/...)
 //   POST   /api/photos  FormData{ full, thumb, project, item?, caption?, w?, h? } -> { photo }  (signed in only)
 //   DELETE /api/photos/<project>/<id>          -> only the person who uploaded it
-//   POST   /api/refs  FormData{ full, project } -> { url }  reference image for a piece (packet screenshot); the
-//                                                  piece keeps the url in the hub document, and it stays out of the Gallery
+//   POST   /api/refs  FormData{ full, project } -> { url }  reference image for a piece (packet screenshot), or an
+//                                                  assembly GIF (kept as-is so it stays animated); the piece keeps the url
+//                                                  in the hub document, and these stay out of the Gallery
 
 import { currentUser } from "./auth.js";
 
 const ID = /^[\w-]{1,120}$/;
 const MAX_FULL = 15 * 1024 * 1024;
 const MAX_THUMB = 2 * 1024 * 1024;
+const MAX_GIF = 30 * 1024 * 1024;
 
 function toPhoto(obj) {
   const m = obj.customMetadata || {};
@@ -48,12 +50,12 @@ export async function photosRoute(request, env, url) {
     return Response.json({ photos: await listPhotos(env, project ? `photos/${project}/` : "photos/") });
   }
 
-  const file = url.pathname.match(/^\/api\/photos\/file\/((?:photos|thumbs|refs)\/[\w-]{1,120}\/[\w-]{1,80}\.jpg)$/);
+  const file = url.pathname.match(/^\/api\/photos\/file\/((?:photos|thumbs|refs)\/[\w-]{1,120}\/[\w-]{1,80}\.(jpg|gif))$/);
   if (file && method === "GET") {
     const obj = await env.PHOTOS.get(file[1]);
     if (!obj) return new Response("Not found", { status: 404 });
     return new Response(obj.body, {
-      headers: { "Content-Type": "image/jpeg", "Cache-Control": "private, max-age=31536000, immutable", ETag: obj.httpEtag },
+      headers: { "Content-Type": file[2] === "gif" ? "image/gif" : "image/jpeg", "Cache-Control": "private, max-age=31536000, immutable", ETag: obj.httpEtag },
     });
   }
 
@@ -86,11 +88,13 @@ export async function photosRoute(request, env, url) {
     const full = form.get("full"), project = String(form.get("project") || "");
     if (!ID.test(project)) return Response.json({ error: "Bad project" }, { status: 400 });
     if (!(full instanceof File)) return Response.json({ error: "Image required" }, { status: 400 });
-    if (full.size > MAX_FULL) return Response.json({ error: "Image too large" }, { status: 413 });
+    const gif = full.type === "image/gif";
+    if (full.size > (gif ? MAX_GIF : MAX_FULL)) return Response.json({ error: gif ? "GIF too large (30 MB max)" : "Image too large" }, { status: 413 });
     const id = `${new Date().toISOString().replace(/[:.]/g, "-")}-${Math.random().toString(36).slice(2, 8)}`;
-    await env.PHOTOS.put(`refs/${project}/${id}.jpg`, full,
-      { httpMetadata: { contentType: "image/jpeg" }, customMetadata: { project, email: user.email, at: new Date().toISOString() } });
-    return Response.json({ url: `/api/photos/file/refs/${project}/${id}.jpg` });
+    const ext = gif ? "gif" : "jpg";
+    await env.PHOTOS.put(`refs/${project}/${id}.${ext}`, full,
+      { httpMetadata: { contentType: gif ? "image/gif" : "image/jpeg" }, customMetadata: { project, email: user.email, at: new Date().toISOString() } });
+    return Response.json({ url: `/api/photos/file/refs/${project}/${id}.${ext}` });
   }
 
   const del = url.pathname.match(/^\/api\/photos\/([\w-]{1,120})\/([\w-]{1,80})$/);

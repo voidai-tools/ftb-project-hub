@@ -197,8 +197,14 @@ body.editing .add-sec { display: block; }
 .vstage .placeholder svg { width: 140px; height: 140px; margin: 0 auto; color: var(--layout); }
 .vside { border-left: 1px solid var(--rule); padding: 18px; overflow: auto; display: grid; align-content: start; gap: 16px; }
 .vside h3 { font: 700 24px/1 var(--f-display); text-transform: uppercase; margin: 6px 0 0; }
-.steps-box { border: 1px dashed var(--rule); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--ink-2); }
-.steps-box b { color: var(--ink); font-family: var(--f-display); text-transform: uppercase; letter-spacing: .05em; font-size: 15px; }
+.asm { display: grid; gap: 8px; }
+.asm-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.asm-h b { font: 600 15px/1 var(--f-display); text-transform: uppercase; letter-spacing: .05em; }
+.asm-h .r { display: flex; gap: 2px; }
+.asm-gif { border: 1px solid var(--rule); border-radius: 8px; padding: 0; overflow: hidden; background: #fff; cursor: zoom-in; display: block; }
+.asm-gif img { display: block; width: 100%; max-height: 260px; object-fit: contain; }
+.asm-add { border: 1px dashed var(--rule); border-radius: 8px; padding: 14px; background: none; color: var(--ink-2); cursor: pointer; font: 500 13px/1 var(--f-body); }
+.asm-add:hover { border-color: var(--layout); color: var(--layout); }
 .editor { max-width: 640px; padding: 20px; display: grid; gap: 16px; }
 .editor h3 { font: 700 26px/1 var(--f-display); text-transform: uppercase; margin: 0; }
 .field { display: grid; gap: 5px; }
@@ -755,6 +761,57 @@ function loadAdsk() {
   return adskReady;
 }
 
+// Optional assembly-instructions GIF for a model, shown in the viewer's side panel. Uploaded as-is so it stays animated.
+async function uploadGif(file, pid) {
+  if (state.mode === "live") {
+    const form = new FormData();
+    form.append("full", file, file.name || "assembly.gif");
+    form.append("project", pid);
+    const res = await fetch(`${API}/refs`, { method: "POST", body: form });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Upload failed");
+    return (await res.json()).url;
+  }
+  if (file.size > 3e6) throw new Error("The preview can only hold GIFs under 3 MB");
+  return dataUrl(file);
+}
+
+function asmBox(s, v) {
+  const box = h("div", { class: "asm" });
+  const pid = state.current;
+  const pick = h("input", { type: "file", accept: "image/gif", style: "display:none" });
+  const status = h("span", { class: "hint" });
+  pick.onchange = async () => {
+    const f = pick.files[0];
+    if (!f) return;
+    if (f.type !== "image/gif") { status.textContent = "Choose a .gif file."; return; }
+    if (state.mode === "live" && !state.me?.signedIn) { status.textContent = "Sign in to add a GIF."; return; }
+    status.textContent = "Uploading…";
+    try { v.gif = { url: await uploadGif(f, pid), at: new Date().toISOString() }; }
+    catch (err) { status.textContent = err.message; return; }
+    status.textContent = "";
+    await saveHub();
+    draw();
+  };
+  function draw() {
+    const head = h("div", { class: "asm-h" }, h("b", {}, "Assembly instructions"),
+      v.gif ? h("span", { class: "r" },
+        h("button", { class: "btn ghost sm", type: "button", onclick: () => pick.click() }, "Replace"),
+        h("button", { class: "btn ghost sm danger", type: "button", onclick: async () => {
+          if (!confirm("Remove the assembly GIF?")) return;
+          delete v.gif; await saveHub(); draw();
+        } }, "Remove")) : null);
+    box.replaceChildren(head, pick,
+      v.gif
+        ? h("button", { class: "asm-gif", "aria-label": "Open assembly instructions full size",
+            onclick: () => openLightbox([{ full: v.gif.url, thumb: v.gif.url, caption: `${v.label || s.title}: assembly instructions`, ref: true }], 0) },
+            h("img", { src: v.gif.url, alt: "Assembly instructions" }))
+        : h("button", { class: "asm-add", type: "button", onclick: () => pick.click() }, "+ Add assembly GIF"),
+      status);
+  }
+  draw();
+  return box;
+}
+
 function openViewer(s, v) {
   const stage = h("div", { class: "vstage" });
   const notes = (s.notes || "").split("\n").filter(Boolean);
@@ -764,7 +821,7 @@ function openViewer(s, v) {
       h("div", {}, h("div", { class: "eyebrow" }, s.qty > 1 ? `Build ×${s.qty}` : "Build ×1"), h("h3", {}, v.label || s.title)),
       notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
       (s.materials || []).length ? h("div", { class: "mats" }, s.materials.map(m => h("span", { class: "mat" }, m))) : null,
-      h("div", { class: "steps-box" }, h("b", {}, "Assembly steps"), h("div", {}, "Publish steps from the FTB Rhino plugin and they'll play here, part by part.")),
+      asmBox(s, v),
       (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null,
       h("button", { class: "btn", onclick: () => close() }, "Close")));
   const close = overlay(panel);
@@ -1383,6 +1440,7 @@ function openLightbox(list, start) {
   }
   function go(d) { const j = i + d; if (j >= 0 && j < list.length) { i = j; draw(); } }
   function key(e) {
+    if (["Escape", "ArrowLeft", "ArrowRight"].includes(e.key)) e.stopPropagation();   // don't also close a panel underneath
     if (e.key === "Escape") close();
     else if (e.key === "ArrowLeft") go(-1);
     else if (e.key === "ArrowRight") go(1);
@@ -1391,8 +1449,8 @@ function openLightbox(list, start) {
   let x0 = null;
   box.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
   box.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); x0 = null; });
-  function close() { box.remove(); document.removeEventListener("keydown", key); render(); }
-  document.addEventListener("keydown", key);
+  function close() { box.remove(); document.removeEventListener("keydown", key, true); render(); }
+  document.addEventListener("keydown", key, true);
   document.body.append(box);
   draw();
 }
