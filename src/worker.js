@@ -16,6 +16,8 @@
 //   GET  /api/models/:urn/thumbnail   -> PNG thumbnail
 //   GET  /api/models/:urn/steps       -> assembly steps JSON (written by the Rhino plugin)
 //   PUT  /api/models/:urn/steps
+//   GET  /api/models/:urn/download    -> redirect to a short-lived link for the original uploaded file
+//   GET/POST/DELETE /api/models/:urn/markups -> markups drawn in the viewer (see markups.js)
 //
 // Site access is gated by Cloudflare Access in front of the Worker. Most routes trust every request they receive;
 // comments check the signed Access token so each one is tied to a real person.
@@ -26,6 +28,7 @@ import { ticktickRoute, syncTicktick } from "./ticktick.js";
 import { meRoute } from "./auth.js";
 import { commentsRoute } from "./comments.js";
 import { photosRoute } from "./photos.js";
+import { markupsRoute } from "./markups.js";
 import { listOrders, putOrder, deleteOrder } from "./orders.js";
 
 // One-time changes to the live hub document, applied on the next read and remembered in hub.migrations.
@@ -145,7 +148,13 @@ async function route(request, env, url) {
     return json({ urn, objectKey });
   }
 
-  const m = pathname.match(/^\/api\/models\/([\w-]+)\/(status|thumbnail|steps)$/);
+  const mk = pathname.match(/^\/api\/models\/([\w-]{1,300})\/markups(?:\/([\w-]{1,80}))?$/);
+  if (mk) {
+    const res = await markupsRoute(request, env, mk[1], mk[2]);
+    if (res) return res;
+  }
+
+  const m = pathname.match(/^\/api\/models\/([\w-]+)\/(status|thumbnail|steps|download)$/);
   if (m) {
     const [, urn, action] = m;
     if (action === "status") {
@@ -167,6 +176,18 @@ async function route(request, env, url) {
         status: res.status,
         headers: { "Content-Type": "image/png", "Cache-Control": res.ok ? "public, max-age=86400" : "no-store" },
       });
+    }
+    if (action === "download") {
+      // The original upload stays in our persistent bucket; hand out a signed link that expires shortly.
+      const objectId = fromUrn(urn);
+      const prefix = `urn:adsk.objects:os.object:${env.APS_BUCKET}/`;
+      if (!objectId.startsWith(prefix)) throw httpError(404, "That model isn't in FTB storage");
+      const objectKey = objectId.slice(prefix.length);
+      const name = (url.searchParams.get("name") || objectKey.replace(/^\d+-/, "")).replace(/["\\\r\n]/g, "");
+      const res = await aps(env, `/oss/v2/buckets/${env.APS_BUCKET}/objects/${encodeURIComponent(objectKey)}/signeds3download?minutesExpiration=10` +
+        `&response-content-disposition=${encodeURIComponent(`attachment; filename="${name}"`)}`);
+      if (!res.url) throw httpError(502, "Autodesk didn't return a download link");
+      return Response.redirect(res.url, 302);
     }
     if (action === "steps" && method === "GET") {
       const steps = await env.HUB.get(`steps:${urn}`, "json");
@@ -253,6 +274,10 @@ async function translate(env, urn) {
 // APS URNs are the object id, base64url-encoded without padding.
 function toUrn(objectId) {
   return btoa(objectId).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+
+function fromUrn(urn) {
+  try { return atob(urn.replace(/-/g, "+").replace(/_/g, "/")); } catch { return ""; }
 }
 
 function json(data, status = 200) {
