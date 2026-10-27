@@ -21,7 +21,7 @@ Adding a build later works the same way: "Add a Kiosk Base ×4 to Cash App Kiosk
 ## Yourself, in the hub
 
 1. Turn on **Edit** (top right).
-2. **+ Project** in the tabs. New projects start from the FTB template: Resources + Files (packet, fabrication models, overview), Cheat Sheets, Signage Templates.
+2. **+ Project** in the tabs. New projects start from the FTB template: Overview (packet, fabrication models, overview drawing), Cheat Sheets, Signage Templates.
 3. **+ Add piece or link group** at the end of the board. New pieces start with one viewer slot and a Build Packet Reference Page link.
 4. For a build that's like an existing one, use **⧉ Duplicate** on its card: it keeps the notes, stock and link titles, and clears the model and addresses.
 5. In a piece, **Upload model** sends the file to permanent storage. The tile shows "Processing" and then "Saved in FTB storage".

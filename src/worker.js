@@ -28,6 +28,13 @@ import { commentsRoute } from "./comments.js";
 import { photosRoute } from "./photos.js";
 import { listOrders, putOrder, deleteOrder } from "./orders.js";
 
+// One-time changes to the live hub document, applied on the next read and remembered in hub.migrations.
+const MIGRATIONS = [
+  { id: "resources-to-overview", run: hub => {   // 2026-10-27: Ben renamed "Resources + Files" cards to "Overview"
+    for (const p of hub.projects) for (const s of p.sections || []) if (/^resources\s*(\+|&|and)\s*files$/i.test(s.title || "")) s.title = "Overview";
+  } },
+];
+
 const APS = "https://developer.api.autodesk.com";
 const HUB_KEY = "hub";
 
@@ -76,11 +83,14 @@ async function route(request, env, url) {
     // Projects added from chat (data/additions.json) go in once each; hub.addedIds remembers which.
     const added = (hub.addedIds ||= []);
     const fresh = additions.projects.filter(p => !added.includes(p.id));
-    if (fresh.length) {
+    const done = (hub.migrations ||= []);
+    const todo = MIGRATIONS.filter(m => !done.includes(m.id));
+    if (fresh.length || todo.length) {
       for (const p of fresh) {
         if (!hub.projects.some(x => x.id === p.id)) hub.projects.push(structuredClone(p));
         added.push(p.id);
       }
+      for (const m of todo) { m.run(hub); done.push(m.id); }
       hub.updatedAt = new Date().toISOString();
       await env.HUB.put(HUB_KEY, JSON.stringify(hub));
     }

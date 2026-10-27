@@ -7,7 +7,7 @@
       "sections": [
         {
           "id": "resources-files",
-          "title": "Resources + Files",
+          "title": "Overview",
           "links": [
             { "title": "SFTSU Packet", "url": "" },
             { "title": "Internal Fabrication Models", "url": "", "type": "drive" },

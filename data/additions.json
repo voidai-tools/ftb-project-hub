@@ -7,7 +7,7 @@
       "sections": [
         {
           "id": "waystation-resources",
-          "title": "Resources + Files",
+          "title": "Overview",
           "links": [
             {
               "title": "Project Packet",
@@ -132,7 +132,7 @@
       "sections": [
         {
           "id": "leo-resources",
-          "title": "Resources + Files",
+          "title": "Overview",
           "notes": "Estimate: Invoice 3899 (10/27/26).\nApproval on 50% of build EOD 10/27; 100% approval Wed 10/28, 2pm PST.\nPickup from FTB EOD 11/06/26.\nInclude crate/pallet for shipping.",
           "links": [
             {
