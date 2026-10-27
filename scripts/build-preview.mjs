@@ -3,7 +3,11 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 
 const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
-const seed = readFileSync(new URL("../data/seed.json", import.meta.url), "utf8");
+const seedDoc = JSON.parse(readFileSync(new URL("../data/seed.json", import.meta.url), "utf8"));
+// Include projects added from chat, as the live Worker does.
+const { projects: added } = JSON.parse(readFileSync(new URL("../data/additions.json", import.meta.url), "utf8"));
+for (const p of added) if (!seedDoc.projects.some(x => x.id === p.id)) seedDoc.projects.push(p);
+const seed = JSON.stringify(seedDoc);
 const part = name => html.split(`<!--BUILD:${name}-->`)[1].split(`<!--/BUILD:${name}-->`)[0].trim();
 
 const out = [part("HEAD"), part("BODY")].join("\n")

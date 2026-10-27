@@ -86,3 +86,7 @@ Every project page has a **Photos** strip above the pieces. Tap **+ Add photos**
 The **Gallery** button (top right) collects every photo, one album per project (archived projects included). An album shows its photos grouped by day, newest first, and can be filtered by piece. Links like `ftbshop.fun/#gallery/<project-id>` open an album directly.
 
 Photos are stored in the Cloudflare R2 bucket `ftb-photos` (bound to the Worker as `PHOTOS` in `wrangler.toml`). Only signed-in team members can see the site, so "public" means everyone on the team sees every photo.
+
+## Projects added from chat
+
+When Ben posts a new project in the project chat, Claude adds it to `data/additions.json` and pushes. On the next page load the Worker adds each listed project to the live hub once (it remembers which in `hub.addedIds`), so editing or deleting it afterwards in the hub sticks. No login token is needed.

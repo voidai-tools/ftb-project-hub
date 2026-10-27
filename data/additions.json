@@ -1,0 +1,39 @@
+{
+  "note": "Projects added from chat. The Worker adds each one to the live hub once (tracked in hub.addedIds), so deleting it in the hub later sticks.",
+  "projects": [
+    {
+      "id": "waystation",
+      "name": "Waystation",
+      "sections": [
+        { "id": "waystation-resources", "title": "Resources + Files", "links": [
+          { "title": "Project Packet", "url": "", "type": "slides" },
+          { "title": "Internal Fabrication Models", "url": "", "type": "drive" },
+          { "title": "Overview with Labels", "url": "", "type": "pdf" }
+        ] },
+        { "id": "waystation-osb-bookshelves", "title": "OSB Bookshelves", "qty": 8,
+          "materials": ["3/4\" Plywood", "3/4\" OSB", "1/2\" OSB"],
+          "notes": "x4 built with the LED groove on the right side.\nx4 built mirrored with the LED groove on the left side.\nTrack lighting to be installed and concealed via 1/2\" OSB face frames.",
+          "viewers": [{ "label": "OSB Bookshelves", "shareUrl": "" }], "links": [] },
+        { "id": "waystation-book-displays", "title": "Book Displays", "qty": 2,
+          "materials": ["3/4\" Plywood", "1/2\" OSB"],
+          "notes": "3/4\" plywood interlocking CNC rib package.\nSkin with 1/2\" OSB.",
+          "viewers": [{ "label": "Book Displays", "shareUrl": "" }], "links": [] },
+        { "id": "waystation-checkout-walls", "title": "Checkout Area Walls",
+          "materials": ["1/2\" OSB"],
+          "notes": "Front face skins routed from 1/2\" OSB.",
+          "viewers": [{ "label": "Checkout Area Walls", "shareUrl": "" }], "links": [] },
+        { "id": "waystation-lightboxes", "title": "Lightboxes", "qty": 8,
+          "materials": ["1/2\" OSB", "1/4\" White Plex"],
+          "notes": "Front faces routed from 1/2\" OSB.\nPlexi cut with predrilled holes.",
+          "viewers": [{ "label": "Lightboxes", "shareUrl": "" }], "links": [] },
+        { "id": "waystation-bar-shelves", "title": "Bar Shelves",
+          "materials": ["TBD"],
+          "notes": "CNC package to be routed, broken into 3 equal sections (50\" x 96\" each).",
+          "viewers": [{ "label": "Bar Shelves", "shareUrl": "" }], "links": [] },
+        { "id": "waystation-bar-table", "title": "Bar Table",
+          "materials": ["TBD"],
+          "viewers": [{ "label": "Bar Table", "shareUrl": "" }], "links": [] }
+      ]
+    }
+  ]
+}

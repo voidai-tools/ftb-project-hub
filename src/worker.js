@@ -21,6 +21,7 @@
 // comments check the signed Access token so each one is tied to a real person.
 
 import seed from "../data/seed.json";
+import additions from "../data/additions.json";
 import { ticktickRoute, syncTicktick } from "./ticktick.js";
 import { meRoute } from "./auth.js";
 import { commentsRoute } from "./comments.js";
@@ -70,9 +71,20 @@ async function route(request, env, url) {
   }
 
   if (pathname === "/api/hub" && method === "GET") {
-    const hub = await env.HUB.get(HUB_KEY, "json");
     // First run: start from the projects imported from start.me.
-    return json(hub || seed);
+    const hub = (await env.HUB.get(HUB_KEY, "json")) || structuredClone(seed);
+    // Projects added from chat (data/additions.json) go in once each; hub.addedIds remembers which.
+    const added = (hub.addedIds ||= []);
+    const fresh = additions.projects.filter(p => !added.includes(p.id));
+    if (fresh.length) {
+      for (const p of fresh) {
+        if (!hub.projects.some(x => x.id === p.id)) hub.projects.push(structuredClone(p));
+        added.push(p.id);
+      }
+      hub.updatedAt = new Date().toISOString();
+      await env.HUB.put(HUB_KEY, JSON.stringify(hub));
+    }
+    return json(hub);
   }
   if (pathname === "/api/hub" && method === "PUT") {
     const hub = await request.json();
