@@ -90,3 +90,7 @@ Photos are stored in the Cloudflare R2 bucket `ftb-photos` (bound to the Worker 
 ## Projects added from chat
 
 When Ben posts a new project in the project chat, Claude adds it to `data/additions.json` and pushes. On the next page load the Worker adds each listed project to the live hub once (it remembers which in `hub.addedIds`), so editing or deleting it afterwards in the hub sticks. No login token is needed.
+
+## Reference images on pieces
+
+Each piece can carry reference images, such as a screenshot from the build packet. Turn on **Edit**, click ✎ on the piece, then paste a screenshot anywhere in the editor (Ctrl+V or ⌘V) or click **+ Image**, and Save. The image shows on the card under the 3D viewer; click it to see it full size. Reference images are stored in R2 under `refs/` and stay out of the Gallery.

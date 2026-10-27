@@ -160,6 +160,14 @@ body.editing .card-edit { display: inline-flex; }
 .state.expiring { background: var(--warn-soft); color: var(--warn); }
 .state.none { background: var(--sheet); color: var(--ink-2); }
 
+.refs { position: relative; display: grid; gap: 1px; background: var(--rule); border-bottom: 1px solid var(--rule); }
+.refs.many { grid-template-columns: 1fr 1fr; }
+.ref { border: 0; padding: 0; background: var(--sheet); cursor: zoom-in; display: block; }
+.ref img { display: block; width: 100%; max-height: 240px; object-fit: contain; padding: 6px; }
+.refs.many .ref img { height: 120px; }
+.ref-lbl { position: absolute; right: 8px; bottom: 8px; font: 500 10px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; background: rgba(10,14,20,.7); color: #fff; padding: 4px 6px; border-radius: 3px; pointer-events: none; }
+.ref-edit { position: relative; }
+.ref-edit .icon-btn { position: absolute; top: 2px; right: 2px; background: rgba(10,14,20,.7); color: #fff; padding: 0 6px; font-size: 16px; }
 .body { padding: 12px 14px 14px; display: grid; gap: 12px; }
 .notes { margin: 0; padding-left: 16px; color: var(--ink); font-size: 13px; display: grid; gap: 3px; }
 .paint-notes { border-left: 3px solid #b5413a; padding: 2px 0 2px 10px; display: grid; gap: 4px; }
@@ -320,18 +328,19 @@ body.tv .bar, body.tv #main { display: none; }
 /* job photos: a strip on each project page, and the Gallery tab with one album per project */
 .tab-sep { flex: none; align-self: center; width: 1px; height: 22px; background: var(--rule); margin: 0 8px; }
 .tools .tab.gallery { margin-right: 8px; }
-.photos { border: 1px solid var(--rule); background: var(--sheet); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; display: grid; gap: 8px; }
-.ph-h { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.ph-h > b { font: 700 17px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; }
-.ph-h .count { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
-.ph-h .r { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.ph-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
-.ph-row .thumb { flex: none; height: 84px; aspect-ratio: 4 / 3; }
+.photos { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; min-height: 36px; }
+.photos > b { font: 700 15px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.photos .count { font: 500 11px/1 var(--f-mono); color: var(--ink-2); margin-left: -4px; }
+.photos .ph-empty { flex: 1; }
+.btn.sm { padding: 5px 10px; font-size: 13px; }
+.ph-row { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.ph-row::-webkit-scrollbar { display: none; }
+.ph-row .thumb { flex: none; height: 44px; aspect-ratio: 4 / 3; border-radius: 4px; }
 .thumb { position: relative; border: 0; padding: 0; border-radius: 6px; overflow: hidden; cursor: zoom-in; background: var(--paper); }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s ease; }
 .thumb:hover img { transform: scale(1.04); }
 .thumb .pc { position: absolute; left: 4px; bottom: 4px; max-width: calc(100% - 8px); font: 500 10px/1 var(--f-mono); background: rgba(10,14,20,.7); color: #fff; padding: 3px 5px; border-radius: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ph-more { flex: none; height: 84px; aspect-ratio: 4 / 3; border: 1px dashed var(--rule); border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font: 600 14px/1.2 var(--f-display); letter-spacing: .05em; text-transform: uppercase; }
+.ph-more { flex: none; height: 44px; aspect-ratio: 4 / 3; border: 1px dashed var(--rule); border-radius: 6px; background: none; color: var(--ink-2); cursor: pointer; font: 600 14px/1.2 var(--f-display); letter-spacing: .05em; text-transform: uppercase; }
 .ph-more:hover { color: var(--layout); border-color: var(--layout); }
 .up-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
 .up-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; display: block; background: var(--paper); }
@@ -373,7 +382,7 @@ body.tv .bar, body.tv #main { display: none; }
 .lb-info a, .lb-info .btn { color: #fff; }
 .lb-info .btn { background: transparent; border-color: rgba(255,255,255,.3); padding: 5px 10px; font-size: 13px; }
 @media (max-width: 760px) {
-  .ph-row .thumb, .ph-more { height: 72px; }
+  .ph-row .thumb, .ph-more { height: 40px; }
   .gal-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; }
   .gal-grid .thumb { border-radius: 2px; }
   .albums { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -668,6 +677,10 @@ function card(p, s) {
         h("button", { class: "icon-btn", title: "Duplicate", "aria-label": `Duplicate ${s.title}`, onclick: () => duplicate(p, s) }, "⧉"),
         h("button", { class: "icon-btn", title: "Edit", "aria-label": `Edit ${s.title}`, onclick: () => openSectionEditor(p, s) }, "✎"))),
     vs.length ? h("div", { class: "viewers" + (vs.length > 1 ? " two" : "") }, vs.map(v => vtile(s, v))) : null,
+    (s.refs || []).length ? h("div", { class: "refs" + (s.refs.length > 1 ? " many" : "") },
+      s.refs.map((r, i) => h("button", { class: "ref", "aria-label": `Open reference image ${i + 1} for ${s.title}`, onclick: () => openRefs(s, i) },
+        h("img", { src: r.url, alt: "", loading: "lazy" }))),
+      h("span", { class: "ref-lbl" }, "Reference")) : null,
     (notes.length || paint.length || (s.materials || []).length || (s.links || []).length) ? h("div", { class: "body" },
       notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
       paint.length ? h("div", { class: "paint-notes" }, h("span", { class: "lbl" }, "Paint"), h("ul", { class: "notes" }, paint.map(n => h("li", {}, n)))) : null,
@@ -785,14 +798,34 @@ function field(label, input) { return h("label", { class: "field" }, h("span", {
 function openSectionEditor(p, s) {
   const isNew = !s;
   const draft = structuredClone(s || { id: "", title: "", viewers: [{ label: "" }], links: [{ title: "Build Packet Reference Page", url: "", type: "slides" }] });
-  draft.viewers ||= []; draft.links ||= [];
+  draft.viewers ||= []; draft.links ||= []; draft.refs ||= [];
   const title = h("input", { id: "f-title", value: draft.title, placeholder: "Curved Display Table" });
   const qty = h("input", { id: "f-qty", type: "number", min: "1", value: draft.qty || 1 });
   const shared = h("input", { id: "f-shared", type: "checkbox" }); shared.checked = !!draft.shared;
   const notes = h("textarea", { id: "f-notes", rows: "4", placeholder: "One build note per line" }); notes.value = draft.notes || "";
   const paint = h("textarea", { id: "f-paint", rows: "3", placeholder: "Colors, sheen, primer, masking — one per line" }); paint.value = draft.paint || "";
   const mats = h("input", { id: "f-mats", value: (draft.materials || []).join(", "), placeholder: '3/4" MDF, 1/2" MDF' });
-  const vbox = h("div", { class: "sub" }), lbox = h("div", { class: "sub" });
+  const vbox = h("div", { class: "sub" }), lbox = h("div", { class: "sub" }), rbox = h("div", { class: "sub" });
+  const refStatus = h("span", { class: "hint" }, "Paste a screenshot here (Ctrl+V / ⌘V) or choose an image.");
+  async function addRefs(files) {
+    if (state.mode === "live" && !state.me?.signedIn) { refStatus.textContent = "Sign in to add images."; return; }
+    for (const [i, f] of files.entries()) {
+      refStatus.textContent = `Uploading ${i + 1} of ${files.length}…`;
+      try { draft.refs.push({ ...(await uploadRef(f, p.id)), at: new Date().toISOString() }); }
+      catch (err) { refStatus.textContent = err.message; return; }
+      drawRefs();
+    }
+    refStatus.textContent = "Added. Save to keep it.";
+  }
+  function drawRefs() {
+    const pick = h("input", { type: "file", accept: "image/*", multiple: true, style: "display:none" });
+    pick.onchange = () => addRefs([...pick.files]);
+    rbox.replaceChildren(h("div", { class: "sub-h" }, h("b", {}, "Reference images"),
+      h("button", { class: "btn", type: "button", onclick: () => pick.click() }, "+ Image"), pick),
+      ...(draft.refs.length ? [h("div", { class: "up-grid" }, draft.refs.map((r, i) => h("div", { class: "ref-edit" }, h("img", { src: r.url, alt: "" }),
+        h("button", { class: "icon-btn", type: "button", "aria-label": "Remove image", title: "Remove", onclick: () => { draft.refs.splice(i, 1); drawRefs(); } }, "×"))))] : []),
+      refStatus);
+  }
 
   function drawViewers() {
     vbox.replaceChildren(h("div", { class: "sub-h" }, h("b", {}, "3D viewers"),
@@ -820,7 +853,7 @@ function openSectionEditor(p, s) {
       field("URL", h("input", { value: l.url || "", placeholder: "https://docs.google.com/…", oninput: e => l.url = e.target.value })),
       field("Note", h("input", { value: l.note || "", oninput: e => l.note = e.target.value })))));
   }
-  drawViewers(); drawLinks();
+  drawViewers(); drawLinks(); drawRefs();
 
   let armed = false;
   const del = h("button", { class: "btn danger", type: "button", onclick: () => {
@@ -834,6 +867,7 @@ function openSectionEditor(p, s) {
       notes: notes.value.trim(), paint: paint.value.trim(), materials: mats.value.split(",").map(x => x.trim()).filter(Boolean),
     });
     if (!draft.paint) delete draft.paint;
+    if (!draft.refs.length) delete draft.refs;
     if (!draft.materials.length) delete draft.materials;
     if (draft.qty === 1) delete draft.qty;
     if (isNew) { draft.id = uid(draft.title); (p.sections ||= []).push(draft); } else Object.assign(s, draft);
@@ -843,9 +877,16 @@ function openSectionEditor(p, s) {
     field("Name", title),
     h("div", { class: "row" }, field("Build quantity", qty), h("label", { class: "field" }, h("span", {}, "Shared with client"), shared)),
     field("Build notes", notes), field("Paint notes", paint), field("Stock / materials", mats),
-    vbox, lbox,
+    rbox, vbox, lbox,
     h("div", { class: "foot" }, isNew ? h("span") : del,
       h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), h("button", { class: "btn primary" }, "Save"))));
+  // A pasted screenshot anywhere in the editor becomes a reference image.
+  form.addEventListener("paste", e => {
+    const imgs = [...(e.clipboardData?.files || [])].filter(f => f.type.startsWith("image/"));
+    if (!imgs.length) return;
+    e.preventDefault();
+    addRefs(imgs);
+  });
   const close = overlay(form);
   title.focus();
 }
@@ -1190,6 +1231,26 @@ async function uploadPhoto(file, project, item, caption) {
   return photo;
 }
 
+// Reference images for a piece (e.g. a screenshot from the packet). Kept sharp: up to 2,400 px.
+async function uploadRef(file, pid) {
+  if (state.mode === "live") {
+    const full = await shrink(file, 2400, .88);
+    const form = new FormData();
+    form.append("full", full.blob, "ref.jpg");
+    form.append("project", pid);
+    const res = await fetch(`${API}/refs`, { method: "POST", body: form });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Upload failed");
+    return { url: (await res.json()).url, w: full.w, h: full.h };
+  }
+  const full = await shrink(file, 1200, .75);
+  return { url: await dataUrl(full.blob), w: full.w, h: full.h };
+}
+
+function openRefs(s, i) {
+  const list = s.refs.map(r => ({ full: r.url, thumb: r.url, caption: `${s.title}: reference`, name: "", email: "", at: r.at || "", project: "", item: "", ref: true }));
+  openLightbox(list, i);
+}
+
 async function deletePhoto(ph) {
   if (state.mode === "live") {
     const res = await fetch(`${API}/photos/${encodeURIComponent(ph.project)}/${encodeURIComponent(ph.id)}`, { method: "DELETE" });
@@ -1265,20 +1326,19 @@ function thumbBtn(ph, list, i, showPiece) {
     h("img", { src: ph.thumb, alt: ph.caption || "", loading: "lazy" }), pc ? h("span", { class: "pc" }, pc) : null);
 }
 
-// Strip on each project page: newest photos, an add button, and a link to the full album.
+// Slim bar on each project page: newest photos in a row, then Album and a small add button.
 function photoStrip(p) {
   if (!state.photos[p.id]) { state.photos[p.id] = []; setTimeout(() => refreshPhotos(p.id)); }
   const list = state.photos[p.id];
-  const SHOW = 14;
+  const SHOW = 16;
   return h("section", { class: "photos", "aria-label": "Job photos" },
-    h("div", { class: "ph-h" }, h("b", {}, "Photos"), h("span", { class: "count" }, list.length || ""),
-      h("div", { class: "r" },
-        list.length ? h("button", { class: "btn ghost", onclick: () => openGallery(p.id) }, "Open album") : null,
-        h("button", { class: "btn primary", onclick: () => pickPhotos(p) }, "+ Add photos"))),
+    h("b", {}, "Photos"), list.length ? h("span", { class: "count" }, list.length) : null,
     list.length
-      ? h("div", { class: "ph-row" }, list.slice(0, SHOW).map((ph, i) => thumbBtn(ph, list, i, true)),
-          list.length > SHOW ? h("button", { class: "ph-more", onclick: () => openGallery(p.id) }, `+${list.length - SHOW} more`) : null)
-      : h("p", { class: "hint", style: "margin:0" }, "No photos yet. Snap progress shots as the job goes, straight from your phone."));
+      ? h("div", { class: "ph-row" }, list.slice(0, SHOW).map((ph, i) => thumbBtn(ph, list, i, false)),
+          list.length > SHOW ? h("button", { class: "ph-more", onclick: () => openGallery(p.id) }, `+${list.length - SHOW}`) : null)
+      : h("span", { class: "hint ph-empty" }, "No photos yet."),
+    list.length ? h("button", { class: "btn ghost sm", onclick: () => openGallery(p.id) }, "Album") : null,
+    h("button", { class: "btn sm", onclick: () => pickPhotos(p) }, "+ Add photos"));
 }
 
 function openLightbox(list, start) {
@@ -1303,8 +1363,8 @@ function openLightbox(list, start) {
     const pc = pieceName(ph.project, ph.item);
     info.replaceChildren(...[
       h("div", { class: "cap" }, ph.caption || ""),
-      avatar(ph), h("span", {}, ph.name || ph.email),
-      h("span", {}, new Date(ph.at).toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })),
+      ph.ref ? null : avatar(ph), ph.ref ? null : h("span", {}, ph.name || ph.email),
+      ph.ref ? null : h("span", {}, new Date(ph.at).toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })),
       pr && state.current !== pr.id ? h("a", { href: `#${pr.id}`, onclick: e => { e.preventDefault(); close(); openProject(pr.id); } }, pr.name) : null,
       pc ? h("span", {}, `· ${pc}`) : null,
       h("a", { href: ph.full, download: `${ph.project}-${ph.id}.jpg`, target: "_blank", rel: "noopener" }, "Full size"),

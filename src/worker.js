@@ -65,7 +65,7 @@ async function route(request, env, url) {
     if (res) return res;
   }
 
-  if (pathname.startsWith("/api/photos")) {
+  if (pathname.startsWith("/api/photos") || pathname === "/api/refs") {
     const res = await photosRoute(request, env, url);
     if (res) return res;
   }

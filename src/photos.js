@@ -7,6 +7,8 @@
 //   GET    /api/photos/file/<key>              -> the image (photos/... or thumbs/...)
 //   POST   /api/photos  FormData{ full, thumb, project, item?, caption?, w?, h? } -> { photo }  (signed in only)
 //   DELETE /api/photos/<project>/<id>          -> only the person who uploaded it
+//   POST   /api/refs  FormData{ full, project } -> { url }  reference image for a piece (packet screenshot); the
+//                                                  piece keeps the url in the hub document, and it stays out of the Gallery
 
 import { currentUser } from "./auth.js";
 
@@ -46,7 +48,7 @@ export async function photosRoute(request, env, url) {
     return Response.json({ photos: await listPhotos(env, project ? `photos/${project}/` : "photos/") });
   }
 
-  const file = url.pathname.match(/^\/api\/photos\/file\/((?:photos|thumbs)\/[\w-]{1,120}\/[\w-]{1,80}\.jpg)$/);
+  const file = url.pathname.match(/^\/api\/photos\/file\/((?:photos|thumbs|refs)\/[\w-]{1,120}\/[\w-]{1,80}\.jpg)$/);
   if (file && method === "GET") {
     const obj = await env.PHOTOS.get(file[1]);
     if (!obj) return new Response("Not found", { status: 404 });
@@ -75,6 +77,20 @@ export async function photosRoute(request, env, url) {
     const obj = await env.PHOTOS.put(`photos/${project}/${id}.jpg`, full, opts);
     await env.PHOTOS.put(`thumbs/${project}/${id}.jpg`, thumb, opts);
     return Response.json({ photo: toPhoto({ key: obj.key, size: obj.size, customMetadata: meta }) });
+  }
+
+  if (url.pathname === "/api/refs" && method === "POST") {
+    const user = await currentUser(request, env);
+    if (!user) return Response.json({ error: "Sign in to add images" }, { status: 401 });
+    const form = await request.formData();
+    const full = form.get("full"), project = String(form.get("project") || "");
+    if (!ID.test(project)) return Response.json({ error: "Bad project" }, { status: 400 });
+    if (!(full instanceof File)) return Response.json({ error: "Image required" }, { status: 400 });
+    if (full.size > MAX_FULL) return Response.json({ error: "Image too large" }, { status: 413 });
+    const id = `${new Date().toISOString().replace(/[:.]/g, "-")}-${Math.random().toString(36).slice(2, 8)}`;
+    await env.PHOTOS.put(`refs/${project}/${id}.jpg`, full,
+      { httpMetadata: { contentType: "image/jpeg" }, customMetadata: { project, email: user.email, at: new Date().toISOString() } });
+    return Response.json({ url: `/api/photos/file/refs/${project}/${id}.jpg` });
   }
 
   const del = url.pathname.match(/^\/api\/photos\/([\w-]{1,120})\/([\w-]{1,80})$/);
