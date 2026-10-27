@@ -151,7 +151,7 @@ body.editing .card-edit { display: inline-flex; }
 .vtile .vicon { flex: none; width: 34px; height: 30px; display: grid; place-items: center; border-radius: 4px; overflow: hidden; color: var(--layout); }
 .vtile .vicon img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .vtile .vicon svg.iso { width: 30px; height: 26px; }
-.vtile .vname { flex: 1; min-width: 0; font: 600 13.5px/1.2 var(--f-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vtile .vname { flex: 1 1 auto; min-width: 4.5em; font: 600 13.5px/1.2 var(--f-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vtile .vopen { flex: none; font: 600 12.5px/1 var(--f-body); color: var(--layout); white-space: nowrap; }
 .vtile:hover .vopen { text-decoration: underline; }
 .state { font: 500 10.5px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
@@ -704,9 +704,17 @@ function vtile(s, v) {
   // A slim banner: everyone opens the full viewer anyway, so the card doesn't spend height on a preview.
   const tile = h("button", { class: "vtile", onclick: () => openViewer(s, v), "aria-label": `Open 3D viewer: ${v.label || s.title}` });
   const icon = h("span", { class: "vicon" });
-  if (v.urn && state.mode === "live") icon.append(h("img", { src: `${API}/models/${v.urn}/thumbnail`, alt: "", loading: "lazy" }));
-  else icon.insertAdjacentHTML("beforeend", ISO);
-  tile.append(icon, h("span", { class: "vname" }, v.label && v.label !== s.title ? v.label : "3D model"), h("span", { class: `state ${st.cls}` }, st.text), h("span", { class: "vopen" }, "Open 3D Viewer →"));
+  icon.insertAdjacentHTML("beforeend", ISO);
+  // Swap in the model's thumbnail once it has loaded; keep the outline icon if there isn't one.
+  if (v.urn && v.progress !== "failed" && state.mode === "live") {
+    const img = new Image();
+    img.onload = () => icon.replaceChildren(img);
+    img.src = `${API}/models/${v.urn}/thumbnail`;
+  }
+  const ready = v.urn && (!v.progress || v.progress === "complete") && !statusErrors.has(v);
+  tile.append(icon, h("span", { class: "vname" }, v.label && v.label !== s.title ? v.label : "3D model"),
+    ready ? null : h("span", { class: `state ${st.cls}` }, v.urn ? st.text : "No model yet"),
+    h("span", { class: "vopen" }, "Open 3D Viewer →"));
   return tile;
 }
 

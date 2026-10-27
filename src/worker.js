@@ -148,13 +148,14 @@ async function route(request, env, url) {
       return json({ status: manifest.status, progress: manifest.progress, error: errors[0] || undefined });
     }
     if (action === "thumbnail") {
-      const { access_token } = await apsToken(env, "viewables:read");
+      // Thumbnails need data:read; a viewables:read token gets refused.
+      const { access_token } = await apsToken(env, INTERNAL_SCOPE);
       const res = await fetch(`${APS}/modelderivative/v2/designdata/${urn}/thumbnail?width=400&height=400`, {
         headers: { Authorization: `Bearer ${access_token}` },
       });
       return new Response(res.body, {
         status: res.status,
-        headers: { "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" },
+        headers: { "Content-Type": "image/png", "Cache-Control": res.ok ? "public, max-age=86400" : "no-store" },
       });
     }
     if (action === "steps" && method === "GET") {
