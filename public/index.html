@@ -120,10 +120,10 @@ h1 { font: 700 clamp(32px, 5vw, 52px)/.95 var(--f-display); letter-spacing: .01e
 .tally b { display: block; font: 600 22px/1 var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; }
 
 /* board */
-/* Project pages: cards fill columns down the screen, then continue to the right (phones keep one stacked column). */
-.board { display: flex; flex-flow: column wrap; align-content: flex-start; gap: 16px; height: 70vh; overflow-x: auto; overflow-y: hidden;
+/* Project pages: one card per column in a single row that scrolls right (phones keep one stacked column). */
+.board { display: flex; flex-flow: row nowrap; align-items: flex-start; gap: 16px; height: 70vh; overflow-x: auto; overflow-y: hidden;
   scroll-behavior: smooth; scroll-snap-type: x proximity; padding-bottom: 12px; }
-.board > .card, .board > .add-sec { width: 360px; max-height: 100%; margin: 0; scroll-snap-align: start; }
+.board > .card, .board > .add-sec { flex: none; width: 360px; max-height: 100%; margin: 0; scroll-snap-align: start; }
 .board > .card { overflow-y: auto; }
 .board > .card.flash { outline: 3px solid var(--layout); outline-offset: -3px; }
 .pnav { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; }
