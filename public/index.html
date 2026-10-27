@@ -501,6 +501,8 @@ const ISO = `<svg class="iso" viewBox="0 0 120 100" fill="none" stroke="currentC
   <path d="M36 20 L84 44 M84 44 L84 84" stroke-dasharray="3 4" opacity=".55"/></svg>`;
 
 function viewerState(v) {
+  if (v.urn && v.progress === "failed") return { cls: "expiring", text: "Conversion failed" };
+  if (v.urn && statusErrors.has(v)) return { cls: "expiring", text: "Can't reach Autodesk" };
   if (v.urn) return { cls: "saved", text: v.progress && v.progress !== "complete" ? `Processing ${v.progress}` : "Saved in FTB storage" };
   if (v.shareUrl) return { cls: "expiring", text: "Share link" };
   return { cls: "none", text: "No model yet" };
@@ -826,7 +828,11 @@ function openViewer(s, v) {
       h("button", { class: "btn", onclick: () => close() }, "Close")));
   const close = overlay(panel);
 
-  if (v.urn && state.mode === "live") {
+  if (v.urn && v.progress === "failed") {
+    stage.append(placeholder(`Autodesk couldn't convert this file${v.error ? `: ${v.error.replace(/\.?$/, ".")}` : "."} Turn on Edit and upload it again, or try exporting it in another format.`));
+  } else if (v.urn && v.progress && v.progress !== "complete") {
+    stage.append(placeholder(`Still converting for the viewer (${v.progress}). Big Rhino files can take a while; this page keeps checking.`));
+  } else if (v.urn && state.mode === "live") {
     const box = h("div", { class: "adsk" });
     stage.append(box);
     loadAdsk().then(() => {
@@ -1044,7 +1050,7 @@ async function upload(file, v, report) {
     if (!put.ok) throw new Error(`upload failed (${put.status})`);
     const done = await (await fetch(`${API}/models/complete`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(start) })).json();
     if (!done.urn) throw new Error(done.error || "no model id returned");
-    v.urn = done.urn; v.file = file.name; v.progress = "0%";
+    v.urn = done.urn; v.file = file.name; v.progress = "0%"; delete v.error;
     if (!v.label) v.label = file.name.replace(/\.[^.]+$/, "");
     report("Uploaded. Converting for the viewer; you can save and close.");
     pollStatus(v);
@@ -1053,14 +1059,42 @@ async function upload(file, v, report) {
   }
 }
 
+// Autodesk converts each upload for the viewer, which can take from a minute to well over half an hour for big
+// Rhino files. Progress is saved on the piece, and any page that loads the hub picks up checking where it left off.
+const polling = new Set();
+const statusErrors = new WeakMap();   // viewer -> latest error from the status check itself (not saved)
 async function pollStatus(v) {
-  for (let i = 0; i < 120; i++) {
-    const s = await (await fetch(`${API}/models/${v.urn}/status`)).json().catch(() => ({}));
-    v.progress = s.status === "success" ? "complete" : s.progress || v.progress;
-    render();
-    if (s.status === "success" || s.status === "failed") { if (s.status === "success") saveHub(); return; }
-    await new Promise(r => setTimeout(r, 5000));
+  if (polling.has(v.urn)) return;
+  polling.add(v.urn);
+  const urn = v.urn;
+  try {
+    for (let i = 0; i < 400 && v.urn === urn; i++) {
+      const s = await (await fetch(`${API}/models/${urn}/status`)).json().catch(err => ({ error: err.message }));
+      if (!s.status) { statusErrors.set(v, s.error || "no answer"); render(); }
+      else if (statusErrors.delete(v)) render();
+      if (s.status === "success" || s.status === "failed") {
+        v.progress = s.status === "success" ? "complete" : "failed";
+        if (s.error) v.error = s.error; else delete v.error;
+        await saveHubQuiet();
+        render();
+        return;
+      }
+      if (s.progress && s.progress !== v.progress) { v.progress = s.progress; render(); }
+      await new Promise(r => setTimeout(r, i < 24 ? 5000 : 20000));
+    }
+  } finally {
+    polling.delete(urn);
   }
+}
+function resumeModelChecks() {
+  if (state.mode !== "live") return;
+  for (const p of state.hub.projects) for (const s of p.sections || []) for (const v of s.viewers || [])
+    if (v.urn && v.progress && v.progress !== "complete" && v.progress !== "failed") pollStatus(v);
+}
+// Same as saveHub, without the "Saved" toast (for background updates).
+async function saveHubQuiet() {
+  if (state.mode !== "live") return;
+  await fetch(`${API}/hub`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state.hub) }).catch(() => {});
 }
 
 // ---------- people + comments ----------
@@ -1819,6 +1853,7 @@ document.getElementById("editBtn").addEventListener("click", e => {
   render();
 });
 loadHub().then(() => Promise.all([loadOrders(), loadMe()])).then(() => {
+  resumeModelChecks();
   const fromHash = location.hash.slice(1);
   const boardHash = Object.entries(BOARDS).find(([, b]) => b.hash === fromHash || b.tvHash === fromHash);
   if (boardHash) state.board = boardHash[0];

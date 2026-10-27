@@ -141,7 +141,11 @@ async function route(request, env, url) {
     if (action === "status") {
       const manifest = await aps(env, `/modelderivative/v2/designdata/${urn}/manifest`, { allow404: true });
       if (!manifest) return json({ status: "missing", progress: "0%" });
-      return json({ status: manifest.status, progress: manifest.progress });
+      // On failure, pass Autodesk's own error text along so the hub can show why.
+      const errors = [];
+      const walk = n => { for (const msg of n.messages || []) if (msg.type === "error") errors.push([].concat(msg.message).join(" ")); (n.children || n.derivatives || []).forEach(walk); };
+      walk(manifest);
+      return json({ status: manifest.status, progress: manifest.progress, error: errors[0] || undefined });
     }
     if (action === "thumbnail") {
       const { access_token } = await apsToken(env, "viewables:read");
