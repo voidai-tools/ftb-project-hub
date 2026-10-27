@@ -712,9 +712,9 @@ function vtile(s, v) {
     img.src = `${API}/models/${v.urn}/thumbnail`;
   }
   const ready = v.urn && (!v.progress || v.progress === "complete") && !statusErrors.has(v);
-  tile.append(icon, h("span", { class: "vname" }, v.label && v.label !== s.title ? v.label : "3D model"),
+  tile.append(...[icon, h("span", { class: "vname" }, v.label && v.label !== s.title ? v.label : "3D model"),
     ready ? null : h("span", { class: `state ${st.cls}` }, v.urn ? st.text : "No model yet"),
-    h("span", { class: "vopen" }, "Open 3D Viewer →"));
+    h("span", { class: "vopen" }, "Open 3D Viewer →")].filter(Boolean));
   return tile;
 }
 
