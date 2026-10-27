@@ -145,16 +145,15 @@ body.editing .card-edit { display: inline-flex; }
 .icon-btn { border: 0; background: none; padding: 4px; border-radius: 4px; cursor: pointer; color: var(--ink-2); display: inline-flex; }
 .icon-btn:hover { color: var(--ink); background: var(--paper); }
 
-.viewers { display: grid; gap: 1px; background: var(--rule); border-block: 1px solid var(--rule); }
-.viewers.two { grid-template-columns: 1fr 1fr; }
-.vtile { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; padding: 0; cursor: pointer; background: var(--paper); overflow: hidden; text-align: left; }
-.vtile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.vtile svg.iso { position: absolute; inset: 0; margin: auto; width: 46%; height: 70%; color: var(--layout); opacity: .85; transition: transform .25s ease; }
-.vtile:hover svg.iso { transform: translateY(-3px); }
-.vtile .vlabel { position: absolute; left: 10px; bottom: 8px; right: 10px; display: flex; justify-content: space-between; align-items: end; gap: 6px; }
-.vtile .vname { font: 600 13px/1.2 var(--f-body); background: var(--sheet); padding: 3px 7px; border-radius: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.viewers.two .vlabel { flex-direction: column; align-items: flex-start; left: 8px; right: 8px; }
-.viewers.two .vname { max-width: 100%; }
+.viewers { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; background: var(--rule); border-block: 1px solid var(--rule); }
+.vtile { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; border: 0; padding: 7px 14px 7px 10px; cursor: pointer; background: var(--paper); text-align: left; color: var(--ink); }
+.vtile:hover { background: var(--layout-soft); }
+.vtile .vicon { flex: none; width: 34px; height: 30px; display: grid; place-items: center; border-radius: 4px; overflow: hidden; color: var(--layout); }
+.vtile .vicon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vtile .vicon svg.iso { width: 30px; height: 26px; }
+.vtile .vname { flex: 1; min-width: 0; font: 600 13.5px/1.2 var(--f-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vtile .vopen { flex: none; font: 600 12.5px/1 var(--f-body); color: var(--layout); white-space: nowrap; }
+.vtile:hover .vopen { text-decoration: underline; }
 .state { font: 500 10.5px/1 var(--f-mono); padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
 .state.saved { background: var(--ok-soft); color: var(--ok); }
 .state.expiring { background: var(--warn-soft); color: var(--warn); }
@@ -328,7 +327,9 @@ body.tv .bar, body.tv #main { display: none; }
 /* job photos: a strip on each project page, and the Gallery tab with one album per project */
 .tab-sep { flex: none; align-self: center; width: 1px; height: 22px; background: var(--rule); margin: 0 8px; }
 .tools .tab.gallery { margin-right: 8px; }
-.photos { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; min-height: 36px; }
+.photos { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+/* in the project header, centered between the title and the counts */
+.head .photos { flex: 1 1 340px; max-width: 620px; min-width: 0; margin-inline: auto; align-self: center; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 10px; background: var(--sheet); }
 .photos > b { font: 700 15px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
 .photos .count { font: 500 11px/1 var(--f-mono); color: var(--ink-2); margin-left: -4px; }
 .photos .ph-empty { flex: 1; }
@@ -601,6 +602,7 @@ function render() {
     h("div", {},
       h("div", { class: "eyebrow" }, [p.client, p.status].filter(Boolean).join(" · ") || "Project"),
       h("h1", {}, p.name)),
+    photoStrip(p),
     h("div", { class: "tally" },
       h("div", {}, h("b", {}, builds), "units to build"),
       h("div", {}, h("b", {}, viewers.filter(v => v.urn).length + "/" + viewers.length), "models saved"),
@@ -615,7 +617,7 @@ function render() {
   const shown = sections.filter(match);
   shown.forEach(s => board.append(card(p, s)));
   board.append(h("button", { class: "add-sec", onclick: () => openSectionEditor(p, null) }, "+ Add piece or link group"));
-  main.append(photoStrip(p), projectNav(board, shown), board);
+  main.append(projectNav(board, shown), board);
   fitBoard();
 }
 
@@ -691,10 +693,12 @@ function card(p, s) {
 
 function vtile(s, v) {
   const st = viewerState(v);
+  // A slim banner: everyone opens the full viewer anyway, so the card doesn't spend height on a preview.
   const tile = h("button", { class: "vtile", onclick: () => openViewer(s, v), "aria-label": `Open 3D viewer: ${v.label || s.title}` });
-  if (v.urn && state.mode === "live") tile.append(h("img", { src: `${API}/models/${v.urn}/thumbnail`, alt: "", loading: "lazy" }));
-  else tile.insertAdjacentHTML("beforeend", ISO);
-  tile.append(h("span", { class: "vlabel" }, h("span", { class: "vname" }, v.label || s.title), h("span", { class: `state ${st.cls}` }, st.text)));
+  const icon = h("span", { class: "vicon" });
+  if (v.urn && state.mode === "live") icon.append(h("img", { src: `${API}/models/${v.urn}/thumbnail`, alt: "", loading: "lazy" }));
+  else icon.insertAdjacentHTML("beforeend", ISO);
+  tile.append(icon, h("span", { class: "vname" }, v.label && v.label !== s.title ? v.label : "3D model"), h("span", { class: `state ${st.cls}` }, st.text), h("span", { class: "vopen" }, "Open 3D Viewer →"));
   return tile;
 }
 
