@@ -36,6 +36,15 @@ const MIGRATIONS = [
   { id: "resources-to-overview", run: hub => {   // 2026-10-27: Ben renamed "Resources + Files" cards to "Overview"
     for (const p of hub.projects) for (const s of p.sections || []) if (/^resources\s*(\+|&|and)\s*files$/i.test(s.title || "")) s.title = "Overview";
   } },
+  { id: "leo-tabletop-model-to-overview", run: hub => {   // 2026-10-28: Ben moved the big tabletop model up to Overview
+    const p = hub.projects.find(x => x.id === "leo-dioramas");
+    const overview = p?.sections?.find(s => /^overview$/i.test(s.title || ""));
+    const top = p?.sections?.find(s => s.id === "leo-tabletop" || /laminate tabletop/i.test(s.title || ""));
+    const moving = (top?.viewers || []).filter(v => v.urn);
+    if (!overview || !moving.length) return;
+    overview.viewers = moving;   // replaces the viewer Overview had
+    top.viewers = [...top.viewers.filter(v => !v.urn), ...(top.viewers.some(v => !v.urn) ? [] : [{ label: top.title }])];
+  } },
 ];
 
 const APS = "https://developer.api.autodesk.com";

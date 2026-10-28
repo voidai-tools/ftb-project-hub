@@ -631,7 +631,8 @@ function render() {
   const sections = p.sections || [];
   const viewers = sections.flatMap(s => s.viewers || []);
   const files = sections.flatMap(s => s.links || []).length;
-  const builds = sections.filter(s => (s.viewers || []).length).reduce((n, s) => n + (s.qty || 1), 0);
+  // Overview cards hold reference models for the whole job, not something to build.
+  const builds = sections.filter(s => (s.viewers || []).length && !isOverview(s)).reduce((n, s) => n + (s.qty || 1), 0);
   if (p.archived) main.append(h("div", { class: "notice arch" }, h("span", {}, "This project is archived. It's hidden from the top bar and lives in the Project Archive."),
     h("button", { class: "btn", onclick: openArchive }, "← Back to archive"),
     h("button", { class: "btn", onclick: () => setArchived(p, false) }, "Unarchive")));
@@ -711,6 +712,7 @@ const STAGES = [
   { id: "led", label: "LED", color: "#a21caf" },
   { id: "complete", label: "Complete", color: "#1d7a4a" },
 ];
+const isOverview = s => /^overview$/i.test((s.title || "").trim());
 const stageOf = s => STAGES.find(x => x.id === s.stage);
 function stageTag(p, s) {
   const st = stageOf(s);
@@ -731,7 +733,7 @@ function card(p, s) {
   return h("article", { class: "card" },
     h("div", { class: "card-h" },
       h("h2", {}, s.title),
-      (s.viewers || []).length || s.stage ? stageTag(p, s) : null,
+      !isOverview(s) && ((s.viewers || []).length || s.stage) ? stageTag(p, s) : null,
       h("span", { class: "sp" }),
       s.shared ? h("span", { class: "chip shared" }, "Shared") : null,
       s.qty > 1 ? h("span", { class: "chip qty", title: `Build ${s.qty}` }, `×${s.qty}`) : null,
