@@ -813,20 +813,26 @@ function overlay(panel) {
   return close;
 }
 
-// Autodesk viewer, loaded on first use.
-let adskReady;
-function loadAdsk() {
-  adskReady ||= new Promise((resolve, reject) => {
-    const css = h("link", { rel: "stylesheet", href: "https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css" });
-    const js = h("script", { src: "https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js" });
-    js.onload = () => Autodesk.Viewing.Initializer({
-      env: "AutodeskProduction2", api: "streamingV2",
-      getAccessToken: async cb => { const t = await (await fetch(`${API}/viewer-token`)).json(); cb(t.access_token, t.expires_in); },
-    }, resolve);
-    js.onerror = reject;
-    document.head.append(css, js);
+// Autodesk viewer. It runs in its own blank frame so the hub's styles (.search, .panel, .item…) can't leak into
+// the viewer's panels; a shared class name once put an invisible box over the top of the model browser.
+// Resolves with the frame's window, which has its own Autodesk global.
+function loadAdsk(frame) {
+  return new Promise((resolve, reject) => {
+    frame.onload = () => {
+      const win = frame.contentWindow, doc = win.document;
+      const css = doc.createElement("link");
+      css.rel = "stylesheet"; css.href = "https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css";
+      const js = doc.createElement("script");
+      js.src = "https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js";
+      js.onload = () => win.Autodesk.Viewing.Initializer({
+        env: "AutodeskProduction2", api: "streamingV2",
+        getAccessToken: async cb => { const t = await (await fetch(`${API}/viewer-token`)).json(); cb(t.access_token, t.expires_in); },
+      }, () => resolve(win));
+      js.onerror = reject;
+      doc.head.append(css, js);
+    };
+    frame.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;overflow:hidden;background:#eef0f3}#v{position:absolute;inset:0}</style></head><body><div id="v"></div></body></html>';
   });
-  return adskReady;
 }
 
 // Optional assembly-instructions GIF for a model, shown in the viewer's side panel. Uploaded as-is so it stays animated.
@@ -902,14 +908,17 @@ function openViewer(s, v) {
   } else if (v.urn && v.progress && v.progress !== "complete") {
     stage.append(placeholder(`Still converting for the viewer (${v.progress}). Big Rhino files can take a while; this page keeps checking.`));
   } else if (v.urn && state.mode === "live") {
-    const box = h("div", { class: "adsk" });
-    stage.append(box);
-    loadAdsk().then(() => {
-      const viewer = new Autodesk.Viewing.GuiViewer3D(box);
+    const frame = h("iframe", { class: "adsk", title: v.label || s.title, allow: "fullscreen", allowfullscreen: true });
+    stage.append(frame);
+    loadAdsk(frame).then(win => {
+      const A = win.Autodesk;
+      const viewer = new A.Viewing.GuiViewer3D(win.document.getElementById("v"));
       viewer.start();
       panel.onclose = () => viewer.finish();
-      Autodesk.Viewing.Document.load(`urn:${v.urn}`, doc => viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry())
-        .then(() => markups(viewer, v, stage, markBox)),
+      // Keys pressed inside the frame don't reach the page, so pass Escape on (unless a markup is being drawn).
+      win.addEventListener("keydown", e => { if (e.key === "Escape" && !stage.querySelector(".mk-bar")) close(); });
+      A.Viewing.Document.load(`urn:${v.urn}`, doc => viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry())
+        .then(() => markups(A, viewer, v, stage, markBox)),
         () => stage.replaceChildren(placeholder("This model is still processing or failed to convert. Try again in a minute.")));
     }).catch(() => stage.replaceChildren(placeholder("Couldn't load the Autodesk viewer.")));
   } else if (v.shareUrl && state.mode === "live") {
@@ -932,10 +941,10 @@ function modelDownload(v) {
 const MK_TOOLS = [["Arrow", "EditModeArrow"], ["Cloud", "EditModeCloud"], ["Box", "EditModeRectangle"],
   ["Circle", "EditModeCircle"], ["Text", "EditModeText"], ["Draw", "EditModeFreehand"]];
 const MK_COLORS = ["#e53935", "#fb8c00", "#1e88e5", "#43a047", "#111111"];
-async function markups(viewer, v, stage, box) {
+async function markups(A, viewer, v, stage, box) {
   const ext = await viewer.loadExtension("Autodesk.Viewing.MarkupsCore").catch(() => null);
   if (!ext) return;
-  const Core = Autodesk.Viewing.Extensions.Markups.Core;
+  const Core = A.Viewing.Extensions.Markups.Core;
   const base = `${API}/models/${v.urn}/markups`;
   let list = [], shown = null, editing = false;
   const status = h("span", { class: "hint" });
