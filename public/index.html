@@ -990,13 +990,17 @@ function openSectionEditor(p, s, opts = {}) {
       h("button", { class: "btn", type: "button", onclick: () => { draft.viewers.push({ label: "" }); drawViewers(); } }, "+ Add model")),
       h("span", { class: "hint" }, "Add one per part that needs its own assembly view (each gets its own name and assembly GIF)."));
     draft.viewers.forEach((v, i) => {
-      const file = h("input", { type: "file", accept: ".3dm,.skp,.step,.stp,.iges,.igs,.obj,.fbx,.dwg,.f3d,.ipt,.iam,.sldprt,.sldasm,.stl,.zip" });
-      file.onchange = () => upload(file.files[0], v, msg => { status.textContent = msg; });
+      // One model file, or several at once (an OBJ with its MTL and textures); a whole folder via the button below.
+      const file = h("input", { type: "file", multiple: true, accept: ".3dm,.skp,.step,.stp,.iges,.igs,.obj,.mtl,.fbx,.dwg,.f3d,.ipt,.iam,.sldprt,.sldasm,.stl,.dae,.gltf,.glb,.bin,.zip,image/*" });
+      file.onchange = () => upload(file.files, v, msg => { status.textContent = msg; });
+      const dir = h("input", { type: "file", webkitdirectory: true, style: "display:none" });
+      dir.onchange = () => upload(dir.files, v, msg => { status.textContent = msg; });
       const status = h("span", { class: "hint" }, v.urn ? "Saved in FTB storage." : "");
       vbox.append(h("div", { class: "item" },
         field("Name", h("input", { value: v.label || "", placeholder: "Base frame, Top cap…", oninput: e => v.label = e.target.value })),
         h("div", { class: "row" },
           field("Upload model (kept permanently)", state.mode === "live" ? file : h("span", { class: "hint" }, "Available on the deployed hub")),
+          state.mode === "live" ? h("button", { class: "btn", type: "button", title: "For an OBJ with its MTL and texture images, or any model that needs its other files", onclick: () => dir.click() }, "Upload a folder") : null, dir,
           h("button", { class: "btn ghost danger", type: "button", onclick: () => { draft.viewers.splice(i, 1); drawViewers(); } }, "Remove")),
         status,
         field("Or Sketchfab link", h("input", { value: v.sketchfab || "", placeholder: "https://sketchfab.com/3d-models/…", oninput: e => v.sketchfab = e.target.value.trim() })),
@@ -1134,17 +1138,82 @@ function importBookmarks(html) {
 }
 
 // Upload straight from the browser to the persistent APS bucket, then start conversion.
-async function upload(file, v, report) {
-  if (!file) return;
+// Models that come with extra files (OBJ + MTL + textures, assemblies) go up as one zip. Autodesk unpacks it and
+// starts from rootFilename, so the textures stay linked. A picked folder or several files get zipped here first.
+const MODEL_EXT = ["obj", "3dm", "skp", "fbx", "step", "stp", "iges", "igs", "dwg", "f3d", "iam", "ipt", "sldasm", "sldprt", "stl", "dae", "gltf", "glb"];
+function pickRoot(names) {
+  const ext = n => n.split(".").pop().toLowerCase();
+  const models = names.filter(n => MODEL_EXT.includes(ext(n)) && !/(^|\/)(__MACOSX|\.)/.test(n));
+  models.sort((a, b) => MODEL_EXT.indexOf(ext(a)) - MODEL_EXT.indexOf(ext(b)) || a.split("/").length - b.split("/").length);
+  return models[0] || "";
+}
+const CRC = Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xedb88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+function crc32(bytes) { let c = ~0; for (let i = 0; i < bytes.length; i++) c = CRC[(c ^ bytes[i]) & 255] ^ (c >>> 8); return ~c >>> 0; }
+// Stored (uncompressed) zip: textures are already compressed, and this keeps it small and fast.
+async function zipFiles(entries) {   // [{ name, file }]
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const { name, file } of entries) {
+    const data = new Uint8Array(await file.arrayBuffer()), nm = enc.encode(name), crc = crc32(data);
+    const head = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, 0, 2], [12, 0x21, 2], [14, crc, 4], [18, data.length, 4], [22, data.length, 4], [26, nm.length, 2], [28, 0, 2]]
+      .forEach(([o, val, n]) => n === 4 ? head.setUint32(o, val, true) : head.setUint16(o, val, true));
+    const cd = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, 0, 2], [14, 0x21, 2], [16, crc, 4], [20, data.length, 4], [24, data.length, 4],
+      [28, nm.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, offset, 4]]
+      .forEach(([o, val, n]) => n === 4 ? cd.setUint32(o, val, true) : cd.setUint16(o, val, true));
+    parts.push(head, nm, data); central.push(cd, nm);
+    offset += 30 + nm.length + data.length;
+  }
+  const cdSize = central.reduce((n, x) => n + x.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, entries.length, 2], [10, entries.length, 2], [12, cdSize, 4], [16, offset, 4], [20, 0, 2]]
+    .forEach(([o, val, n]) => n === 4 ? end.setUint32(o, val, true) : end.setUint16(o, val, true));
+  return new Blob([...parts, ...central, end], { type: "application/zip" });
+}
+// File names inside a zip someone picked, read from its central directory.
+async function zipNames(file) {
+  const tail = new DataView(await file.slice(Math.max(0, file.size - 65557)).arrayBuffer());
+  let e = -1;
+  for (let i = tail.byteLength - 22; i >= 0; i--) if (tail.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) return [];
+  const count = tail.getUint16(e + 10, true), size = tail.getUint32(e + 12, true), start = tail.getUint32(e + 16, true);
+  const cd = new DataView(await file.slice(start, start + size).arrayBuffer()), dec = new TextDecoder(), names = [];
+  for (let i = 0, o = 0; i < count && o + 46 <= cd.byteLength; i++) {
+    const n = cd.getUint16(o + 28, true), x = cd.getUint16(o + 30, true), c = cd.getUint16(o + 32, true);
+    names.push(dec.decode(new Uint8Array(cd.buffer, o + 46, n)));
+    o += 46 + n + x + c;
+  }
+  return names;
+}
+
+async function upload(picked, v, report) {
+  const files = [...(picked?.length != null ? picked : [picked])].filter(Boolean);
+  if (!files.length) return;
   try {
+    let file = files[0], rootFilename = "", name = file.name;
+    if (files.length > 1) {
+      // A folder (or several files): keep paths inside the folder so the OBJ still finds its MTL and textures.
+      const entries = files.map(f => ({ name: (f.webkitRelativePath || f.name).split("/").slice(f.webkitRelativePath ? 1 : 0).join("/"), file: f }))
+        .filter(e => !/(^|\/)(\.|__MACOSX)/.test(e.name));
+      rootFilename = pickRoot(entries.map(e => e.name));
+      if (!rootFilename) throw new Error("no 3D model file (.obj, .3dm, .skp…) in what you picked");
+      report(`Packing ${entries.length} files…`);
+      const folder = files[0].webkitRelativePath?.split("/")[0];
+      name = `${folder || rootFilename.split("/").pop().replace(/\.[^.]+$/, "")}.zip`;
+      file = new File([await zipFiles(entries)], name, { type: "application/zip" });
+    } else if (/\.zip$/i.test(file.name)) {
+      rootFilename = pickRoot(await zipNames(file));
+      if (!rootFilename) throw new Error("no 3D model file (.obj, .3dm, .skp…) inside that zip");
+    }
     report("Uploading…");
-    const start = await (await fetch(`${API}/models/upload`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name }) })).json();
+    const start = await (await fetch(`${API}/models/upload`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: name }) })).json();
     const put = await fetch(start.url, { method: "PUT", body: file });
     if (!put.ok) throw new Error(`upload failed (${put.status})`);
-    const done = await (await fetch(`${API}/models/complete`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(start) })).json();
+    const done = await (await fetch(`${API}/models/complete`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...start, rootFilename }) })).json();
     if (!done.urn) throw new Error(done.error || "no model id returned");
-    v.urn = done.urn; v.file = file.name; v.progress = "0%"; delete v.error;
-    if (!v.label) v.label = file.name.replace(/\.[^.]+$/, "");
+    v.urn = done.urn; v.file = name; v.progress = "0%"; delete v.error;
+    if (!v.label) v.label = (rootFilename ? rootFilename.split("/").pop() : name).replace(/\.[^.]+$/, "");
     report("Uploaded. Converting for the viewer; you can save and close.");
     pollStatus(v);
   } catch (err) {

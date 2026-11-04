@@ -11,7 +11,8 @@
 //   GET/POST/DELETE /api/photos       -> job photos in R2, per project, plus the Gallery (see photos.js)
 //   GET  /api/viewer-token            -> short-lived APS token, viewables:read only
 //   POST /api/models/upload           -> { fileName } => signed S3 URL for a direct browser upload
-//   POST /api/models/complete         -> { objectKey, uploadKey } => finalize upload + start translation, returns { urn }
+//   POST /api/models/complete         -> { objectKey, uploadKey, rootFilename? } => finalize upload + start translation
+//                                        (rootFilename = the main file inside an uploaded zip), returns { urn }
 //   GET  /api/models/:urn/status      -> translation progress
 //   GET  /api/models/:urn/thumbnail   -> PNG thumbnail
 //   GET  /api/models/:urn/steps       -> assembly steps JSON (written by the Rhino plugin)
@@ -145,13 +146,13 @@ async function route(request, env, url) {
   }
 
   if (pathname === "/api/models/complete" && method === "POST") {
-    const { objectKey, uploadKey } = await request.json();
+    const { objectKey, uploadKey, rootFilename } = await request.json();
     const obj = await aps(env, `/oss/v2/buckets/${env.APS_BUCKET}/objects/${encodeURIComponent(objectKey)}/signeds3upload`, {
       method: "POST",
       body: { uploadKey },
     });
     const urn = toUrn(obj.objectId);
-    await translate(env, urn);
+    await translate(env, urn, rootFilename);
     return json({ urn, objectKey });
   }
 
@@ -261,12 +262,13 @@ async function ensureBucket(env) {
   bucketReady = true;
 }
 
-async function translate(env, urn) {
+// A zip (OBJ + MTL + textures, assemblies) is unpacked by Autodesk, starting from rootFilename inside it.
+async function translate(env, urn, rootFilename) {
   return aps(env, "/modelderivative/v2/designdata/job", {
     method: "POST",
     headers: { "x-ads-force": "true" },
     body: {
-      input: { urn },
+      input: rootFilename ? { urn, compressedUrn: true, rootFilename } : { urn },
       output: { formats: [{ type: "svf2", views: ["2d", "3d"] }] },
     },
   });

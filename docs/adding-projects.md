@@ -109,6 +109,10 @@ Videos work too: pick them alongside photos in **+ Add photos**. They upload as-
 
 A piece can hold several 3D models, one per part that needs its own assembly view. In **Edit**, click **+ Add another model** under a card's models (or **+ Add model** in the piece editor), give it a name such as "Base frame", and upload the file. Each model shows on the card under its own name and gets its own assembly GIF; inside the viewer, buttons along the top of the side panel switch between the card's models.
 
+## OBJ folders and models with textures
+
+An OBJ needs its .mtl and texture images to show in color. In the piece editor, click **Upload a folder** next to "Upload model" and pick the folder that holds the .obj, .mtl and textures (subfolders like `textures/` are kept). You can also select several files at once in the normal picker, or pick a .zip. The hub zips them in the browser and tells Autodesk which file is the model (it prefers .obj, then .3dm, .skp, .fbx and so on). Picking loose files flattens any subfolders, so use **Upload a folder** when the .mtl points into one.
+
 ## Sketchfab models
 
 Instead of uploading, a model slot can show a Sketchfab model: in the piece editor paste the model's Sketchfab page link (https://sketchfab.com/3d-models/…) into **Or Sketchfab link** and Save. The card shows the Sketchfab thumbnail, and the viewer plays Sketchfab's own embed. Sketchfab models have no download button.
