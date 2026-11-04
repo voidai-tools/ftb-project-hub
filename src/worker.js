@@ -17,7 +17,6 @@
 //   GET  /api/models/:urn/steps       -> assembly steps JSON (written by the Rhino plugin)
 //   PUT  /api/models/:urn/steps
 //   GET  /api/models/:urn/download    -> redirect to a short-lived link for the original uploaded file
-//   GET/POST/DELETE /api/models/:urn/markups -> markups drawn in the viewer (see markups.js)
 //
 // Site access is gated by Cloudflare Access in front of the Worker. Most routes trust every request they receive;
 // comments check the signed Access token so each one is tied to a real person.
@@ -28,7 +27,6 @@ import { ticktickRoute, syncTicktick } from "./ticktick.js";
 import { meRoute } from "./auth.js";
 import { commentsRoute } from "./comments.js";
 import { photosRoute } from "./photos.js";
-import { markupsRoute } from "./markups.js";
 import { listOrders, putOrder, deleteOrder } from "./orders.js";
 
 // One-time changes to the live hub document, applied on the next read and remembered in hub.migrations.
@@ -155,12 +153,6 @@ async function route(request, env, url) {
     const urn = toUrn(obj.objectId);
     await translate(env, urn);
     return json({ urn, objectKey });
-  }
-
-  const mk = pathname.match(/^\/api\/models\/([\w-]{1,300})\/markups(?:\/([\w-]{1,80}))?$/);
-  if (mk) {
-    const res = await markupsRoute(request, env, mk[1], mk[2]);
-    if (res) return res;
   }
 
   const m = pathname.match(/^\/api\/models\/([\w-]+)\/(status|thumbnail|steps|download)$/);

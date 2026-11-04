@@ -105,9 +105,13 @@ Every piece with a 3D model slot (except Overview cards) has a status tag next t
 
 Videos work too: pick them alongside photos in **+ Add photos**. They upload as-is (MP4, MOV or WebM, up to 100 MB each) with a progress percentage, show a ▶ badge in strips and albums, and play in the full-size viewer.
 
-## Markups on models
+## Several models on one card
 
-Open a piece's 3D viewer and click **+ New markup** in the side panel. Pick a tool (Arrow, Cloud, Box, Circle, Text, Draw) and a color, draw on the model, optionally name it, then **Save**. Markups are drawn on top of the current camera view, so each one remembers that view: clicking a saved markup in the list moves the camera back and shows it; click it again to hide it. Everyone sees everyone's markups; you can delete your own. They're stored in KV as `markup:<urn>:<id>`.
+A piece can hold several 3D models, one per part that needs its own assembly view. In **Edit**, click **+ Add another model** under a card's models (or **+ Add model** in the piece editor), give it a name such as "Base frame", and upload the file. Each model shows on the card under its own name and gets its own assembly GIF; inside the viewer, buttons along the top of the side panel switch between the card's models.
+
+## Sketchfab models
+
+Instead of uploading, a model slot can show a Sketchfab model: in the piece editor paste the model's Sketchfab page link (https://sketchfab.com/3d-models/…) into **Or Sketchfab link** and Save. The card shows the Sketchfab thumbnail, and the viewer plays Sketchfab's own embed. Sketchfab models have no download button.
 
 ## Downloading models
 

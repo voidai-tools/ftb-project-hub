@@ -204,26 +204,16 @@ body.editing .add-sec { display: block; }
 .vstage .placeholder svg { width: 140px; height: 140px; margin: 0 auto; color: var(--layout); }
 .vside { border-left: 1px solid var(--rule); padding: 18px; overflow: auto; display: grid; align-content: start; gap: 16px; }
 .vside h3 { font: 700 24px/1 var(--f-display); text-transform: uppercase; margin: 6px 0 0; }
-.asm, .mk { display: grid; gap: 8px; }
-.mk[hidden] { display: none; }
+.asm { display: grid; gap: 8px; }
+.vswitch { display: flex; flex-wrap: wrap; gap: 6px; }
+.add-model { display: none; border: 0; background: var(--paper); color: var(--ink-2); padding: 8px 14px; text-align: left; cursor: pointer; font: 500 12.5px/1 var(--f-body); }
+.add-model:hover { color: var(--layout); background: var(--layout-soft); }
+body.editing .add-model { display: block; }
 .vrow { display: flex; align-items: stretch; min-width: 0; }
 .vrow .vtile { flex: 1 1 auto; min-width: 0; }
 .vdl { flex: none; display: grid; place-items: center; width: 40px; border-left: 1px solid var(--rule); background: var(--paper); color: var(--ink-2); text-decoration: none; font-size: 16px; }
 .vside a.btn { text-decoration: none; text-align: center; }
 .vdl:hover { background: var(--layout-soft); color: var(--layout); }
-.mk-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.mk-list li { display: flex; align-items: center; gap: 6px; }
-.mk-item { flex: 1 1 auto; min-width: 0; text-align: left; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); padding: 7px 10px; cursor: pointer; color: var(--ink); }
-.mk-item[aria-pressed="true"] { border-color: #e53935; box-shadow: inset 3px 0 0 #e53935; }
-.mk-item b { display: block; font: 600 13px/1.25 var(--f-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mk-item span { font-size: 12px; color: var(--ink-2); }
-.mk-bar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 20; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; align-items: center;
-  background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.18); max-width: calc(100% - 20px); }
-.mk-bar .btn { padding: 5px 9px; font-size: 13px; }
-.mk-bar input[type=text] { width: 140px; padding: 5px 8px; border: 1px solid var(--rule); border-radius: 6px; font: inherit; font-size: 13px; }
-.mk-bar .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--sheet); outline: 1px solid var(--rule); cursor: pointer; padding: 0; }
-.mk-bar .sw[aria-pressed="true"] { outline: 2px solid var(--ink); }
-.mk-bar .div { width: 1px; align-self: stretch; background: var(--rule); margin: 0 2px; }
 .asm-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .asm-h b { font: 600 15px/1 var(--f-display); text-transform: uppercase; letter-spacing: .05em; }
 .asm-h .r { display: flex; gap: 2px; }
@@ -529,10 +519,15 @@ const ISO = `<svg class="iso" viewBox="0 0 120 100" fill="none" stroke="currentC
   <path d="M60 8 L108 32 L108 72 L60 96 L12 72 L12 32 Z"/><path d="M12 32 L60 56 L108 32 M60 56 L60 96"/>
   <path d="M36 20 L84 44 M84 44 L84 84" stroke-dasharray="3 4" opacity=".55"/></svg>`;
 
+// Sketchfab links end in the model's 32-character id (…/3d-models/some-name-<id>, or …/models/<id>).
+const sketchfabId = url => (url || "").match(/sketchfab\.com\/.*?([0-9a-f]{32})/i)?.[1] || "";
+const hasModel = v => !!(v.urn || sketchfabId(v.sketchfab));
+
 function viewerState(v) {
   if (v.urn && v.progress === "failed") return { cls: "expiring", text: "Conversion failed" };
   if (v.urn && statusErrors.has(v)) return { cls: "expiring", text: "Can't reach Autodesk" };
   if (v.urn) return { cls: "saved", text: v.progress && v.progress !== "complete" ? `Processing ${v.progress}` : "Saved in FTB storage" };
+  if (sketchfabId(v.sketchfab)) return { cls: "saved", text: "Sketchfab" };
   if (v.shareUrl) return { cls: "expiring", text: "Share link" };
   return { cls: "none", text: "No model yet" };
 }
@@ -643,7 +638,7 @@ function render() {
     photoStrip(p),
     h("div", { class: "tally" },
       h("div", {}, h("b", {}, builds), "units to build"),
-      h("div", {}, h("b", {}, viewers.filter(v => v.urn).length + "/" + viewers.length), "models saved"),
+      h("div", {}, h("b", {}, viewers.filter(hasModel).length + "/" + viewers.length), "models saved"),
       h("div", {}, h("b", {}, files), "files + links"),
       state.editing ? h("button", { class: "btn", onclick: () => openProjectEditor(p) }, "Project settings") : null)));
 
@@ -742,7 +737,8 @@ function card(p, s) {
         h("button", { class: "icon-btn", title: "Move down", "aria-label": "Move down", onclick: () => move(p, s, 1) }, "↓"),
         h("button", { class: "icon-btn", title: "Duplicate", "aria-label": `Duplicate ${s.title}`, onclick: () => duplicate(p, s) }, "⧉"),
         h("button", { class: "icon-btn", title: "Edit", "aria-label": `Edit ${s.title}`, onclick: () => openSectionEditor(p, s) }, "✎"))),
-    vs.length ? h("div", { class: "viewers" + (vs.length > 1 ? " two" : "") }, vs.map(v => vtile(s, v))) : null,
+    vs.length ? h("div", { class: "viewers" + (vs.length > 1 ? " two" : "") }, vs.map(v => vtile(s, v)),
+      h("button", { class: "add-model", type: "button", onclick: () => openSectionEditor(p, s, { addModel: true }) }, "+ Add another model")) : null,
     (s.refs || []).length ? h("div", { class: "refs" + (s.refs.length > 1 ? " many" : "") },
       s.refs.map((r, i) => h("button", { class: "ref", "aria-label": `Open reference image ${i + 1} for ${s.title}`, onclick: () => openRefs(s, i) },
         h("img", { src: r.url, alt: "", loading: "lazy" }))),
@@ -766,10 +762,16 @@ function vtile(s, v) {
     const img = new Image();
     img.onload = () => icon.replaceChildren(img);
     img.src = `${API}/models/${v.urn}/thumbnail`;
+  } else if (!v.urn && sketchfabId(v.sketchfab)) {
+    fetch(`https://api.sketchfab.com/v3/models/${sketchfabId(v.sketchfab)}`).then(r => r.ok ? r.json() : null).then(m => {
+      const imgs = (m?.thumbnails?.images || []).sort((a, b) => a.width - b.width);
+      const pic = imgs.find(x => x.width >= 100) || imgs.at(-1);
+      if (pic) icon.replaceChildren(h("img", { src: pic.url, alt: "" }));
+    }).catch(() => {});
   }
   const ready = v.urn && (!v.progress || v.progress === "complete") && !statusErrors.has(v);
-  tile.append(...[icon, h("span", { class: "vname" }, v.label && v.label !== s.title ? v.label : "3D model"),
-    ready ? null : h("span", { class: `state ${st.cls}` }, v.urn ? st.text : "No model yet"),
+  tile.append(...[icon, h("span", { class: "vname" }, v.label || s.title),
+    ready ? null : h("span", { class: `state ${st.cls}` }, hasModel(v) ? st.text : "No model yet"),
     h("span", { class: "vopen" }, "Open 3D Viewer →")].filter(Boolean));
   if (!(v.urn && state.mode === "live")) return tile;
   return h("div", { class: "vrow" }, tile,
@@ -888,22 +890,28 @@ function asmBox(s, v) {
 
 function openViewer(s, v) {
   const stage = h("div", { class: "vstage" });
-  const markBox = h("div", { class: "mk", hidden: true });
   const notes = (s.notes || "").split("\n").filter(Boolean);
   const panel = h("div", { class: "panel viewer-panel", role: "dialog", "aria-label": v.label || s.title },
     stage,
     h("aside", { class: "vside" },
-      h("div", {}, h("div", { class: "eyebrow" }, s.qty > 1 ? `Build ×${s.qty}` : "Build ×1"), h("h3", {}, v.label || s.title)),
+      h("div", {}, h("div", { class: "eyebrow" }, [s.title !== (v.label || s.title) ? s.title : "", s.qty > 1 ? `Build ×${s.qty}` : "Build ×1"].filter(Boolean).join(" · ")),
+        h("h3", {}, v.label || s.title)),
+      (s.viewers || []).length > 1 ? h("div", { class: "vswitch", role: "group", "aria-label": "Models on this card" },
+        s.viewers.map((o, i) => h("button", { class: "btn sm", type: "button", "aria-pressed": String(o === v),
+          onclick: () => { if (o !== v) { close(); openViewer(s, o); } } }, o.label || `Model ${i + 1}`))) : null,
       notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
       (s.materials || []).length ? h("div", { class: "mats" }, s.materials.map(m => h("span", { class: "mat" }, m))) : null,
-      markBox,
       asmBox(s, v),
       (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null,
       v.urn && state.mode === "live" ? h("a", { class: "btn", href: modelDownload(v), download: "" }, `⤓ Download ${v.file ? v.file : "model file"}`) : null,
       h("button", { class: "btn", onclick: () => close() }, "Close")));
   const close = overlay(panel);
 
-  if (v.urn && v.progress === "failed") {
+  const sfId = !v.urn && sketchfabId(v.sketchfab);
+  if (sfId) {
+    stage.append(h("iframe", { src: `https://sketchfab.com/models/${sfId}/embed?autostart=1&ui_hint=0&ui_theme=dark`, title: v.label || s.title,
+      allow: "autoplay; fullscreen; xr-spatial-tracking", allowfullscreen: true }));
+  } else if (v.urn && v.progress === "failed") {
     stage.append(placeholder(`Autodesk couldn't convert this file${v.error ? `: ${v.error.replace(/\.?$/, ".")}` : "."} Turn on Edit and upload it again, or try exporting it in another format.`));
   } else if (v.urn && v.progress && v.progress !== "complete") {
     stage.append(placeholder(`Still converting for the viewer (${v.progress}). Big Rhino files can take a while; this page keeps checking.`));
@@ -915,10 +923,9 @@ function openViewer(s, v) {
       const viewer = new A.Viewing.GuiViewer3D(win.document.getElementById("v"));
       viewer.start();
       panel.onclose = () => viewer.finish();
-      // Keys pressed inside the frame don't reach the page, so pass Escape on (unless a markup is being drawn).
-      win.addEventListener("keydown", e => { if (e.key === "Escape" && !stage.querySelector(".mk-bar")) close(); });
-      A.Viewing.Document.load(`urn:${v.urn}`, doc => viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry())
-        .then(() => markups(A, viewer, v, stage, markBox)),
+      // Keys pressed inside the frame don't reach the page, so pass Escape on.
+      win.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+      A.Viewing.Document.load(`urn:${v.urn}`, doc => viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry()),
         () => stage.replaceChildren(placeholder("This model is still processing or failed to convert. Try again in a minute.")));
     }).catch(() => stage.replaceChildren(placeholder("Couldn't load the Autodesk viewer.")));
   } else if (v.shareUrl && state.mode === "live") {
@@ -936,104 +943,6 @@ function modelDownload(v) {
   return `${API}/models/${v.urn}/download` + (v.file ? `?name=${encodeURIComponent(v.file)}` : "");
 }
 
-// Markups: Autodesk's MarkupsCore draws on top of the current camera view. Each saved markup keeps the SVG and the
-// view it was drawn from, so showing one moves the camera back there first. Everyone sees everyone's markups.
-const MK_TOOLS = [["Arrow", "EditModeArrow"], ["Cloud", "EditModeCloud"], ["Box", "EditModeRectangle"],
-  ["Circle", "EditModeCircle"], ["Text", "EditModeText"], ["Draw", "EditModeFreehand"]];
-const MK_COLORS = ["#e53935", "#fb8c00", "#1e88e5", "#43a047", "#111111"];
-async function markups(A, viewer, v, stage, box) {
-  const ext = await viewer.loadExtension("Autodesk.Viewing.MarkupsCore").catch(() => null);
-  if (!ext) return;
-  const Core = A.Viewing.Extensions.Markups.Core;
-  const base = `${API}/models/${v.urn}/markups`;
-  let list = [], shown = null, editing = false;
-  const status = h("span", { class: "hint" });
-  box.hidden = false;
-
-  async function load() {
-    try { list = (await (await fetch(base)).json()).markups || []; } catch { list = []; }
-    draw();
-  }
-  function hideShown() {
-    if (!shown) return;
-    ext.unloadMarkupsAllLayers(); ext.hide(); shown = null;
-  }
-  function show(m) {
-    if (editing) return;
-    if (shown === m.id) { hideShown(); draw(); return; }
-    hideShown();
-    if (m.view) viewer.restoreState(m.view, null, true);
-    ext.show(); ext.loadMarkups(m.svg, m.id); shown = m.id;
-    draw();
-  }
-  function draw() {
-    const mine = m => state.me?.email && m.email === state.me.email;
-    box.replaceChildren(
-      h("div", { class: "asm-h" }, h("b", {}, "Markups"),
-        h("button", { class: "btn ghost sm", type: "button", disabled: editing, onclick: startEdit }, "+ New markup")),
-      list.length ? h("ul", { class: "mk-list" }, list.map(m => h("li", {},
-        h("button", { class: "mk-item", type: "button", "aria-pressed": String(shown === m.id), title: shown === m.id ? "Hide" : "Show on the model", onclick: () => show(m) },
-          h("b", {}, m.title), h("span", {}, `${m.name || m.email} · ${ago(m.at)}`)),
-        mine(m) ? h("button", { class: "icon-btn", type: "button", title: "Delete", "aria-label": `Delete markup ${m.title}`, onclick: async () => {
-          if (!confirm(`Delete the markup "${m.title}"?`)) return;
-          const res = await fetch(`${base}/${m.id}`, { method: "DELETE" });
-          if (!res.ok) { status.textContent = (await res.json().catch(() => ({}))).error || "Couldn't delete"; return; }
-          if (shown === m.id) hideShown();
-          list = list.filter(x => x !== m); draw();
-        } }, "×") : null))) : h("span", { class: "hint" }, "Circle a problem or point something out, right on the model."),
-      status);
-  }
-
-  function startEdit() {
-    if (state.mode === "live" && !state.me?.signedIn) { status.textContent = "Sign in to add markups."; return; }
-    hideShown();
-    editing = true; status.textContent = ""; draw();
-    ext.enterEditMode();
-    let color = MK_COLORS[0], tool = MK_TOOLS[0][1];
-    const name = h("input", { type: "text", placeholder: "Name (optional)", "aria-label": "Markup name" });
-    const toolBtns = MK_TOOLS.map(([label, mode]) => h("button", { class: "btn", type: "button", onclick: () => { tool = mode; setMode(); } }, label));
-    const colorBtns = MK_COLORS.map(c => h("button", { class: "sw", type: "button", style: `background:${c}`, "aria-label": `Color ${c}`, onclick: () => { color = c; setMode(); } }));
-    function setMode() {
-      const mode = new Core[tool](ext);
-      ext.changeEditMode(mode);
-      const st = mode.getStyle();
-      if ("stroke-color" in st) st["stroke-color"] = color;
-      if ("font-size" in st) st["font-size"] = Math.max(st["font-size"] || 0, 14);
-      mode.setStyle(st);
-      toolBtns.forEach((b, i) => b.setAttribute("aria-pressed", String(MK_TOOLS[i][1] === tool)));
-      colorBtns.forEach((b, i) => b.setAttribute("aria-pressed", String(MK_COLORS[i] === color)));
-    }
-    // Esc inside the markup tools shouldn't close the whole viewer.
-    const keys = e => { if (e.key === "Escape") e.stopPropagation(); };
-    document.addEventListener("keydown", keys, true);
-    function finish() {
-      document.removeEventListener("keydown", keys, true);
-      ext.leaveEditMode(); ext.unloadMarkupsAllLayers(); ext.hide();
-      bar.remove(); editing = false; draw();
-    }
-    const save = h("button", { class: "btn primary", type: "button", onclick: async () => {
-      const svg = ext.generateData();
-      if (!svg || !/<(path|polyline|text|rect|ellipse|g)\b/.test(svg.replace(/^<svg[^>]*>/, ""))) { status.textContent = "Draw something first."; return; }
-      save.disabled = true; save.textContent = "Saving…";
-      try {
-        const res = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: name.value, svg, view: viewer.getState({ viewport: true }) }) });
-        const out = await res.json();
-        if (!res.ok) throw new Error(out.error || "Couldn't save");
-        list.push(out.markup);
-        finish();
-        show(out.markup);
-      } catch (err) { status.textContent = err.message; save.disabled = false; save.textContent = "Save"; }
-    } }, "Save");
-    const bar = h("div", { class: "mk-bar" }, ...toolBtns, h("span", { class: "div" }), ...colorBtns, h("span", { class: "div" }),
-      h("button", { class: "btn", type: "button", title: "Undo", onclick: () => ext.undo() }, "↶"), name, save,
-      h("button", { class: "btn ghost", type: "button", onclick: finish }, "Cancel"));
-    stage.append(bar);
-    setMode();
-  }
-  load();
-}
-
 function placeholder(msg, extra) {
   const ph = h("div", { class: "placeholder" }, h("p", {}, msg), extra);
   ph.insertAdjacentHTML("afterbegin", ISO);
@@ -1043,10 +952,11 @@ function placeholder(msg, extra) {
 // ---------- editors ----------
 function field(label, input) { return h("label", { class: "field" }, h("span", {}, label), input); }
 
-function openSectionEditor(p, s) {
+function openSectionEditor(p, s, opts = {}) {
   const isNew = !s;
   const draft = structuredClone(s || { id: "", title: "", viewers: [{ label: "" }], links: [{ title: "Build Packet Reference Page", url: "", type: "slides" }] });
   draft.viewers ||= []; draft.links ||= []; draft.refs ||= [];
+  if (opts.addModel) draft.viewers.push({ label: "" });
   const title = h("input", { id: "f-title", value: draft.title, placeholder: "Curved Display Table" });
   const qty = h("input", { id: "f-qty", type: "number", min: "1", value: draft.qty || 1 });
   const shared = h("input", { id: "f-shared", type: "checkbox" }); shared.checked = !!draft.shared;
@@ -1076,18 +986,20 @@ function openSectionEditor(p, s) {
   }
 
   function drawViewers() {
-    vbox.replaceChildren(h("div", { class: "sub-h" }, h("b", {}, "3D viewers"),
-      h("button", { class: "btn", type: "button", onclick: () => { draft.viewers.push({ label: "" }); drawViewers(); } }, "+ Viewer")));
+    vbox.replaceChildren(h("div", { class: "sub-h" }, h("b", {}, "3D models"),
+      h("button", { class: "btn", type: "button", onclick: () => { draft.viewers.push({ label: "" }); drawViewers(); } }, "+ Add model")),
+      h("span", { class: "hint" }, "Add one per part that needs its own assembly view (each gets its own name and assembly GIF)."));
     draft.viewers.forEach((v, i) => {
       const file = h("input", { type: "file", accept: ".3dm,.skp,.step,.stp,.iges,.igs,.obj,.fbx,.dwg,.f3d,.ipt,.iam,.sldprt,.sldasm,.stl,.zip" });
       file.onchange = () => upload(file.files[0], v, msg => { status.textContent = msg; });
       const status = h("span", { class: "hint" }, v.urn ? "Saved in FTB storage." : "");
       vbox.append(h("div", { class: "item" },
-        field("Label", h("input", { value: v.label || "", oninput: e => v.label = e.target.value })),
+        field("Name", h("input", { value: v.label || "", placeholder: "Base frame, Top cap…", oninput: e => v.label = e.target.value })),
         h("div", { class: "row" },
           field("Upload model (kept permanently)", state.mode === "live" ? file : h("span", { class: "hint" }, "Available on the deployed hub")),
           h("button", { class: "btn ghost danger", type: "button", onclick: () => { draft.viewers.splice(i, 1); drawViewers(); } }, "Remove")),
         status,
+        field("Or Sketchfab link", h("input", { value: v.sketchfab || "", placeholder: "https://sketchfab.com/3d-models/…", oninput: e => v.sketchfab = e.target.value.trim() })),
         field("Or Autodesk share link (may expire)", h("input", { value: v.shareUrl || "", placeholder: "https://autode.sk/…", oninput: e => v.shareUrl = e.target.value }))));
     });
   }
