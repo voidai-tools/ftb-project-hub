@@ -120,3 +120,9 @@ Instead of uploading, a model slot can show a Sketchfab model: in the piece edit
 ## Downloading models
 
 Every uploaded model keeps its original file (the .3dm, .skp and so on) in our persistent Autodesk bucket. The ⤓ button next to "Open 3D Viewer" on a card, and **Download** in the viewer's side panel, fetch that original file through a link that expires after 10 minutes. Models added only as Autodesk share links have no download.
+
+## Sharing a model outside FTB
+
+Open an uploaded model's viewer and click **Get a view-only link** under "Share outside FTB", then **Copy**. Anyone with the link (ftbshop.fun/share/…) sees just that one model in the Autodesk viewer, with no login and no access to the rest of the hub. Each model has one link; **Turn off** kills it, and getting a new one later makes a different link. Links don't expire on their own (Ben's call, 2026-11-11). KV keys: `share:<token>`, `shareFor:<urn>` (src/shares.js).
+
+This needs a Cloudflare Access rule so outsiders skip the team login on that path only: Zero Trust → Access → Applications → Add an application → Self-hosted, name "FTB Hub shared models", domain ftbshop.fun with path `share`, and one policy with action **Bypass** and include **Everyone**. Everything else on ftbshop.fun stays behind the "FTB Hub" app.

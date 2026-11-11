@@ -206,6 +206,8 @@ body.editing .add-sec { display: block; }
 .vside h3 { font: 700 24px/1 var(--f-display); text-transform: uppercase; margin: 6px 0 0; }
 .asm { display: grid; gap: 8px; }
 .vswitch { display: flex; flex-wrap: wrap; gap: 6px; }
+.share-row { display: flex; gap: 6px; }
+.share-row input { flex: 1 1 auto; min-width: 0; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); font-size: 12.5px; }
 .add-model { display: none; border: 0; background: var(--paper); color: var(--ink-2); padding: 8px 14px; text-align: left; cursor: pointer; font: 500 12.5px/1 var(--f-body); }
 .add-model:hover { color: var(--layout); background: var(--layout-soft); }
 body.editing .add-model { display: block; }
@@ -902,6 +904,7 @@ function openViewer(s, v) {
       notes.length ? h("ul", { class: "notes" }, notes.map(n => h("li", {}, n))) : null,
       (s.materials || []).length ? h("div", { class: "mats" }, s.materials.map(m => h("span", { class: "mat" }, m))) : null,
       asmBox(s, v),
+      v.urn && state.mode === "live" ? shareBox(s, v) : null,
       (s.links || []).length ? h("ul", { class: "links" }, s.links.map(linkRow)) : null,
       v.urn && state.mode === "live" ? h("a", { class: "btn", href: modelDownload(v), download: "" }, `⤓ Download ${v.file ? v.file : "model file"}`) : null,
       h("button", { class: "btn", onclick: () => close() }, "Close")));
@@ -939,6 +942,44 @@ function openViewer(s, v) {
     stage.append(placeholder("No model yet. Turn on Edit to upload a Rhino, SketchUp or other 3D file."));
   }
 }
+// Public view-only link for one model (for clients and other people without a hub login). See src/shares.js.
+function shareBox(s, v) {
+  const box = h("div", { class: "asm share" });
+  const status = h("span", { class: "hint" });
+  let link = null;
+  async function call(method, path = "", body) {
+    const res = await fetch(`${API}/shares${path}`, { method, headers: body ? { "Content-Type": "application/json" } : {}, body: body && JSON.stringify(body) });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || "Something went wrong");
+    return out;
+  }
+  function draw() {
+    box.replaceChildren(h("div", { class: "asm-h" }, h("b", {}, "Share outside FTB"),
+        link ? h("span", { class: "r" }, h("button", { class: "btn ghost sm danger", type: "button", onclick: async () => {
+          if (!confirm("Turn this link off? Anyone who has it won't be able to open the model anymore.")) return;
+          try { await call("DELETE", `/${link.token}`); link = null; status.textContent = "Link turned off."; } catch (err) { status.textContent = err.message; }
+          draw();
+        } }, "Turn off")) : null),
+      link
+        ? h("div", { class: "share-row" }, h("input", { type: "text", readonly: true, value: link.url, "aria-label": "Share link", onfocus: e => e.target.select() }),
+            h("button", { class: "btn sm", type: "button", onclick: async () => {
+              try { await navigator.clipboard.writeText(link.url); status.textContent = "Copied. Anyone with this link can view this model."; }
+              catch { status.textContent = "Select the link and copy it."; }
+            } }, "Copy"))
+        : h("button", { class: "asm-add", type: "button", onclick: async () => {
+            if (!state.me?.signedIn) { status.textContent = "Sign in to share models."; return; }
+            status.textContent = "Making a link…";
+            try { link = await call("POST", "", { urn: v.urn, label: v.label || s.title, project: state.current }); status.textContent = "Anyone with this link can view this model, without logging in."; }
+            catch (err) { status.textContent = err.message; }
+            draw();
+          } }, "Get a view-only link"),
+      status);
+  }
+  draw();
+  call("GET", `?urn=${encodeURIComponent(v.urn)}`).then(r => { if (r.token) { link = r; draw(); } }).catch(() => {});
+  return box;
+}
+
 function modelDownload(v) {
   return `${API}/models/${v.urn}/download` + (v.file ? `?name=${encodeURIComponent(v.file)}` : "");
 }
