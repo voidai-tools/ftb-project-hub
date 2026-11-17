@@ -7,7 +7,7 @@ routes = [{ pattern = "ftbshop.fun", custom_domain = true }]
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = ["/api/*", "/share/*"]
+run_worker_first = ["/api/*", "/share/*", "/vault", "/vault/", "/vault.html"]
 
 [[kv_namespaces]]
 binding = "HUB"
@@ -34,3 +34,4 @@ ACCESS_AUD = "edf3200dbf383a9108bc7f928db6365cda69ff794868be90e1913a260cb93676"
 #   APS_CLIENT_SECRET
 #   TICKTICK_CLIENT_ID      (optional: TickTick sync, see src/ticktick.js)
 #   TICKTICK_CLIENT_SECRET
+#   VAULT_OWNER             (optional: the one email that can open /vault; without it the first person to open it claims it)

@@ -69,6 +69,14 @@ export async function sharePage(request, env, url, getToken) {
   }
   const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
   const title = share.label || "3D model";
+  const headers = { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer" };
+  // Vault links (src/vault.js) can point at a Sketchfab model instead of an uploaded one.
+  if (share.sketchfab && /^[0-9a-f]{32}$/.test(share.sketchfab)) return new Response(page(title, `
+  <iframe id="v" src="https://sketchfab.com/models/${share.sketchfab}/embed?autostart=1&ui_theme=dark&ui_infos=0&ui_watermark_link=0&dnt=1" title="${esc(title)}"
+    allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen style="border:0;width:100%;height:calc(100% - 52px)"></iframe>`, esc(title), share.dark), { headers });
+  const stage = share.dark
+    ? `viewer.setBackgroundColor(70, 72, 78, 18, 19, 22); viewer.setGroundShadow(true); viewer.setQualityLevel(true, true); viewer.setTheme("dark-theme");`
+    : "";
   return new Response(page(title, `
   <div id="v"></div>
   <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"></script>
@@ -78,13 +86,14 @@ export async function sharePage(request, env, url, getToken) {
       getAccessToken: async cb => { const t = await (await fetch(tokenUrl)).json(); cb(t.access_token, t.expires_in); } }, () => {
       const viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById("v"));
       viewer.start();
+      viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => { ${stage} });
       Autodesk.Viewing.Document.load("urn:" + urn, doc => viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry()),
         () => { document.getElementById("v").innerHTML = "<p class='msg'>This model couldn't be loaded. It may still be processing; try again in a few minutes.</p>"; });
     });
-  </script>`, esc(title)), { headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex", "Referrer-Policy": "no-referrer" } });
+  </script>`, esc(title), share.dark), { headers });
 }
 
-function page(title, body, safeTitle = title) {
+function page(title, body, safeTitle = title, dark = false) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex"><title>${safeTitle} · FTB Design</title>
 <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css">
@@ -92,5 +101,6 @@ function page(title, body, safeTitle = title) {
 header{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;gap:12px;padding:0 14px;background:#fff;border-bottom:1px solid #d9dde3;z-index:10}
 header img{height:30px}header b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #v{position:fixed;top:52px;left:0;right:0;bottom:0}.msg{padding:80px 20px;text-align:center;color:#5b6470}</style></head>
+${dark ? `<style>body{background:#16181c;color:#e8eaed}header{background:#1d1f24;border-color:#2c2f36}.msg{color:#9aa1ab}</style>` : ""}
 <body><header><img src="/share/logo.png" alt="FTB Design"><b>${safeTitle}</b></header>${body}</body></html>`;
 }
