@@ -126,3 +126,13 @@ Every uploaded model keeps its original file (the .3dm, .skp and so on) in our p
 Open an uploaded model's viewer and click **Get a view-only link** under "Share outside FTB", then **Copy**. Anyone with the link (ftbshop.fun/share/…) sees just that one model in the Autodesk viewer, with no login and no access to the rest of the hub. Each model has one link; **Turn off** kills it, and getting a new one later makes a different link. Links don't expire on their own (Ben's call, 2026-11-11). KV keys: `share:<token>`, `shareFor:<urn>` (src/shares.js).
 
 This needs a Cloudflare Access rule so outsiders skip the team login on that path only: Zero Trust → Access → Applications → Add an application → Self-hosted, name "FTB Hub shared models", domain ftbshop.fun with path `share`, and one policy with action **Bypass** and include **Everyone**. Everything else on ftbshop.fun stays behind the "FTB Hub" app.
+
+## Private vault (ftbshop.fun/vault)
+
+Ben's own gallery of models to share with people outside FTB, one link at a time. Nothing in the hub links to it. Only one signed-in email can open it: the `VAULT_OWNER` Worker Secret if set, otherwise whoever opened /vault first (KV `vault:owner`). Everyone else gets a plain "Nothing here" page.
+
+- **Upload model** (or drop a file or folder anywhere on the page): same Autodesk path as hub uploads, so .3dm, .skp, .obj + textures, .stl, .glb and zips all work and the file stays in the persistent bucket.
+- **+ Sketchfab link**: paste a Sketchfab model link; it shows in Sketchfab's own player.
+- Open a model, then **Get a view-only link** and **Copy**. The link is ftbshop.fun/share/… (same public path as hub share links, shown dark), works until **Turn off**. Deleting a model also turns its link off.
+
+KV: `vault` (all items), `share:<token>` with `vault: <itemId>`. Code: src/vault.js, public/vault.html.

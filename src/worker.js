@@ -10,6 +10,7 @@
 //   GET/POST/DELETE /api/comments     -> comments on project items (see comments.js)
 //   GET/POST/DELETE /api/photos       -> job photos in R2, per project, plus the Gallery (see photos.js)
 //   GET/POST/DELETE /api/shares       -> public view-only links for a model; the public page is /share/<token> (see shares.js)
+//   /vault, /api/vault/...            -> the owner's private model gallery, unlinked from the hub (see vault.js)
 //   GET  /api/viewer-token            -> short-lived APS token, viewables:read only
 //   POST /api/models/upload           -> { fileName } => signed S3 URL for a direct browser upload
 //   POST /api/models/complete         -> { objectKey, uploadKey, rootFilename? } => finalize upload + start translation
@@ -30,6 +31,7 @@ import { meRoute } from "./auth.js";
 import { commentsRoute } from "./comments.js";
 import { photosRoute } from "./photos.js";
 import { sharesRoute, sharePage } from "./shares.js";
+import { vaultRoute, vaultPage } from "./vault.js";
 import { listOrders, putOrder, deleteOrder } from "./orders.js";
 
 // One-time changes to the live hub document, applied on the next read and remembered in hub.migrations.
@@ -57,6 +59,10 @@ export default {
     if (url.pathname.startsWith("/share/")) {
       try { return await sharePage(request, env, url, scope => apsToken(env, scope)); }
       catch (err) { return new Response("Something went wrong loading this model.", { status: 500 }); }
+    }
+    if (url.pathname === "/vault" || url.pathname === "/vault/" || url.pathname === "/vault.html") {
+      try { return await vaultPage(request, env, url); }
+      catch (err) { return new Response("Something went wrong.", { status: 500 }); }
     }
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     try {
@@ -135,6 +141,11 @@ async function route(request, env, url) {
   if (om && method === "DELETE") {
     await deleteOrder(env, om[1]);
     return json({ ok: true });
+  }
+
+  if (pathname === "/api/vault" || pathname.startsWith("/api/vault/")) {
+    const res = await vaultRoute(request, env, url);
+    if (res) return res;
   }
 
   if (pathname.startsWith("/api/shares")) {

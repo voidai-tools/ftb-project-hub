@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Vault · FTB Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* The vault: a private, Sketchfab-style gallery. Always dark, so models sit on a gallery-black stage. */
+:root {
+  --bg: #121418; --panel: #1a1d22; --card: #1f2329; --raise: #262a31; --line: #2e333b;
+  --ink: #e9ebee; --ink-2: #9aa2ad; --ink-3: #6c7480;
+  --accent: #7d9cff; --accent-ink: #0d1430; --ok: #5cc98d; --warn: #f0b45a; --bad: #ff7a7a;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body); min-height: 100vh; }
+button, input, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1480px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left, 0px)); }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 5; background: rgba(18,20,24,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.bar .wrap { display: flex; align-items: center; gap: 16px; min-height: 64px; flex-wrap: wrap; padding-block: 8px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img { height: 30px; display: block; }
+.brand b { font: 700 22px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; }
+.brand small { font: 500 11px/1 var(--f-mono); color: var(--ink-3); letter-spacing: .12em; text-transform: uppercase; }
+.search { flex: 1; min-width: 160px; max-width: 420px; margin-left: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.search::placeholder { color: var(--ink-3); }
+.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--raise); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 500; white-space: nowrap; text-decoration: none; }
+.btn:hover { border-color: #444b55; background: #2c313a; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.primary:hover { background: #95afff; }
+.btn.ghost { background: none; }
+.btn.danger { color: var(--bad); background: none; }
+.btn[disabled] { opacity: .5; cursor: default; }
+
+/* gallery */
+.head { display: flex; align-items: baseline; gap: 12px; margin: 28px 0 16px; }
+.head h1 { margin: 0; font: 600 30px/1 var(--f-display); letter-spacing: .03em; }
+.head span { color: var(--ink-3); font: 500 12px/1 var(--f-mono); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; padding-bottom: 60px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; text-align: left; padding: 0; transition: transform .15s, border-color .15s; }
+.card:hover { transform: translateY(-2px); border-color: #454c57; }
+.thumb { position: relative; aspect-ratio: 16 / 10; background: radial-gradient(ellipse at 50% 40%, #3a3e46 0%, #1b1d21 75%); display: grid; place-items: center; overflow: hidden; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.aps img { object-fit: contain; padding: 6%; }
+.thumb .ph { color: var(--ink-3); font: 500 12px/1.4 var(--f-mono); text-align: center; padding: 12px; }
+.badges { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; gap: 6px; }
+.badge { font: 600 10.5px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 5px 7px; border-radius: 5px; background: rgba(10,12,15,.75); color: var(--ink-2); }
+.badge.shared { color: var(--ok); margin-left: auto; }
+.badge.warn { color: var(--warn); }
+.badge.bad { color: var(--bad); }
+.meta { padding: 12px 14px 14px; }
+.meta b { display: block; font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta small { color: var(--ink-3); font: 12px/1.4 var(--f-mono); }
+
+.empty { border: 1.5px dashed var(--line); border-radius: 12px; padding: 64px 20px; text-align: center; color: var(--ink-2); }
+.empty b { display: block; font: 600 22px/1.2 var(--f-display); color: var(--ink); margin-bottom: 6px; }
+
+/* drag and drop + toasts */
+.drop { position: fixed; inset: 0; z-index: 50; display: none; place-items: center; background: rgba(12,14,18,.85); border: 3px dashed var(--accent); font: 600 28px/1 var(--f-display); letter-spacing: .04em; }
+body.dragging .drop { display: grid; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; background: var(--raise); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.5); max-width: calc(100vw - 32px); }
+
+/* model view */
+.view { position: fixed; inset: 0; z-index: 20; background: var(--bg); display: grid; grid-template-columns: 1fr 360px; }
+.stage { position: relative; background: radial-gradient(ellipse at 50% 35%, #484b53 0%, #1c1e22 70%); min-height: 0; }
+.stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.stage .ph { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-2); text-align: center; padding: 20px; }
+.close { position: absolute; top: 12px; left: 12px; z-index: 2; }
+.side { background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.side .name { width: 100%; background: none; border: 1px solid transparent; border-radius: 6px; padding: 4px 6px; margin: -5px -7px; font: 600 26px/1.15 var(--f-display); letter-spacing: .02em; }
+.side .name:hover, .side .name:focus { border-color: var(--line); background: var(--bg); }
+.side h3 { margin: 0 0 8px; font: 600 11px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13px; }
+.facts dt { color: var(--ink-3); }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+.notes { width: 100%; min-height: 90px; resize: vertical; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.share { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.share p { margin: 0; color: var(--ink-2); font-size: 13px; }
+.link { display: flex; gap: 6px; }
+.link input { flex: 1; min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; font: 12px var(--f-mono); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.spacer { flex: 1; }
+
+@media (max-width: 820px) {
+  .view { grid-template-columns: 1fr; grid-template-rows: 58vh auto; overflow-y: auto; }
+  .side { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .brand small, .wide { display: none; }
+  .bar .wrap { gap: 10px; }
+  .brand { margin-right: auto; }
+  .search { order: 3; max-width: none; flex-basis: 100%; }
+}
+</style>
+</head>
+<body>
+<header class="bar"><div class="wrap">
+  <div class="brand"><img src="/ftb-logo.png" alt="FTB Design"><div><b>Vault</b><br><small>Private · only you</small></div></div>
+  <input class="search" id="q" type="search" placeholder="Search models" aria-label="Search models">
+  <button class="btn" id="addSf">+ Sketchfab<span class="wide"> link</span></button>
+  <button class="btn primary" id="up">Upload<span class="wide"> model</span></button>
+  <input type="file" id="file" hidden accept=".3dm,.skp,.step,.stp,.iges,.igs,.obj,.mtl,.fbx,.dwg,.f3d,.ipt,.iam,.sldprt,.sldasm,.stl,.dae,.gltf,.glb,.bin,.zip,image/*" multiple>
+</div></header>
+
+<main class="wrap">
+  <div class="head"><h1>All models</h1><span id="count"></span></div>
+  <div id="grid" class="grid"></div>
+</main>
+<div class="drop">Drop to upload to the vault</div>
+<div id="view"></div>
+
+<script>
+const API = "/api";
+let items = [], query = "";
+const $ = s => document.querySelector(s);
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else if (k === "value") el.value = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  el.append(...kids.flat().filter(k => k != null && k !== false));
+  return el;
+}
+async function call(method, path, body) {
+  const res = await fetch(API + path, { method, headers: body ? { "Content-Type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `${res.status}`);
+  return data;
+}
+let toastTimer;
+function toast(msg, ms = 3500) {
+  document.querySelector(".toast")?.remove();
+  const t = h("div", { class: "toast", role: "status" }, msg);
+  document.body.append(t);
+  clearTimeout(toastTimer);
+  if (ms) toastTimer = setTimeout(() => t.remove(), ms);
+}
+const when = iso => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const ready = it => it.kind === "sketchfab" || it.progress === "complete";
+
+// ---------- gallery ----------
+function render() {
+  const list = items.filter(it => !query || `${it.name} ${it.file || ""} ${it.notes || ""}`.toLowerCase().includes(query));
+  $("#count").textContent = `${items.length} model${items.length === 1 ? "" : "s"}`;
+  const grid = $("#grid");
+  if (!items.length) {
+    grid.replaceChildren(h("div", { class: "empty", style: "grid-column: 1 / -1" },
+      h("b", {}, "Nothing in the vault yet"),
+      "Drop a model anywhere on this page (.3dm, .skp, .obj, .stl, .glb, a zip or a whole folder), or add a Sketchfab link."));
+    return;
+  }
+  grid.replaceChildren(...list.map(card));
+}
+function card(it) {
+  return h("button", { class: "card", onclick: () => open(it) },
+    thumb(it),
+    h("div", { class: "meta" }, h("b", {}, it.name), h("small", {}, `${when(it.createdAt)} · ${it.kind === "sketchfab" ? "Sketchfab" : (it.file?.split(".").pop() || "").toUpperCase()}`)));
+}
+function thumb(it) {
+  const badges = h("div", { class: "badges" });
+  let inner;
+  if (it.kind === "sketchfab") {
+    inner = it.thumb ? h("img", { src: it.thumb, alt: "", loading: "lazy" }) : h("div", { class: "ph" }, "Sketchfab model");
+    badges.append(h("span", { class: "badge" }, "Sketchfab"));
+  } else if (it.progress === "complete") {
+    inner = h("img", { src: `${API}/models/${it.urn}/thumbnail`, alt: "", loading: "lazy" });
+  } else if (it.progress === "failed") {
+    inner = h("div", { class: "ph" }, "Autodesk couldn't convert this file");
+    badges.append(h("span", { class: "badge bad" }, "Failed"));
+  } else {
+    inner = h("div", { class: "ph" }, `Converting for the viewer\n${it.progress || ""}`);
+    badges.append(h("span", { class: "badge warn" }, `Converting ${it.progress || ""}`));
+  }
+  if (it.share) badges.append(h("span", { class: "badge shared" }, "● Shared"));
+  return h("div", { class: `thumb ${it.kind === "upload" ? "aps" : ""}` }, inner, badges);
+}
+
+// ---------- model view ----------
+let current = null;
+function open(it) {
+  current = it;
+  history.replaceState(null, "", `#${it.id}`);
+  const stage = h("div", { class: "stage" },
+    h("button", { class: "btn close", onclick: close, "aria-label": "Back to the vault" }, "← Vault"));
+  if (it.kind === "sketchfab") {
+    stage.append(h("iframe", { src: `https://sketchfab.com/models/${it.sketchfab}/embed?autostart=1&ui_theme=dark&ui_infos=0&dnt=1`, title: it.name,
+      allow: "autoplay; fullscreen; xr-spatial-tracking", allowfullscreen: true }));
+  } else if (it.progress === "complete") {
+    stage.append(adskFrame(it.urn));
+  } else {
+    stage.append(h("div", { class: "ph" }, it.progress === "failed" ? `Autodesk couldn't convert this file.${it.error ? "\n" + it.error : ""}` :
+      `Still converting for the viewer (${it.progress || "0%"}). Big Rhino files can take a while; this page updates by itself.`));
+  }
+  $("#view").replaceChildren(h("div", { class: "view" }, stage, side(it)));
+  document.body.style.overflow = "hidden";
+}
+function close() {
+  current = null;
+  $("#view").replaceChildren();
+  document.body.style.overflow = "";
+  history.replaceState(null, "", location.pathname);
+  render();
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && current && !e.target.closest("input, textarea")) close(); });
+
+function side(it) {
+  const name = h("input", { class: "name", value: it.name, "aria-label": "Model name",
+    onchange: async e => { const v = e.target.value.trim(); if (!v || v === it.name) return; it.name = v; await patch(it, { name: v }); toast("Renamed"); },
+    onkeydown: e => { if (e.key === "Enter") e.target.blur(); } });
+  const notes = h("textarea", { class: "notes", placeholder: "Notes for yourself (not shown on the shared link)",
+    onchange: async e => { it.notes = e.target.value; await patch(it, { notes: it.notes }); toast("Notes saved"); } });
+  notes.value = it.notes || "";
+  const facts = h("dl", { class: "facts" },
+    h("dt", {}, "Added"), h("dd", {}, when(it.createdAt)),
+    it.kind === "sketchfab"
+      ? [h("dt", {}, "Source"), h("dd", {}, h("a", { href: `https://sketchfab.com/models/${it.sketchfab}`, target: "_blank", rel: "noopener" }, "Sketchfab ↗"))]
+      : [h("dt", {}, "File"), h("dd", {}, it.file || "—"), h("dt", {}, "Status"), h("dd", {}, it.progress === "complete" ? "Ready" : it.progress === "failed" ? "Failed" : `Converting ${it.progress || ""}`)]);
+  const actions = h("div", { class: "row" },
+    it.kind === "upload" && h("a", { class: "btn ghost", href: `${API}/models/${it.urn}/download?name=${encodeURIComponent(it.file || "")}` }, "Download original"),
+    h("span", { class: "spacer" }),
+    h("button", { class: "btn danger", onclick: () => remove(it) }, "Delete"));
+  return h("aside", { class: "side" }, name, shareBox(it), h("div", {}, h("h3", {}, "Details"), facts), h("div", {}, h("h3", {}, "Notes"), notes), actions);
+}
+
+function shareBox(it) {
+  const box = h("div", { class: "share" }, h("h3", { style: "margin:0" }, "Share link"));
+  const draw = () => {
+    box.replaceChildren(h("h3", { style: "margin:0" }, "Share link"));
+    if (it.share) {
+      const url = `${location.origin}/share/${it.share}`;
+      const input = h("input", { value: url, readonly: true, onclick: e => e.target.select(), "aria-label": "Share link" });
+      box.append(h("p", {}, "Anyone with this link can look at this one model. No login, nothing else in the vault or hub."),
+        h("div", { class: "link" }, input, h("button", { class: "btn primary", onclick: () => copy(url) }, "Copy")),
+        h("div", { class: "row" }, h("a", { class: "btn ghost", href: url, target: "_blank", rel: "noopener" }, "Preview ↗"), h("span", { class: "spacer" }),
+          h("button", { class: "btn danger", onclick: async () => { if (!confirm("Turn this link off? Anyone who has it will see 'Link not found'.")) return;
+            await call("DELETE", `/vault/items/${it.id}/share`); delete it.share; draw(); toast("Link turned off"); } }, "Turn off")));
+    } else {
+      box.append(h("p", {}, "Make a view-only link to send to someone. It works until you turn it off."),
+        h("button", { class: "btn primary", disabled: !ready(it), onclick: async e => {
+          e.target.disabled = true;
+          try { const r = await call("POST", `/vault/items/${it.id}/share`); it.share = r.token; draw(); copy(r.url); }
+          catch (err) { toast(`Couldn't make a link: ${err.message}`); e.target.disabled = false; }
+        } }, ready(it) ? "Get a view-only link" : "Available once it's converted"));
+    }
+  };
+  draw();
+  return box;
+}
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast("Link copied"); } catch { toast("Select the link and copy it"); }
+}
+async function patch(it, body) {
+  try { Object.assign(it, await call("PATCH", `/vault/items/${it.id}`, body)); } catch (err) { toast(`Didn't save: ${err.message}`); }
+}
+async function remove(it) {
+  if (!confirm(`Delete "${it.name}" from the vault?${it.share ? " Its share link stops working too." : ""}`)) return;
+  await call("DELETE", `/vault/items/${it.id}`);
+  items = items.filter(x => x !== it);
+  close();
+  toast("Deleted");
+}
+
+// Autodesk viewer in its own frame, on a dark Sketchfab-like stage.
+function adskFrame(urn) {
+  const f = h("iframe", { title: "3D model" });
+  f.srcdoc = `<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css">
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#1c1e22}#v{position:absolute;inset:0}</style></head><body><div id="v"></div>
+<script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"><\/script>
+<script>
+Autodesk.Viewing.Initializer({ env: "AutodeskProduction2", api: "streamingV2",
+  getAccessToken: async cb => { const t = await (await fetch("${API}/viewer-token")).json(); cb(t.access_token, t.expires_in); } }, () => {
+  const viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById("v"));
+  viewer.start();
+  viewer.setTheme("dark-theme");
+  viewer.addEventListener(Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
+    viewer.setBackgroundColor(72, 75, 83, 22, 23, 27); viewer.setGroundShadow(true); viewer.setQualityLevel(true, true); viewer.fitToView();
+  });
+  Autodesk.Viewing.Document.load("urn:${urn}", doc => viewer.loadDocumentNode(doc, doc.getRoot().getDefaultGeometry()),
+    () => { document.body.innerHTML = "<p style='color:#9aa2ad;font:14px system-ui;text-align:center;padding-top:30vh'>This model couldn't be loaded.</p>"; });
+});
+<\/script></body></html>`;
+  return f;
+}
+
+// ---------- adding models ----------
+$("#up").onclick = () => $("#file").click();
+$("#file").onchange = e => { uploadFiles([...e.target.files]); e.target.value = ""; };
+$("#q").oninput = e => { query = e.target.value.trim().toLowerCase(); render(); };
+$("#addSf").onclick = async () => {
+  const link = prompt("Paste a Sketchfab model link");
+  if (!link) return;
+  const id = link.match(/sketchfab\.com\/.*?([0-9a-f]{32})/i)?.[1];
+  if (!id) return toast("That doesn't look like a Sketchfab model link (it should end in a long id).");
+  let name = "", thumb;
+  try {
+    const m = await (await fetch(`https://api.sketchfab.com/v3/models/${id}`)).json();
+    name = m.name || "";
+    const imgs = (m.thumbnails?.images || []).sort((a, b) => a.width - b.width);
+    thumb = (imgs.find(i => i.width >= 640) || imgs.at(-1))?.url;
+  } catch {}   // private models don't answer; the name can be set by hand
+  if (!name) name = prompt("Name for this model", "Sketchfab model") || "Sketchfab model";
+  try { items.unshift(await call("POST", "/vault/items", { kind: "sketchfab", sketchfab: id, name, thumb })); render(); toast("Added"); }
+  catch (err) { toast(`Couldn't add it: ${err.message}`); }
+};
+
+// Drag a file, several files or a whole folder (OBJ + MTL + textures) onto the page.
+let dragDepth = 0;
+addEventListener("dragenter", e => { if (e.dataTransfer?.types.includes("Files")) { dragDepth++; document.body.classList.add("dragging"); } });
+addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dragging"); } });
+addEventListener("dragover", e => e.preventDefault());
+addEventListener("drop", async e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove("dragging");
+  const files = await droppedFiles(e.dataTransfer);
+  if (files.length) uploadFiles(files);
+});
+async function droppedFiles(dt) {
+  const entries = [...dt.items].map(i => i.webkitGetAsEntry?.()).filter(Boolean);
+  if (!entries.some(en => en.isDirectory)) return [...dt.files];
+  const out = [];
+  const walk = (entry, path) => new Promise(res => {
+    if (entry.isFile) entry.file(f => { Object.defineProperty(f, "webkitRelativePath", { value: path + f.name }); out.push(f); res(); }, res);
+    else {
+      const reader = entry.createReader(), all = [];
+      const more = () => reader.readEntries(async batch => { if (batch.length) { all.push(...batch); more(); } else { for (const c of all) await walk(c, `${path}${entry.name}/`); res(); } }, res);
+      more();
+    }
+  });
+  for (const en of entries) await walk(en, "");
+  return out;
+}
+
+// Same path as hub uploads: straight into FTB's persistent Autodesk bucket, then converted for the viewer.
+async function uploadFiles(files) {
+  if (!files.length) return;
+  try {
+    let file = files[0], rootFilename = "", name = file.name;
+    if (files.length > 1) {
+      const entries = files.map(f => ({ name: (f.webkitRelativePath || f.name).split("/").slice(f.webkitRelativePath ? 1 : 0).join("/"), file: f }))
+        .filter(e => !/(^|\/)(\.|__MACOSX)/.test(e.name));
+      rootFilename = pickRoot(entries.map(e => e.name));
+      if (!rootFilename) throw new Error("no 3D model file (.obj, .3dm, .skp…) in what you picked");
+      toast(`Packing ${entries.length} files…`, 0);
+      const folder = files[0].webkitRelativePath?.split("/")[0];
+      name = `${folder || rootFilename.split("/").pop().replace(/\.[^.]+$/, "")}.zip`;
+      file = new File([await zipFiles(entries)], name, { type: "application/zip" });
+    } else if (/\.zip$/i.test(file.name)) {
+      rootFilename = pickRoot(await zipNames(file));
+      if (!rootFilename) throw new Error("no 3D model file (.obj, .3dm, .skp…) inside that zip");
+    } else if (!MODEL_EXT.includes(file.name.split(".").pop().toLowerCase())) {
+      throw new Error(`.${file.name.split(".").pop()} isn't a 3D model file the viewer can open`);
+    }
+    toast(`Uploading ${name}…`, 0);
+    const start = await call("POST", "/models/upload", { fileName: name });
+    const put = await fetch(start.url, { method: "PUT", body: file });
+    if (!put.ok) throw new Error(`upload failed (${put.status})`);
+    const done = await call("POST", "/models/complete", { ...start, rootFilename });
+    if (!done.urn) throw new Error("no model id returned");
+    const label = (rootFilename ? rootFilename.split("/").pop() : name).replace(/\.[^.]+$/, "");
+    const it = await call("POST", "/vault/items", { kind: "upload", urn: done.urn, file: name, name: label, progress: "0%" });
+    items.unshift(it); render();
+    toast("Uploaded. Converting for the viewer; you can leave this page.", 6000);
+    poll(it);
+  } catch (err) {
+    toast(`Upload didn't finish: ${err.message}`, 8000);
+  }
+}
+
+// Autodesk converts each upload (a minute to half an hour for big Rhino files). Progress is saved on the item.
+const polling = new Set();
+async function poll(it) {
+  if (polling.has(it.id)) return;
+  polling.add(it.id);
+  try {
+    for (let i = 0; i < 400 && items.includes(it); i++) {
+      const s = await fetch(`${API}/models/${it.urn}/status`).then(r => r.json()).catch(() => ({}));
+      if (s.status === "success" || s.status === "failed") {
+        await patch(it, { progress: s.status === "success" ? "complete" : "failed", error: s.error || "" });
+        if (current === it) open(it); else if (!current) render();
+        if (s.status === "success") toast(`"${it.name}" is ready`);
+        return;
+      }
+      if (s.progress && s.progress !== it.progress) { it.progress = s.progress; if (!current) render(); }
+      await new Promise(r => setTimeout(r, i < 24 ? 5000 : 20000));
+    }
+  } finally { polling.delete(it.id); }
+}
+
+// Zip helpers, same as the hub (public/index.html): a folder or several files go up as one stored zip.
+const MODEL_EXT = ["obj", "3dm", "skp", "fbx", "step", "stp", "iges", "igs", "dwg", "f3d", "iam", "ipt", "sldasm", "sldprt", "stl", "dae", "gltf", "glb"];
+function pickRoot(names) {
+  const ext = n => n.split(".").pop().toLowerCase();
+  const models = names.filter(n => MODEL_EXT.includes(ext(n)) && !/(^|\/)(__MACOSX|\.)/.test(n));
+  models.sort((a, b) => MODEL_EXT.indexOf(ext(a)) - MODEL_EXT.indexOf(ext(b)) || a.split("/").length - b.split("/").length);
+  return models[0] || "";
+}
+const CRC = Array.from({ length: 256 }, (_, n) => { for (let k = 0; k < 8; k++) n = n & 1 ? 0xedb88320 ^ (n >>> 1) : n >>> 1; return n >>> 0; });
+function crc32(bytes) { let c = ~0; for (let i = 0; i < bytes.length; i++) c = CRC[(c ^ bytes[i]) & 255] ^ (c >>> 8); return ~c >>> 0; }
+// Stored (uncompressed) zip: textures are already compressed, and this keeps it small and fast.
+async function zipFiles(entries) {   // [{ name, file }]
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const { name, file } of entries) {
+    const data = new Uint8Array(await file.arrayBuffer()), nm = enc.encode(name), crc = crc32(data);
+    const head = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, 0, 2], [12, 0x21, 2], [14, crc, 4], [18, data.length, 4], [22, data.length, 4], [26, nm.length, 2], [28, 0, 2]]
+      .forEach(([o, val, n]) => n === 4 ? head.setUint32(o, val, true) : head.setUint16(o, val, true));
+    const cd = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, 0, 2], [14, 0x21, 2], [16, crc, 4], [20, data.length, 4], [24, data.length, 4],
+      [28, nm.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, offset, 4]]
+      .forEach(([o, val, n]) => n === 4 ? cd.setUint32(o, val, true) : cd.setUint16(o, val, true));
+    parts.push(head, nm, data); central.push(cd, nm);
+    offset += 30 + nm.length + data.length;
+  }
+  const cdSize = central.reduce((n, x) => n + x.byteLength, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, entries.length, 2], [10, entries.length, 2], [12, cdSize, 4], [16, offset, 4], [20, 0, 2]]
+    .forEach(([o, val, n]) => n === 4 ? end.setUint32(o, val, true) : end.setUint16(o, val, true));
+  return new Blob([...parts, ...central, end], { type: "application/zip" });
+}
+// File names inside a zip someone picked, read from its central directory.
+async function zipNames(file) {
+  const tail = new DataView(await file.slice(Math.max(0, file.size - 65557)).arrayBuffer());
+  let e = -1;
+  for (let i = tail.byteLength - 22; i >= 0; i--) if (tail.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) return [];
+  const count = tail.getUint16(e + 10, true), size = tail.getUint32(e + 12, true), start = tail.getUint32(e + 16, true);
+  const cd = new DataView(await file.slice(start, start + size).arrayBuffer()), dec = new TextDecoder(), names = [];
+  for (let i = 0, o = 0; i < count && o + 46 <= cd.byteLength; i++) {
+    const n = cd.getUint16(o + 28, true), x = cd.getUint16(o + 30, true), c = cd.getUint16(o + 32, true);
+    names.push(dec.decode(new Uint8Array(cd.buffer, o + 46, n)));
+    o += 46 + n + x + c;
+  }
+  return names;
+}
+
+(async () => {
+  try { items = (await call("GET", "/vault")).items; }
+  catch (err) { $("#grid").replaceChildren(h("div", { class: "empty", style: "grid-column: 1 / -1" }, h("b", {}, "Couldn't load the vault"), err.message)); return; }
+  render();
+  for (const it of items) if (it.kind === "upload" && it.progress !== "complete" && it.progress !== "failed") poll(it);
+  const it = items.find(x => x.id === location.hash.slice(1));
+  if (it) open(it);
+})();
+</script>
+</body>
+</html>
