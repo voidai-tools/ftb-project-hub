@@ -73,7 +73,13 @@ Links like `ftbshop.fun/#job/<id>` open a job's panel directly (the address bar 
 
 In TickTick, go to Settings → Backup → **Generate backup** to get a CSV. On the Shop tab, click **Import TickTick** and pick it. Finished tasks go into the job history (search finds them, the board doesn't show them); open ones land in the CNC column. Importing a newer backup later is safe: it updates imported tasks nobody has changed in the hub and never makes duplicates.
 
-The backup lists attached files by name only, without the files themselves, so old attachments show as "In the TickTick backup · file not copied over". Their names are still searchable, so you can find which job a file belonged to and pull it from TickTick if you need it.
+The backup lists attached files by name only, so after importing, old attachments show as "In the TickTick backup · file not copied over" until you copy them.
+
+### Copying the old files over
+
+In the same **TickTick import** box, under **Copy the attached files**, sign in with your TickTick email and password. If you sign in to TickTick with Google or Apple, open the "Signed in with Google or Apple?" part instead and paste the `t` cookie as it explains. Then click **Copy files** and keep the box open until it's done (it works through about a dozen files at a time).
+
+Your password goes to TickTick once and isn't stored. The sign-in TickTick gives back is kept on the server for 6 hours at most, never shown in the browser, and dropped as soon as the copy finishes or you click **Forget TickTick sign-in**. Signing in again later picks up anything that failed. This uses TickTick's own web-app API, which isn't an official API, so if TickTick changes it the copy may stop working; the files already copied stay.
 
 Storage: jobs live in the D1 database `ftb-hub-tasks` and files in the R2 bucket `ftb-files` (both bound in wrangler.toml). Uploads are capped at 100 MB per file.
 

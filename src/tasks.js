@@ -16,6 +16,7 @@
 //   GET    /api/files/<key>               -> download a file
 //   GET    /api/tasks/search?q=           -> { results } every word must match, newest first
 //   POST   /api/tasks/import              { tasks: [...] } from a TickTick backup, parsed in the browser
+//   /api/tasks/ttfiles/...                 copy the old TickTick attachments themselves (see ttfiles.js)
 //
 // Orders used to live in KV (order:<id> + orders:all); they're copied into D1 once, the first time it's used.
 
@@ -34,7 +35,7 @@ const SCHEMA = [
 ];
 
 let ready = null;
-function setup(env) {
+export function setup(env) {
   return (ready ||= (async () => {
     await env.DB.batch(SCHEMA.map(s => env.DB.prepare(s)));
     const done = await env.DB.prepare("SELECT v FROM meta WHERE k = 'kv-orders-copied'").first("v");
@@ -64,7 +65,7 @@ async function copyFromKv(env) {
 const searchText = t => [t.title, t.notes, t.project, t.for, t.location, ...(t.tags || []), ...(t.files || []).map(f => f.name)]
   .filter(Boolean).join(" \n ").toLowerCase();
 
-function upsertStmt(env, t) {
+export function upsertStmt(env, t) {
   const now = new Date().toISOString();
   t.updatedAt ||= now;
   return env.DB.prepare(`INSERT INTO tasks (id, parent_id, status, status_at, updated_at, search, data) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
@@ -72,7 +73,7 @@ function upsertStmt(env, t) {
     .bind(t.id, t.parentId || null, t.status || "queued", t.statusAt || t.createdAt || now, t.updatedAt, searchText(t), JSON.stringify(t));
 }
 
-async function getTask(env, id) {
+export async function getTask(env, id) {
   const row = await env.DB.prepare("SELECT data FROM tasks WHERE id = ?").bind(id).first("data");
   return row ? JSON.parse(row) : null;
 }
@@ -132,6 +133,11 @@ export async function tasksRoute(request, env, url) {
     const now = new Date().toISOString();
     const stmts = [];
     let merged = 0;
+    // Files already copied over from TickTick keep their copy when a newer backup is imported.
+    const copied = new Map();
+    const { results: existing } = await env.DB.prepare("SELECT data FROM tasks WHERE id IN (SELECT value FROM json_each(?))")
+      .bind(JSON.stringify(tasks.map(t => t?.id).filter(Boolean))).all();
+    for (const r of existing) for (const f of JSON.parse(r.data).files || []) if (f.tt && f.key) copied.set(f.tt, f);
     for (const raw of tasks) {
       if (!raw?.id || !ID.test(raw.id) || !raw.title) continue;
       if (raw.mergeInto) {
@@ -147,7 +153,7 @@ export async function tasksRoute(request, env, url) {
         }
         continue;
       }
-      const t = { ...raw, source: "ticktick-import", importedAt: now, updatedAt: now };
+      const t = { ...raw, files: (raw.files || []).map(f => copied.get(f.tt) || f), source: "ticktick-import", importedAt: now, updatedAt: now };
       // Re-importing a newer backup refreshes tasks nobody has touched on the hub since the last import.
       stmts.push(env.DB.prepare(`INSERT INTO tasks (id, parent_id, status, status_at, updated_at, search, data) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
         ON CONFLICT(id) DO UPDATE SET parent_id = ?2, status = ?3, status_at = ?4, updated_at = ?5, search = ?6, data = ?7

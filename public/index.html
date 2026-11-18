@@ -391,6 +391,11 @@ body.editing .add-model { display: block; }
 .dr-foot { display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--rule); padding-top: 12px; margin-top: auto; flex-wrap: wrap; }
 .dr-foot small { color: var(--ink-2); }
 .lists { display: grid; gap: 6px; }
+.tt-dialog { max-width: 560px; }
+.tt-dialog section { display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.tt-dialog h4 { margin: 0; font: 700 14px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; }
+.tt-dialog p { margin: 0; }
+.tt-files, .tt-signin { display: grid; gap: 10px; }
 @media (max-width: 560px) { .drawer { padding-inline: 16px; } }
 @media (max-width: 1400px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lane.queued { order: 9; } }
 @media (max-width: 860px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -2007,7 +2012,7 @@ function renderPickup(main) {
   main.append(h("div", { class: "head" },
     h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, board.title)),
     h("div", { class: "tools" },
-      state.mode === "live" && bid === "shop" ? h("button", { class: "btn ghost", title: "Bring in a TickTick backup (.csv)", onclick: importTicktick }, "Import TickTick") : null,
+      state.mode === "live" && bid === "shop" ? h("button", { class: "btn ghost", title: "Import TickTick history and files", onclick: importTicktick }, "TickTick import") : null,
       h("a", { class: "btn", href: `#${board.tvHash}`, onclick: e => { e.preventDefault(); enterTv(bid); } }, "TV view"),
       h("button", { class: "btn primary", onclick: () => openOrderEditor(null) }, "+ Order"))));
   if (state.mode === "preview" && orders.some(o => o.example)) {
@@ -2578,7 +2583,86 @@ function ttTasks(rows) {
   return out.sort((a, b) => a._depth - b._depth).map(({ _depth, ...t }) => t);
 }
 
-function importTicktick() {
+// The TickTick dialog: 1) import a backup CSV, 2) copy the attached files themselves. The backup only names the files,
+// so step 2 signs in to TickTick through the hub's server and copies each one into the hub.
+async function importTicktick() {
+  const status = h("p", { class: "hint", "aria-live": "polite" });
+  const body = h("div", { class: "tt-files" });
+  const form = h("div", { class: "panel editor tt-dialog" },
+    h("h3", {}, "TickTick"),
+    h("section", {}, h("h4", {}, "1. Import a backup"),
+      h("p", {}, "In TickTick: Settings → Backup → Generate backup. Pick that .csv here. Safe to repeat with a newer backup."),
+      h("button", { class: "btn primary", type: "button", onclick: () => importBackup() }, "Choose backup file…")),
+    h("section", {}, h("h4", {}, "2. Copy the attached files"), body, status),
+    h("div", { class: "foot" }, h("span"), h("button", { class: "btn", type: "button", onclick: () => close() }, "Close")));
+  let stop = false;
+  form.onclose = () => { stop = true; };
+  const close = overlay(form);
+
+  const summary = c => {
+    const total = c.pending + c.copied + c.failed + c.missing;
+    return total ? `${c.copied.toLocaleString()} of ${total.toLocaleString()} files copied` +
+      (c.pending ? ` · ${c.pending.toLocaleString()} to go` : "") + (c.failed ? ` · ${c.failed} failed` : "") +
+      (c.missing ? ` · ${c.missing} not found in TickTick` : "") : "";
+  };
+
+  async function copyAll(c) {
+    status.textContent = summary(c);
+    while (!stop && c.pending) {
+      let r;
+      try { r = await api("/tasks/ttfiles/copy", { method: "POST", body: "{}" }); }
+      catch (e) { status.textContent = e.message; return draw(); }
+      c = r.counts;
+      status.textContent = summary(c) + (c.pending ? "… keep this open" : "");
+    }
+    if (!stop) { await loadOrders(); render(); draw(); }
+  }
+
+  async function draw() {
+    let s;
+    try { s = await api("/tasks/ttfiles"); } catch (e) { body.replaceChildren(h("p", { class: "hint" }, e.message)); return; }
+    const c = s.counts, sum = summary(c);
+    if (!s.connected) {
+      const user = h("input", { type: "email", autocomplete: "off", placeholder: "TickTick email" });
+      const pass = h("input", { type: "password", autocomplete: "new-password", placeholder: "TickTick password" });
+      const cookie = h("input", { type: "password", autocomplete: "off", placeholder: "Value of the t cookie" });
+      const go = h("button", { class: "btn primary" }, c.pending ? "Sign in and keep copying" : c.failed ? "Sign in and retry failed files" : "Sign in and find files");
+      const signin = h("form", { class: "tt-signin", onsubmit: async e => {
+        e.preventDefault();
+        const payload = cookie.value.trim() ? { cookie: cookie.value } : { username: user.value, password: pass.value };
+        if (!payload.cookie && !(payload.username && payload.password)) { status.textContent = "Enter your TickTick email and password, or the cookie."; return; }
+        go.disabled = true; status.textContent = "Signing in to TickTick and looking through every task…";
+        let r;
+        try { r = await api("/tasks/ttfiles/connect", { method: "POST", body: JSON.stringify(payload) }); }
+        catch (err) { go.disabled = false; status.textContent = err.message; return; }
+        finally { pass.value = ""; cookie.value = ""; }
+        status.textContent = `Found ${r.inTickTick.toLocaleString()} attachments in ${r.lists.join(", ")}.`;
+        draw();
+      } },
+        sum ? h("p", {}, sum) : null,
+        h("p", { class: "hint" }, "Your password goes to TickTick once to sign in and isn't saved. The hub keeps that sign-in for 6 hours at most, only to copy files, and drops it when the copy finishes."),
+        field("Email", user), field("Password", pass),
+        h("details", {}, h("summary", {}, "Signed in to TickTick with Google or Apple?"),
+          h("p", { class: "hint" }, "Open ticktick.com in Chrome and sign in. Press F12, go to Application → Cookies → https://ticktick.com, and copy the Value of the cookie named t. Paste it here instead of a password, and only here."),
+          field("Cookie", cookie)),
+        h("div", { class: "foot" }, h("span"), go));
+      body.replaceChildren(signin);
+      return;
+    }
+    const copy = h("button", { class: "btn primary", type: "button", onclick: () => { copy.disabled = true; copyAll(c); } }, c.pending ? "Copy files" : "Done");
+    if (!c.pending) copy.disabled = true;
+    body.replaceChildren(h("p", {}, sum || "No attached files found."),
+      s.errors?.length ? h("details", {}, h("summary", {}, "Why some failed"), h("ul", {}, s.errors.map(x => h("li", {}, `${x.name}: ${x.error}`)))) : null,
+      h("div", { class: "foot" },
+        h("button", { class: "btn ghost", type: "button", onclick: async () => { await api("/tasks/ttfiles/forget", { method: "POST", body: "{}" }); draw(); } }, "Forget TickTick sign-in"),
+        h("div", { class: "r" },
+          c.failed ? h("button", { class: "btn", type: "button", onclick: async () => { await api("/tasks/ttfiles/retry", { method: "POST", body: "{}" }); draw(); } }, "Retry failed") : null,
+          copy)));
+  }
+  draw();
+}
+
+function importBackup() {
   const pick = h("input", { type: "file", accept: ".csv,text/csv" });
   pick.onchange = async () => {
     const file = pick.files[0];

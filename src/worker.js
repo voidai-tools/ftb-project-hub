@@ -30,6 +30,7 @@ import { photosRoute } from "./photos.js";
 import { sharesRoute, sharePage } from "./shares.js";
 import { vaultRoute, vaultPage } from "./vault.js";
 import { tasksRoute } from "./tasks.js";
+import { ttFilesRoute } from "./ttfiles.js";
 
 // One-time changes to the live hub document, applied on the next read and remembered in hub.migrations.
 const MIGRATIONS = [
@@ -74,6 +75,10 @@ async function route(request, env, url) {
   const { pathname } = url;
   const method = request.method;
 
+  if (pathname.startsWith("/api/tasks/ttfiles")) {
+    const res = await ttFilesRoute(request, env, url);
+    if (res) return res;
+  }
   if (pathname === "/api/orders" || pathname.startsWith("/api/orders/") || pathname.startsWith("/api/tasks/") || pathname.startsWith("/api/files/")) {
     const res = await tasksRoute(request, env, url);
     if (res) return res;
