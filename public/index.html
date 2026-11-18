@@ -320,8 +320,9 @@ body.editing .add-model { display: block; }
 .order-m.note { white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .subs-mini { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13px; }
 .subs-mini li { display: flex; gap: 6px; align-items: start; }
-.subs-mini label { flex: 1; min-width: 0; display: flex; gap: 6px; align-items: start; cursor: pointer; }
-.subs-mini input { margin: 2px 0 0; flex: none; }
+.subs-mini .sub-name { flex: 1; min-width: 0; cursor: pointer; }
+.subs-mini input, .step-check { margin: 2px 0 0; flex: none; width: 16px; height: 16px; cursor: pointer; }
+.step-check { margin-top: 2px; width: 18px; height: 18px; }
 .subs-mini .n, .dr-subs .n { font: 500 11px/1.4 var(--f-mono); color: var(--ink-2); white-space: nowrap; }
 .subs-mini .more { color: var(--ink-2); font-size: 12px; padding-left: 20px; }
 .qa { display: grid; gap: 4px; border-radius: 8px; }
@@ -2060,7 +2061,7 @@ function orderCard(o) {
   const subs = o.subs || [], subsDone = subs.filter(x => x.status === "done").length;
   const open = state.mode === "live" ? e => { if (!e.target.closest("button, input, a, label")) openJob(o.id); } : null;
   return h("article", { class: "order" + (isStale(o) ? " stale" : "") + (open ? " clickable" : ""), onclick: open },
-    h("div", { class: "order-t" }, h("b", {}, o.title, o.qty > 1 ? ` ×${o.qty}` : ""), chip),
+    h("div", { class: "order-t" }, stepCheck(o, subs), h("b", {}, o.title, o.qty > 1 ? ` ×${o.qty}` : ""), chip),
     h("div", { class: "order-m" },
       o.for ? h("span", {}, "For ", h("strong", {}, o.for)) : null,
       o.location ? h("span", {}, "At ", h("strong", {}, o.location)) : null,
@@ -2069,7 +2070,8 @@ function orderCard(o) {
       subs.length ? h("span", { title: "Subtasks done" }, `☑ ${subsDone}/${subs.length}`) : null),
     o.notes ? h("div", { class: "order-m note" }, o.notes) : null,
     subs.length ? h("ul", { class: "subs-mini" }, subs.filter(x => x.status !== "done").slice(0, 6).map(x =>
-      h("li", {}, h("label", {}, h("input", { type: "checkbox", onchange: () => toggleSub(o, x) }), h("span", {}, x.title)),
+      h("li", {}, h("input", { type: "checkbox", "aria-label": `Done: ${x.title}`, onchange: () => toggleSub(o, x) }),
+        h("span", { class: "sub-name", onclick: state.mode === "live" ? e => { e.stopPropagation(); openJob(x.id); } : null }, x.title),
         x.files ? h("span", { class: "n" }, `📎${x.files}`) : null)),
       subs.length - subsDone > 6 ? h("li", { class: "more" }, `+${subs.length - subsDone - 6} more`) : null) : null,
     o.status === "done" ? h("div", { class: "tags", role: "group", "aria-label": "Where it goes next" },
@@ -2079,6 +2081,15 @@ function orderCard(o) {
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
       actions));
+}
+
+// A job being worked on with no open subtasks gets one checkbox, like a TickTick task: ticking it finishes this shop's step
+// and sends it on to wait for the next shop (CNC → Build waiting), or to Completed from the last shop.
+function stepCheck(o, subs) {
+  if (o.status !== "in-progress" || subs.some(x => x.status !== "done")) return null;   // once every subtask is ticked, the job gets one too
+  const cols = colsOf(o), next = cols.slice(colOf(o) + 1).find(c => c.waiting);
+  return h("input", { type: "checkbox", class: "step-check", title: next ? `Done here: send to ${next.title}` : "Done: send to Completed",
+    "aria-label": `Done: ${o.title}`, onchange: () => advance(o, next ? next.waiting : "done") });
 }
 
 async function setTag(o, t) {
