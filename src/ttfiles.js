@@ -26,7 +26,12 @@ const SCHEMA = `CREATE TABLE IF NOT EXISTS tt_files (att_id TEXT PRIMARY KEY, tt
 let ready = false;
 async function ensure(env) {
   await setup(env);
-  if (!ready) { await env.DB.prepare(SCHEMA).run(); ready = true; }
+  if (!ready) {
+    await env.DB.prepare(SCHEMA).run();
+    // attempts: how many copy runs have started on a file, so one that keeps crashing a run gets skipped.
+    try { await env.DB.prepare("ALTER TABLE tt_files ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0").run(); } catch {}
+    ready = true;
+  }
 }
 
 const fail = (status, error, extra = {}) => Response.json({ error, ...extra }, { status });
@@ -143,10 +148,14 @@ export async function ttFilesRoute(request, env, url) {
     const token = await env.HUB.get(TOKEN_KEY);
     if (!token) return fail(401, "Sign in to TickTick first.", { needSignIn: true });
     const started = Date.now();
-    const { results: batch } = await env.DB.prepare("SELECT * FROM tt_files WHERE status = 'pending' ORDER BY att_id LIMIT 12").all();
+    // A file that has started three runs without finishing most likely crashed them (too big, or TickTick stalled).
+    await env.DB.prepare("UPDATE tt_files SET status = 'failed', error = 'Kept timing out, probably too big to copy here' WHERE status = 'pending' AND attempts >= 3").run();
+    // Small batches, smallest files first, so each run finishes well inside the Worker's limits.
+    const { results: batch } = await env.DB.prepare("SELECT * FROM tt_files WHERE status = 'pending' ORDER BY attempts, size, att_id LIMIT 4").all();
     let copied = 0, failed = 0;
     for (const f of batch) {
-      if (Date.now() - started > 20000) break;
+      if (Date.now() - started > 12000) break;
+      await env.DB.prepare("UPDATE tt_files SET attempts = attempts + 1 WHERE att_id = ?").bind(f.att_id).run();
       let error = null, file = null;
       try {
         // ticktick.com's web app downloads from this path; try the API host first, then the main site.
@@ -160,19 +169,21 @@ export async function ttFilesRoute(request, env, url) {
         }
         if (res.status === 401 || res.status === 403) return fail(401, "TickTick sign-in expired. Sign in again.", { needSignIn: true, counts: await counts(env) });
         if (!res.ok) throw new Error(`TickTick answered ${res.status}`);
-        if (Number(res.headers.get("Content-Length") || 0) > MAX_FILE) throw new Error("Over 95 MB");
-        const body = await res.arrayBuffer();
-        if (body.byteLength > MAX_FILE) throw new Error("Over 95 MB");
+        const length = Number(res.headers.get("Content-Length") || 0);
+        if (length > MAX_FILE) throw new Error("Over 95 MB");
+        // Stream straight into R2 when the size is known, so big files never sit in the Worker's memory.
+        const body = length ? res.body.pipeThrough(new FixedLengthStream(length)) : await readCapped(res);
+        const size = length || body.byteLength;
         const task = await getTask(env, f.our_task);
         const entry = task?.files?.find(x => x.tt === f.att_id);
-        if (!entry) { await env.DB.prepare("UPDATE tt_files SET status = 'missing', updated_at = ? WHERE att_id = ?").bind(new Date().toISOString(), f.att_id).run(); continue; }
+        if (!entry) { await res.body?.cancel?.().catch(() => {}); await env.DB.prepare("UPDATE tt_files SET status = 'missing', updated_at = ? WHERE att_id = ?").bind(new Date().toISOString(), f.att_id).run(); continue; }
         const name = (entry.name || f.name || "file").replace(/[\/\\\r\n]/g, "_").slice(0, 180);
         const type = (res.headers.get("Content-Type") || "application/octet-stream").split(";")[0];
         const key = `tasks/${task.id}/${f.att_id.slice(-8)}/${encodeURIComponent(name).replace(/%/g, "~").slice(0, 200)}`;
         await env.FILES.put(key, body, { httpMetadata: { contentType: type }, customMetadata: { name, task: task.id, by: "TickTick" } });
         // Re-read just before writing so an edit made meanwhile isn't lost.
         const latest = await getTask(env, task.id) || task;
-        file = { ...entry, key, size: body.byteLength, type, at: entry.at || task.createdAt, by: "TickTick" };
+        file = { ...entry, key, size, type, at: entry.at || task.createdAt, by: "TickTick" };
         latest.files = (latest.files || []).map(x => (x.tt === f.att_id ? file : x));
         await upsertStmt(env, latest).run();
       } catch (err) { error = err.message; }
@@ -186,4 +197,22 @@ export async function ttFilesRoute(request, env, url) {
   }
 
   return null;
+}
+
+// No Content-Length: read it in, stopping as soon as it passes the size cap.
+async function readCapped(res) {
+  const reader = res.body.getReader();
+  const parts = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_FILE) { await reader.cancel(); throw new Error("Over 95 MB"); }
+    parts.push(value);
+  }
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const p of parts) { out.set(p, at); at += p.byteLength; }
+  return out;
 }

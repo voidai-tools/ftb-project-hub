@@ -2608,10 +2608,17 @@ async function importTicktick() {
 
   async function copyAll(c) {
     status.textContent = summary(c);
+    let misses = 0;
     while (!stop && c.pending) {
       let r;
-      try { r = await api("/tasks/ttfiles/copy", { method: "POST", body: "{}" }); }
-      catch (e) { status.textContent = e.message; return draw(); }
+      try { r = await api("/tasks/ttfiles/copy", { method: "POST", body: "{}" }); misses = 0; }
+      catch (e) {
+        // A run that hits a hiccup (a 503, a dropped connection) is retried; files already copied stay copied.
+        if (/sign in/i.test(e.message) || ++misses > 8) { status.textContent = e.message; return draw(); }
+        status.textContent = `${summary(c)} · hiccup (${e.message}), retrying…`;
+        await new Promise(ok => setTimeout(ok, 2000 * misses));
+        continue;
+      }
       c = r.counts;
       status.textContent = summary(c) + (c.pending ? "… keep this open" : "");
     }
@@ -2651,13 +2658,13 @@ async function importTicktick() {
     }
     const copy = h("button", { class: "btn primary", type: "button", onclick: () => { copy.disabled = true; copyAll(c); } }, c.pending ? "Copy files" : "Done");
     if (!c.pending) copy.disabled = true;
-    body.replaceChildren(h("p", {}, sum || "No attached files found."),
+    body.replaceChildren(...[h("p", {}, sum || "No attached files found."),
       s.errors?.length ? h("details", {}, h("summary", {}, "Why some failed"), h("ul", {}, s.errors.map(x => h("li", {}, `${x.name}: ${x.error}`)))) : null,
       h("div", { class: "foot" },
         h("button", { class: "btn ghost", type: "button", onclick: async () => { await api("/tasks/ttfiles/forget", { method: "POST", body: "{}" }); draw(); } }, "Forget TickTick sign-in"),
         h("div", { class: "r" },
           c.failed ? h("button", { class: "btn", type: "button", onclick: async () => { await api("/tasks/ttfiles/retry", { method: "POST", body: "{}" }); draw(); } }, "Retry failed") : null,
-          copy)));
+          copy))].filter(Boolean));
   }
   draw();
 }
