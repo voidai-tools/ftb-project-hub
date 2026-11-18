@@ -304,6 +304,9 @@ body.editing .add-model { display: block; }
 .order-a .btn { padding: 5px 10px; font-size: 13px; }
 .chip { font: 600 10.5px/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; white-space: nowrap; background: var(--paper); color: var(--ink-2); }
 .chip.doing { background: var(--lane); color: #fff; }
+.chip.finished { background: var(--ok); color: #fff; }
+.order:has(.chip.finished) { border-color: var(--ok); }
+.tvb-item .wait.finished { color: var(--ok); font-weight: 700; }
 .chip.waiting { background: var(--warn-soft); color: var(--warn); }
 .outs { font-size: 13px; color: var(--ink-2); }
 .outs summary { cursor: pointer; padding: 4px 0; }
@@ -2050,7 +2053,7 @@ function orderCard(o) {
   const cols = colsOf(o), col = cols[colOf(o)];
   const firstUp = cols.find(c => c.dept === o.dept) || cols[0];
   const chip = o.status === "queued" ? h("span", { class: "chip" }, `For ${firstUp.title}`)
-    : o.status === "in-progress" ? h("span", { class: "chip doing" }, col.doing)
+    : o.status === "in-progress" ? (o.finished ? h("span", { class: "chip finished" }, "Finished") : h("span", { class: "chip doing" }, col.doing))
     : col ? h("span", { class: "chip waiting" }, "Waiting") : null;
   const btn = (label, to, primary) => h("button", { class: "btn" + (primary ? " primary" : ""), onclick: () => advance(o, to) }, label);
   let actions = [];
@@ -2083,13 +2086,17 @@ function orderCard(o) {
       actions));
 }
 
-// A job being worked on with no open subtasks gets one checkbox, like a TickTick task: ticking it finishes this shop's step
-// and sends it on to wait for the next shop (CNC → Build waiting), or to Completed from the last shop.
+// A job being worked on with no open subtasks gets one checkbox, like a TickTick task. Ticking it marks this shop's
+// part Finished (the badge turns green) and leaves the job where it is: whoever runs the floor moves it on from there,
+// so the router doesn't have to think about next steps. Moving the job anywhere clears Finished.
 function stepCheck(o, subs) {
   if (o.status !== "in-progress" || subs.some(x => x.status !== "done")) return null;   // once every subtask is ticked, the job gets one too
-  const cols = colsOf(o), next = cols.slice(colOf(o) + 1).find(c => c.waiting);
-  return h("input", { type: "checkbox", class: "step-check", title: next ? `Done here: send to ${next.title}` : "Done: send to Completed",
-    "aria-label": `Done: ${o.title}`, onchange: () => advance(o, next ? next.waiting : "done") });
+  return h("input", { type: "checkbox", class: "step-check", checked: o.finished || null, title: o.finished ? "Finished · untick if it isn't" : "Mark finished",
+    "aria-label": `Finished: ${o.title}`, onchange: async e => {
+      const finished = e.target.checked;
+      await saveOrder({ ...o, finished, finishedAt: finished ? new Date().toISOString() : "" });
+      render();
+    } });
 }
 
 async function setTag(o, t) {
@@ -2098,7 +2105,7 @@ async function setTag(o, t) {
 }
 
 async function advance(o, to) {
-  const moved = { ...o, status: to, statusAt: new Date().toISOString() };
+  const moved = { ...o, status: to, statusAt: new Date().toISOString(), finished: false, finishedAt: "" };
   const waitingFor = colsOf(o).find(c => c.waiting === o.status);
   if (waitingFor) moved.dept = waitingFor.dept; // the shop it was waiting for owns it from here
   await saveOrder(moved);
@@ -2150,7 +2157,7 @@ function openOrderEditor(o) {
     const next = { ...d, title: title.value.trim(), qty: Math.max(1, +qty.value || 1), dept: p.dept || d.dept, for: who.value.trim(),
       location: loc.value.trim(), project: proj.value, notes: notes.value.trim(), status: p.status, outTag: outTag.value };
     if (isNew) { next.id = uid(next.title); next.createdAt = new Date().toISOString(); }
-    if (isNew || p !== here) next.statusAt = new Date().toISOString();
+    if (isNew || p !== here) Object.assign(next, { statusAt: new Date().toISOString(), finished: false, finishedAt: "" });
     delete next.example;
     await saveOrder(next); close(); render();
   } },
@@ -2184,7 +2191,7 @@ function enterTv(bid = "shop") {
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
       [o.for ? `For ${o.for}` : null, o.location].some(Boolean) ? h("div", { class: "who" }, [o.for ? `For ${o.for}` : null, o.location].filter(Boolean).join(" · ")) : null,
       o.status === "in-progress"
-        ? h("div", { class: "wait" }, `${colsOf(o)[colOf(o)].doing} · ${waited(o.statusAt)}`)
+        ? h("div", { class: "wait" + (o.finished ? " finished" : "") }, o.finished ? `Finished · ${waited(o.finishedAt || o.statusAt)}` : `${colsOf(o)[colOf(o)].doing} · ${waited(o.statusAt)}`)
         : h("div", { class: "wait waiting" }, `Waiting · ${waited(o.statusAt)}`));
     const doneItem = o => h("div", { class: "tvb-item" },
       h("div", { class: "t" }, o.title, o.qty > 1 ? ` ×${o.qty}` : ""),
@@ -2388,8 +2395,8 @@ function drawJob(drawer, { order: o, subtasks, path }, opts = {}) {
     const places = placesFor(boardOf(o)), here = placeOf(o);
     const sel = h("select", { "aria-label": "Where it is", onchange: () => {
       const p = places[+sel.value];
-      Object.assign(o, { status: p.status, dept: p.dept || o.dept, statusAt: new Date().toISOString() });
-      queueSave(o.id, { status: o.status, dept: o.dept, statusAt: o.statusAt }, say); flushJobSaves(say);
+      Object.assign(o, { status: p.status, dept: p.dept || o.dept, statusAt: new Date().toISOString(), finished: false, finishedAt: "" });
+      queueSave(o.id, { status: o.status, dept: o.dept, statusAt: o.statusAt, finished: false, finishedAt: "" }, say); flushJobSaves(say);
     } }, places.map((p, i) => h("option", { value: i, selected: p.label === here.label || null }, p.label)));
     where = h("label", { class: "dr-where" }, h("span", {}, "Where it is"), sel);
   }
@@ -2624,13 +2631,21 @@ async function importTicktick() {
       let r;
       try { r = await api("/tasks/ttfiles/copy", { method: "POST", body: "{}" }); misses = 0; }
       catch (e) {
-        // A run that hits a hiccup (a 503, a dropped connection) is retried; files already copied stay copied.
-        if (/sign in/i.test(e.message) || ++misses > 8) { status.textContent = e.message; return draw(); }
-        status.textContent = `${summary(c)} · hiccup (${e.message}), retrying…`;
-        await new Promise(ok => setTimeout(ok, 2000 * misses));
+        // A run that hits a hiccup (a 503, a dropped connection) is retried with longer and longer pauses;
+        // files already copied stay copied.
+        if (/sign in/i.test(e.message) || ++misses > 25) { status.textContent = e.message; return draw(); }
+        const wait = Math.min(90, 5 * misses);
+        status.textContent = `${summary(c)} · hiccup (${e.message}), trying again in ${wait}s…`;
+        await new Promise(ok => setTimeout(ok, wait * 1000));
         continue;
       }
       c = r.counts;
+      if (r.slowDown) {
+        status.textContent = `${summary(c)} · TickTick asked us to slow down, waiting ${r.slowDown}s…`;
+        await new Promise(ok => setTimeout(ok, r.slowDown * 1000));
+        continue;
+      }
+      await new Promise(ok => setTimeout(ok, 400));   // a steady, gentle pace
       status.textContent = summary(c) + (c.pending ? "… keep this open" : "");
     }
     if (!stop) { await loadOrders(); render(); draw(); }
