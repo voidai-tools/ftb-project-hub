@@ -6,6 +6,7 @@ FTB Design's project hub: replaces the start.me pages. Each project holds its bu
 
 - `public/index.html`: the whole front end (no build step). Project tabs, piece cards, Autodesk Viewer v7 in a modal, edit mode, start.me bookmark import.
 - `src/worker.js`: Cloudflare Worker. Serves `public/`, stores the hub in KV, issues read-only viewer tokens, and handles uploads and translation through APS. The APS client secret never reaches the browser.
+- `src/tasks.js`: Shop board jobs with subtasks, notes and files, job search, and the TickTick backup import. Jobs in D1 (`ftb-hub-tasks`, binding `DB`), files in R2 (`ftb-files`, binding `FILES`).
 - `data/seed.json`: the "Stuart Fails To Save The Universe" page transcribed from start.me. Used on first run until the hub is saved.
 - `scripts/build-preview.mjs`: builds `dist/preview.html`, a static single-page preview with the seed embedded.
 

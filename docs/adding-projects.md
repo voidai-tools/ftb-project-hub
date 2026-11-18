@@ -59,14 +59,23 @@ The **Shop** tab has the same columns as the lobby TV: **CNC**, **Build**, **Pai
 
 For the lobby screen, open `https://ftbshop.fun/#tv` on the TV's browser, sign in once, and leave it. It shows CNC, Build and Paint side by side with how long each job has been there, plus a narrow Completed column showing where each finished piece goes. Queued orders stay off the TV. It refreshes every 30 seconds; double-click exits.
 
-## TickTick CNC list
+## CNC jobs: tasks, subtasks, files and notes (replaces TickTick)
 
-The hub can follow the **CNC HUB** list in TickTick. Every open task there shows up on the Shop board as a CNC job in progress (marked "TickTick"), and checking a task off in TickTick moves it to Build. From there you move it by hand: **Start build**, **To paint**, or **Completed** (then tag it Pickup, Wrap for truck, FOH table or Ship). The sync runs every 5 minutes, or right away with **Sync TickTick** on the Shop tab. It only reads TickTick; nothing on the board changes your TickTick tasks.
+The CNC column is the router's board. Type a job into **+ Add a CNC job** at the top of the column and press Enter: the job's panel opens with the note ready to type in. Drop files on the panel (or paste, or click to attach) and add subtasks with Enter. Everything saves as you type; there's no Edit menu to go through. Dropping files straight onto the **+ Add a CNC job** box makes one job per file, named after the file (or one job with all of them, if you typed a name first).
 
-One-time setup:
-1. At developer.ticktick.com, sign in, open **Manage Apps**, and create an app. Set its redirect URL to `https://ftbshop.fun/api/ticktick/callback`.
-2. In Cloudflare, add the app's Client ID and Client Secret to the Worker as secrets named `TICKTICK_CLIENT_ID` and `TICKTICK_CLIENT_SECRET`.
-3. On the Shop tab, click **Connect TickTick** and approve.
+Click any card to open its panel. Subtasks show as checkboxes on the card, so the router can tick off sheets right from the board; click a subtask in the panel to give it its own note and files. **Where it is** in the panel moves a job anywhere on the board, and **More details** has qty, who it's for, project and the rest.
+
+**Search every job, note and file** above the board looks through every job ever posted, finished ones included, matching titles, notes, tags and file names. Each word you type must match.
+
+Links like `ftbshop.fun/#job/<id>` open a job's panel directly (the address bar shows it while a panel is open).
+
+### Bringing in TickTick history
+
+In TickTick, go to Settings → Backup → **Generate backup** to get a CSV. On the Shop tab, click **Import TickTick** and pick it. Finished tasks go into the job history (search finds them, the board doesn't show them); open ones land in the CNC column. Importing a newer backup later is safe: it updates imported tasks nobody has changed in the hub and never makes duplicates.
+
+The backup lists attached files by name only, without the files themselves, so old attachments show as "In the TickTick backup · file not copied over". Their names are still searchable, so you can find which job a file belonged to and pull it from TickTick if you need it.
+
+Storage: jobs live in the D1 database `ftb-hub-tasks` and files in the R2 bucket `ftb-files` (both bound in wrangler.toml). Uploads are capped at 100 MB per file.
 
 ## Sign-in and comments
 
