@@ -149,12 +149,12 @@ export async function ttFilesRoute(request, env, url) {
     if (!token) return fail(401, "Sign in to TickTick first.", { needSignIn: true });
     const started = Date.now();
     // A file that has started three runs without finishing most likely crashed them (too big, or TickTick stalled).
-    await env.DB.prepare("UPDATE tt_files SET status = 'failed', error = 'Kept timing out, probably too big to copy here' WHERE status = 'pending' AND attempts >= 3").run();
+    await env.DB.prepare("UPDATE tt_files SET status = 'failed', error = coalesce(error, 'Kept timing out, probably too big to copy here') || ' (gave up after 3 tries)' WHERE status = 'pending' AND attempts >= 3").run();
     // Small batches, smallest files first, so each run finishes well inside the Worker's limits.
-    const { results: batch } = await env.DB.prepare("SELECT * FROM tt_files WHERE status = 'pending' ORDER BY attempts, size, att_id LIMIT 4").all();
-    let copied = 0, failed = 0;
+    const { results: batch } = await env.DB.prepare("SELECT * FROM tt_files WHERE status = 'pending' ORDER BY attempts, size, att_id LIMIT 3").all();
+    let copied = 0, failed = 0, slowDown = 0;
     for (const f of batch) {
-      if (Date.now() - started > 12000) break;
+      if (Date.now() - started > 10000 || slowDown) break;
       await env.DB.prepare("UPDATE tt_files SET attempts = attempts + 1 WHERE att_id = ?").bind(f.att_id).run();
       let error = null, file = null;
       try {
@@ -162,18 +162,31 @@ export async function ttFilesRoute(request, env, url) {
         let res = null;
         for (const base of [TT, "https://ticktick.com"]) {
           try {
-            const r = await fetch(`${base}/api/v1/attachment/${f.tt_project}/${f.tt_task}/${f.att_id}`, { headers: headers(token) });
+            // Never wait forever on TickTick: a stalled download is what took whole runs down before.
+            const r = await fetch(`${base}/api/v1/attachment/${f.tt_project}/${f.tt_task}/${f.att_id}`, { headers: headers(token), signal: AbortSignal.timeout(20000) });
+            if (r.status === 429 || r.status >= 500) { res = r; break; }
             if (!res || r.ok || r.status === 401 || r.status === 403) res = r;
             if (r.ok) break;
           } catch (err) { if (!res) throw err; }
         }
         if (res.status === 401 || res.status === 403) return fail(401, "TickTick sign-in expired. Sign in again.", { needSignIn: true, counts: await counts(env) });
+        // TickTick is busy or rate-limiting us: leave the file to try again and tell the page to wait.
+        if (res.status === 429 || res.status >= 500) {
+          await res.body?.cancel?.().catch(() => {});
+          // A rate limit isn't the file's fault; a 5xx counts as one of its 3 tries and sends it to the back of the line.
+          await env.DB.prepare("UPDATE tt_files SET attempts = attempts - ?, error = ? WHERE att_id = ?")
+            .bind(res.status === 429 ? 1 : 0, `TickTick answered ${res.status}`, f.att_id).run();
+          slowDown = Math.min(120, Math.max(20, Number(res.headers.get("Retry-After")) || 30));
+          continue;
+        }
         if (!res.ok) throw new Error(`TickTick answered ${res.status}`);
         const length = Number(res.headers.get("Content-Length") || 0);
         if (length > MAX_FILE) throw new Error("Over 95 MB");
-        // Stream straight into R2 when the size is known, so big files never sit in the Worker's memory.
-        const body = length ? res.body.pipeThrough(new FixedLengthStream(length)) : await readCapped(res);
-        const size = length || body.byteLength;
+        // Big files with a known, uncompressed size stream straight into R2 so they never sit in the Worker's memory;
+        // everything else is read in first (a compressed download's Content-Length isn't the size we end up with).
+        const plain = !res.headers.get("Content-Encoding");
+        const body = plain && length > 8 * 1024 * 1024 ? res.body.pipeThrough(new FixedLengthStream(length)) : await readCapped(res);
+        const size = body.byteLength ?? length;
         const task = await getTask(env, f.our_task);
         const entry = task?.files?.find(x => x.tt === f.att_id);
         if (!entry) { await res.body?.cancel?.().catch(() => {}); await env.DB.prepare("UPDATE tt_files SET status = 'missing', updated_at = ? WHERE att_id = ?").bind(new Date().toISOString(), f.att_id).run(); continue; }
@@ -186,14 +199,22 @@ export async function ttFilesRoute(request, env, url) {
         file = { ...entry, key, size, type, at: entry.at || task.createdAt, by: "TickTick" };
         latest.files = (latest.files || []).map(x => (x.tt === f.att_id ? file : x));
         await upsertStmt(env, latest).run();
-      } catch (err) { error = err.message; }
+      } catch (err) {
+        if (err.name === "TimeoutError" || err.name === "AbortError") {
+          // Too slow this time: leave it pending (its attempt still counts) and give TickTick a breather.
+          slowDown = 20;
+          await env.DB.prepare("UPDATE tt_files SET error = ? WHERE att_id = ?").bind("TickTick took too long to send it", f.att_id).run();
+          continue;
+        }
+        error = err.message;
+      }
       await env.DB.prepare("UPDATE tt_files SET status = ?, error = ?, updated_at = ? WHERE att_id = ?")
         .bind(error ? "failed" : "copied", error, new Date().toISOString(), f.att_id).run();
       if (error) failed++; else copied++;
     }
     const c = await counts(env);
     if (!c.pending) await env.HUB.delete(TOKEN_KEY);   // done: drop the TickTick sign-in right away
-    return Response.json({ ok: true, copied, failed, counts: c });
+    return Response.json({ ok: true, copied, failed, slowDown, counts: c });
   }
 
   return null;
