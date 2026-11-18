@@ -59,6 +59,7 @@ export async function sharesRoute(request, env, url) {
 // /share/... is public. getToken(scope) is the Worker's APS token helper.
 export async function sharePage(request, env, url, getToken) {
   if (url.pathname === "/share/logo.png") return env.ASSETS.fetch(new Request(new URL("/ftb-logo.png", url), request));
+  if (url.pathname === "/share/favicon.png") return env.ASSETS.fetch(new Request(new URL("/icons/favicon-32.png", url), request));
   const m = url.pathname.match(/^\/share\/([^/]+)(\/token)?$/);
   const share = m && TOKEN.test(m[1]) ? await env.HUB.get(`share:${m[1]}`, "json") : null;
   if (!share) return new Response(page("Link not found", "<p class='msg'>This link was turned off or never existed. Ask FTB Design for a new one.</p>"),
@@ -95,7 +96,7 @@ export async function sharePage(request, env, url, getToken) {
 
 function page(title, body, safeTitle = title, dark = false) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex"><title>${safeTitle} · FTB Design</title>
+<meta name="robots" content="noindex"><title>${safeTitle} · FTB Design</title><link rel="icon" href="/share/favicon.png" type="image/png">
 <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css">
 <style>html,body{margin:0;height:100%;font-family:system-ui,sans-serif;background:#eef0f3;color:#1b1f24}
 header{position:fixed;top:0;left:0;right:0;height:52px;display:flex;align-items:center;gap:12px;padding:0 14px;background:#fff;border-bottom:1px solid #d9dde3;z-index:10}
