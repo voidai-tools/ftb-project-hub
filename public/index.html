@@ -2086,17 +2086,13 @@ function orderCard(o) {
       actions));
 }
 
-// A job being worked on with no open subtasks gets one checkbox, like a TickTick task. Ticking it marks this shop's
-// part Finished (the badge turns green) and leaves the job where it is: whoever runs the floor moves it on from there,
-// so the router doesn't have to think about next steps. Moving the job anywhere clears Finished.
+// A job being worked on with no open subtasks gets one checkbox, like a TickTick task: ticking it finishes this shop's step
+// and sends it on to wait for the next shop (CNC → Build waiting), or to Completed from the last shop.
 function stepCheck(o, subs) {
   if (o.status !== "in-progress" || subs.some(x => x.status !== "done")) return null;   // once every subtask is ticked, the job gets one too
-  return h("input", { type: "checkbox", class: "step-check", checked: o.finished || null, title: o.finished ? "Finished · untick if it isn't" : "Mark finished",
-    "aria-label": `Finished: ${o.title}`, onchange: async e => {
-      const finished = e.target.checked;
-      await saveOrder({ ...o, finished, finishedAt: finished ? new Date().toISOString() : "" });
-      render();
-    } });
+  const cols = colsOf(o), next = cols.slice(colOf(o) + 1).find(c => c.waiting);
+  return h("input", { type: "checkbox", class: "step-check", title: next ? `Done here: send to ${next.title}` : "Done: send to Completed",
+    "aria-label": `Done: ${o.title}`, onchange: () => advance(o, next ? next.waiting : "done") });
 }
 
 async function setTag(o, t) {
