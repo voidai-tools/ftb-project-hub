@@ -314,6 +314,84 @@ body.editing .add-model { display: block; }
 .tagb:hover { border-color: var(--ink-2); color: var(--ink); }
 .tagb[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--sheet); }
 .lane-empty { font-size: 13px; color: var(--ink-2); padding: 8px 0; }
+/* job panel, quick-add, search (replaces TickTick) */
+.order.clickable { cursor: pointer; }
+.order.clickable:hover { border-color: var(--ink-2); }
+.order-m.note { white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.subs-mini { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13px; }
+.subs-mini li { display: flex; gap: 6px; align-items: start; }
+.subs-mini label { flex: 1; min-width: 0; display: flex; gap: 6px; align-items: start; cursor: pointer; }
+.subs-mini input { margin: 2px 0 0; flex: none; }
+.subs-mini .n, .dr-subs .n { font: 500 11px/1.4 var(--f-mono); color: var(--ink-2); white-space: nowrap; }
+.subs-mini .more { color: var(--ink-2); font-size: 12px; padding-left: 20px; }
+.qa { display: grid; gap: 4px; border-radius: 8px; }
+.qa-in { width: 100%; padding: 9px 10px; border: 1px dashed var(--lane, var(--rule)); border-radius: 8px; background: var(--sheet); color: var(--ink); font: 500 14px/1.2 var(--f-body); }
+.qa-in:focus { outline: none; border-style: solid; box-shadow: 0 0 0 3px var(--layout-soft); }
+.qa-hint { font-size: 11.5px; color: var(--ink-2); padding: 0 2px; }
+.qa.drag { outline: 2px dashed var(--layout); outline-offset: 4px; background: var(--layout-soft); }
+.job-search { margin: 14px 0 18px; }
+.job-q { width: 100%; max-width: 640px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--sheet); color: var(--ink); font-size: 15px; }
+.results { display: grid; gap: 8px; max-width: 860px; padding-bottom: 48px; }
+.res-h { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
+.res { display: grid; gap: 4px; text-align: left; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; cursor: pointer; color: var(--ink); font: inherit; }
+.res:hover { border-color: var(--layout); }
+.res-t { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.res-t b { flex: 1 1 260px; font-size: 15px; }
+.res-d { font: 500 12px/1 var(--f-mono); color: var(--ink-2); }
+.res-p, .res-n { font-size: 13px; color: var(--ink-2); }
+.res-f { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 500 12px/1.3 var(--f-mono); color: var(--ink); }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); z-index: 15; background: var(--sheet); border-left: 1px solid var(--rule);
+  box-shadow: -20px 0 50px -24px rgba(0,0,0,.45); overflow-y: auto; padding: max(14px, env(safe-area-inset-top, 0px)) 20px max(20px, env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; }
+.drawer.drag { outline: 3px dashed var(--layout); outline-offset: -8px; }
+.dr-load { padding: 40px 0; color: var(--ink-2); display: grid; gap: 12px; justify-items: start; }
+.dr-top { display: flex; gap: 8px; align-items: center; min-height: 32px; }
+.dr-crumbs { flex: 1; min-width: 0; font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linkish { border: 0; background: none; padding: 0; color: var(--layout); cursor: pointer; font: inherit; }
+.linkish:hover { text-decoration: underline; }
+.dr-saved { font: 500 11px/1 var(--f-mono); color: var(--ink-2); }
+.dr-x { font-size: 24px; line-height: 1; width: 36px; height: 36px; justify-content: center; align-items: center; }
+.dr-where { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.dr-where select { padding: 6px 8px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); font: 500 13px var(--f-body); }
+.dr-done { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; cursor: pointer; }
+.dr-done input { width: 18px; height: 18px; }
+.dr-title, .dr-note { width: 100%; resize: none; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink); padding: 6px 8px; margin: 0 -8px; width: calc(100% + 16px); overflow: hidden; }
+.dr-title { font: 700 22px/1.25 var(--f-body); }
+.dr-note { font: 400 14.5px/1.5 var(--f-body); min-height: 90px; }
+.dr-title:hover, .dr-note:hover { border-color: var(--rule); }
+.dr-title:focus, .dr-note:focus { outline: none; border-color: var(--layout); background: var(--paper); }
+.dr-sec { display: grid; gap: 8px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.dr-sec h4 { margin: 0; display: flex; gap: 8px; align-items: baseline; font: 700 14px/1 var(--f-display); letter-spacing: .08em; text-transform: uppercase; }
+.dr-sec h4 .n { font: 500 11px/1 var(--f-mono); color: var(--ink-2); letter-spacing: 0; }
+.dr-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.dr-files li { display: flex; gap: 10px; align-items: center; }
+.dr-files .ft { flex: none; width: 40px; height: 32px; }
+.dr-files .fthumb { flex: none; width: 40px; height: 32px; border-radius: 4px; overflow: hidden; }
+.dr-files .fthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dr-files .fi { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.dr-files .fi a, .dr-files .fi span { font-weight: 500; overflow-wrap: anywhere; color: var(--ink); }
+.dr-files .fi a { color: var(--layout); text-decoration: none; }
+.dr-files .fi a:hover { text-decoration: underline; }
+.dr-files small { color: var(--ink-2); font-size: 12px; }
+.dr-files li.legacy .ft { opacity: .55; }
+.dr-files li.uploading { opacity: .6; }
+.dr-files .del { font-size: 16px; white-space: nowrap; }
+.dr-files .icon-btn { text-decoration: none; }
+.dr-drop { border: 1px dashed var(--rule); border-radius: 8px; padding: 12px; background: none; color: var(--ink-2); cursor: pointer; font: 500 13px/1 var(--f-body); }
+.dr-drop:hover { border-color: var(--layout); color: var(--layout); }
+.dr-subs { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.dr-subs li { display: flex; gap: 8px; align-items: center; border-radius: 6px; padding: 2px 4px; }
+.dr-subs li:hover { background: var(--paper); }
+.dr-subs input { width: 17px; height: 17px; flex: none; }
+.dr-subs .sub-t { flex: 1; min-width: 0; display: flex; gap: 8px; align-items: center; border: 0; background: none; padding: 6px 0; cursor: pointer; text-align: left; color: var(--ink); font: 500 14px/1.3 var(--f-body); }
+.dr-subs .sub-t > span:first-child { flex: 1; min-width: 0; }
+.dr-subs li.done .sub-t > span:first-child { text-decoration: line-through; color: var(--ink-2); }
+.dr-subs .chev { color: var(--ink-2); font-size: 18px; }
+.dr-addsub { width: 100%; padding: 8px 10px; border: 1px dashed var(--rule); border-radius: 6px; background: none; color: var(--ink); font: 500 14px var(--f-body); }
+.dr-addsub:focus { outline: none; border-style: solid; border-color: var(--layout); }
+.dr-foot { display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--rule); padding-top: 12px; margin-top: auto; flex-wrap: wrap; }
+.dr-foot small { color: var(--ink-2); }
+.lists { display: grid; gap: 6px; }
+@media (max-width: 560px) { .drawer { padding-inline: 16px; } }
 @media (max-width: 1400px) { .lanes { grid-template-columns: repeat(3, minmax(0, 1fr)); } .lane.queued { order: 9; } }
 @media (max-width: 860px) { .lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .lanes { grid-template-columns: 1fr; } }
@@ -445,7 +523,7 @@ body.tv .bar, body.tv #main { display: none; }
 const API = "/api";
 const state = { hub: { projects: [] }, current: null, editing: false, query: "", mode: "live",
   me: null, counts: {}, threads: {}, open: new Set(), drafts: {}, board: "shop",
-  photos: {}, allPhotos: null, album: null, albumPiece: "" };
+  photos: {}, allPhotos: null, album: null, albumPiece: "", taskQuery: "" };
 
 async function loadHub() {
   try {
@@ -1855,7 +1933,6 @@ function exampleOrders() {
 
 async function loadOrders() {
   if (state.mode === "live") {
-    if (!state.ticktick) state.ticktick = await (await fetch(`${API}/ticktick/status`)).json().catch(() => ({}));
     try { state.orders = (await (await fetch(`${API}/orders`)).json()).orders || []; } catch { state.orders ||= []; }
   } else {
     let local = null;
@@ -1869,7 +1946,7 @@ async function saveOrder(o) {
   if (i >= 0) state.orders[i] = o; else state.orders.push(o);
   if (state.mode === "live") {
     const res = await fetch(`${API}/orders/${o.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
-    if (!res.ok) { toast("Couldn't save the order. Try again."); return; }
+    if (!res.ok) { toast("Couldn't save the order. Try again."); return false; }
   } else {
     try { localStorage.setItem("ftb-orders-v3", JSON.stringify(state.orders)); } catch {}
   }
@@ -1930,25 +2007,30 @@ function renderPickup(main) {
   main.append(h("div", { class: "head" },
     h("div", {}, h("div", { class: "eyebrow" }, "Shop orders"), h("h1", {}, board.title)),
     h("div", { class: "tools" },
-      state.mode === "live" && bid === "shop" ? ticktickButton() : null,
+      state.mode === "live" && bid === "shop" ? h("button", { class: "btn ghost", title: "Bring in a TickTick backup (.csv)", onclick: importTicktick }, "Import TickTick") : null,
       h("a", { class: "btn", href: `#${board.tvHash}`, onclick: e => { e.preventDefault(); enterTv(bid); } }, "TV view"),
       h("button", { class: "btn primary", onclick: () => openOrderEditor(null) }, "+ Order"))));
   if (state.mode === "preview" && orders.some(o => o.example)) {
     main.append(h("p", { class: "hint" }, "These orders are examples. Add your own with + Order; changes stay in this browser until the hub is deployed."));
   }
-  const lane = (cls, title, note, list, empty, extra) => h("section", { class: `lane ${cls}` },
+  const area = h("div", { class: "jobs-area" });
+  if (state.mode === "live") main.append(jobSearch());
+  main.append(area);
+  const lane = (cls, title, note, list, empty, extra, top) => h("section", { class: `lane ${cls}` },
     h("div", { class: "lane-h" }, h("b", {}, title), h("span", {}, note ? `${list.length} · ${note}` : list.length)),
-    list.length ? list.map(orderCard) : h("div", { class: "lane-empty" }, empty), extra);
+    top, list.length ? list.map(orderCard) : h("div", { class: "lane-empty" }, empty), extra);
   const queued = orders.filter(o => o.status === "queued").sort(byOldest);
   const done = orders.filter(o => o.status === "done").sort(byOldest);
   const out = orders.filter(o => o.status === "out" && new Date(o.statusAt) > dayAgo).sort(byOldest).reverse();
   const outList = out.length ? h("details", { class: "outs" }, h("summary", {}, `Out the door today · ${out.length}`),
     h("ul", {}, out.map(o => h("li", {}, h("span", {}, o.title, o.outTag ? ` · ${o.outTag}` : ""),
-      h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"))))) : null;
-  main.append(h("div", { class: "lanes", style: `--n:${board.cols.length}` },
+      h("button", { class: "icon-btn", "aria-label": `Open ${o.title}`, onclick: () => state.mode === "live" ? openJob(o.id) : openOrderEditor(o) }, "✎"))))) : null;
+  const drawLanes = () => area.replaceChildren(h("div", { class: "lanes", style: `--n:${board.cols.length}` },
     lane("queued", "Queued", "not on TV", queued, "Nothing waiting to start."),
-    board.cols.map((c, i) => lane(c.cls, c.title, "", shopList(orders, i), c.empty)),
+    board.cols.map((c, i) => lane(c.cls, c.title, "", shopList(orders, i), c.empty, null, i === 0 && state.mode === "live" ? quickAdd(bid, c) : null)),
     lane("done", "Completed", "", done, "Nothing finished yet.", outList)));
+  state.redrawJobs = () => state.mode === "live" && state.taskQuery.trim() ? renderSearchResults(area) : drawLanes();
+  state.redrawJobs();
 }
 
 // Where an order can go from here: a later shop, or straight to Completed.
@@ -1970,14 +2052,21 @@ function orderCard(o) {
   else if (o.status === "in-progress") actions = laterMoves(o).map(m => btn(m.label, m.to, m.to === "done"));
   else if (col) actions = [...laterMoves(o).map(m => btn(m.label, m.to)), btn(col.start, "in-progress", true)];
   else if (o.status === "done") actions = [btn("Out the door", "out")];
-  return h("article", { class: "order" + (isStale(o) ? " stale" : "") },
+  const subs = o.subs || [], subsDone = subs.filter(x => x.status === "done").length;
+  const open = state.mode === "live" ? e => { if (!e.target.closest("button, input, a, label")) openJob(o.id); } : null;
+  return h("article", { class: "order" + (isStale(o) ? " stale" : "") + (open ? " clickable" : ""), onclick: open },
     h("div", { class: "order-t" }, h("b", {}, o.title, o.qty > 1 ? ` ×${o.qty}` : ""), chip),
     h("div", { class: "order-m" },
       o.for ? h("span", {}, "For ", h("strong", {}, o.for)) : null,
       o.location ? h("span", {}, "At ", h("strong", {}, o.location)) : null,
       o.project ? h("span", {}, o.project) : null,
-      o.source === "ticktick" ? h("span", { title: "Comes from the TickTick CNC HUB list" }, "TickTick") : null),
-    o.notes ? h("div", { class: "order-m" }, o.notes) : null,
+      o.fileCount ? h("span", { title: "Files" }, `📎 ${o.fileCount}`) : null,
+      subs.length ? h("span", { title: "Subtasks done" }, `☑ ${subsDone}/${subs.length}`) : null),
+    o.notes ? h("div", { class: "order-m note" }, o.notes) : null,
+    subs.length ? h("ul", { class: "subs-mini" }, subs.filter(x => x.status !== "done").slice(0, 6).map(x =>
+      h("li", {}, h("label", {}, h("input", { type: "checkbox", onchange: () => toggleSub(o, x) }), h("span", {}, x.title)),
+        x.files ? h("span", { class: "n" }, `📎${x.files}`) : null)),
+      subs.length - subsDone > 6 ? h("li", { class: "more" }, `+${subs.length - subsDone - 6} more`) : null) : null,
     o.status === "done" ? h("div", { class: "tags", role: "group", "aria-label": "Where it goes next" },
       OUT_TAGS.map(t => h("button", { class: "tagb", "aria-pressed": String(o.outTag === t), onclick: () => setTag(o, t) }, t))) : null,
     h("div", { class: "order-a" },
@@ -1985,18 +2074,6 @@ function orderCard(o) {
       h("span", { style: "flex:1" }),
       h("button", { class: "icon-btn", "aria-label": `Edit ${o.title}`, onclick: () => openOrderEditor(o) }, "✎"),
       actions));
-}
-
-// TickTick: connect once, then the Worker pulls the CNC HUB list every 5 minutes; "Sync TickTick" pulls right away.
-function ticktickButton() {
-  const btn = h("button", { class: "btn", onclick: async () => {
-    if (!state.ticktick?.connected) { location.href = `${API}/ticktick/connect`; return; }
-    btn.disabled = true;
-    const r = await (await fetch(`${API}/ticktick/sync`, { method: "POST" })).json().catch(() => ({}));
-    toast(r.ok ? `TickTick: ${r.added} new, ${r.toBuild} sent to build` : `TickTick sync failed: ${r.reason || "try again"}`);
-    await loadOrders(); render();
-  } }, state.ticktick?.connected ? "Sync TickTick" : "Connect TickTick");
-  return btn;
 }
 
 async function setTag(o, t) {
@@ -2045,7 +2122,7 @@ function openOrderEditor(o) {
   const loc = h("input", { id: "o-loc", value: d.location || "", placeholder: "Assembly table, paint cart…" });
   const proj = h("select", { id: "o-proj" }, h("option", { value: "" }, "None"),
     state.hub.projects.map(p => h("option", { value: p.name, selected: p.name === d.project }, p.name)));
-  const notes = h("input", { id: "o-notes", value: d.notes || "" });
+  const notes = h("textarea", { id: "o-notes", rows: "3" }, d.notes || "");
   let armed = false;
   const del = h("button", { class: "btn danger", type: "button", onclick: async () => {
     if (!armed) { armed = true; del.textContent = "Click again to delete"; return; }
@@ -2117,6 +2194,432 @@ function exitTv() {
   state.current = "pickup"; location.hash = (BOARDS[state.board] || BOARDS.shop).hash; render();
 }
 
+// ---------- job panel (replaces TickTick) ----------
+// Click a job for a side panel with its title, note, files and subtasks, all saved as you type. Quick-add sits on top
+// of the first column, files dropped there become jobs, and one search covers every job, note and file ever posted.
+
+async function api(path, opts = {}) {
+  const res = await fetch(`${API}${path}`, { ...opts, headers: { ...(typeof opts.body === "string" ? { "Content-Type": "application/json" } : {}), ...(opts.headers || {}) } });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  return data;
+}
+const newId = title => `${slug(title).slice(0, 40)}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+const shortDate = iso => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString([], { month: "short", day: "numeric", ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}) }); };
+const fmtSize = n => !n ? "" : n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
+const FILE_COLORS = { "3DM": "#6b5bd6", DWG: "#0f7c8c", DXF: "#0f7c8c", CRV3: "#2350c8", PDF: "#c4392f", AI: "#d97a00", STL: "#9a6a1f", SKP: "#b5413a" };
+const extOf = name => (name.includes(".") ? name.split(".").pop() : "").slice(0, 4).toUpperCase();
+const typing = () => document.activeElement?.closest?.("#main input, #main textarea");
+const refreshBoard = () => { if (state.current === "pickup" && !typing()) render(); };
+
+async function uploadJobFile(id, file) {
+  const res = await fetch(`${API}/orders/${id}/files?name=${encodeURIComponent(file.name)}`, {
+    method: "POST", headers: { "Content-Type": file.type || "application/octet-stream" }, body: file });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+  return data.file;
+}
+
+async function addJob(bid, col, title) {
+  const now = new Date().toISOString();
+  const o = { id: newId(title), title, dept: col.dept, status: "in-progress", statusAt: now, createdAt: now, ...(bid === "shop" ? {} : { board: bid }) };
+  try {
+    const r = await api(`/orders/${o.id}`, { method: "PUT", body: JSON.stringify(o) });
+    state.orders.push({ ...r.order, subs: [] });
+    return r.order;
+  } catch (e) { toast(`Couldn't add it: ${e.message}`); return null; }
+}
+
+// Top of the first column: type a job and press Enter, or drop files (one job per file, or all on the typed job).
+function quickAdd(bid, col) {
+  const input = h("input", { class: "qa-in", placeholder: `+ Add a ${col.title} job`, "aria-label": `Add a ${col.title} job`, onkeydown: async e => {
+    if (e.key !== "Enter" || !input.value.trim()) return;
+    e.preventDefault();
+    const o = await addJob(bid, col, input.value.trim());
+    if (!o) return;
+    input.value = "";
+    render();
+    openJob(o.id, { focus: "note" });
+  } });
+  const box = h("div", { class: "qa" }, input, h("div", { class: "qa-hint" }, "Enter adds it · drop files here to make jobs"));
+  box.addEventListener("dragover", e => { e.preventDefault(); box.classList.add("drag"); });
+  box.addEventListener("dragleave", () => box.classList.remove("drag"));
+  box.addEventListener("drop", async e => {
+    e.preventDefault(); box.classList.remove("drag");
+    const files = [...e.dataTransfer.files];
+    if (!files.length) return;
+    const typed = input.value.trim();
+    const groups = typed ? [[typed, files]] : files.map(f => [f.name.replace(/\.[^.]+$/, ""), [f]]);
+    let last;
+    for (const [title, fs] of groups) {
+      const o = await addJob(bid, col, title);
+      if (!o) break;
+      last = o;
+      for (const f of fs) {
+        toast(`Uploading ${f.name}…`);
+        try { await uploadJobFile(o.id, f); } catch (err) { toast(`${f.name}: ${err.message}`); }
+      }
+    }
+    input.value = "";
+    await loadOrders(); render();
+    if (last && groups.length === 1) openJob(last.id);
+  });
+  return box;
+}
+
+async function toggleSub(parent, sub) {
+  sub.status = sub.status === "done" ? "open" : "done";
+  try { await api(`/orders/${sub.id}`, { method: "PUT", body: JSON.stringify({ status: sub.status, statusAt: new Date().toISOString() }) }); }
+  catch (e) { sub.status = sub.status === "done" ? "open" : "done"; toast(`Couldn't save: ${e.message}`); }
+  render();
+}
+
+// Saving as you type: changes wait half a second, then go up together.
+const pendingSaves = new Map();
+let saveTimer;
+function queueSave(id, fields, say) {
+  pendingSaves.set(id, { ...(pendingSaves.get(id) || {}), ...fields });
+  say?.("Saving…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => flushJobSaves(say), 500);
+}
+async function flushJobSaves(say) {
+  clearTimeout(saveTimer);
+  const work = [...pendingSaves];
+  pendingSaves.clear();
+  for (const [id, fields] of work) {
+    try { syncBoard((await api(`/orders/${id}`, { method: "PUT", body: JSON.stringify(fields) })).order); say?.("Saved"); }
+    catch (e) { say?.("Not saved"); toast(`Couldn't save: ${e.message}`); }
+  }
+}
+// Keep the board's copy of a job (or of a subtask on a card) in step with the panel.
+function syncBoard(t) {
+  const i = (state.orders || []).findIndex(o => o.id === t.id);
+  if (i >= 0) state.orders[i] = { ...state.orders[i], ...t };
+  else if (t.parentId) {
+    const p = (state.orders || []).find(o => o.id === t.parentId);
+    const s = p?.subs?.find(x => x.id === t.id);
+    if (s) Object.assign(s, { title: t.title, status: t.status, files: t.fileCount ?? s.files });
+    else if (p) (p.subs ||= []).push({ id: t.id, title: t.title, status: t.status, files: t.fileCount || 0 });
+  }
+  refreshBoard();
+}
+
+function drawerKey(e) { if (e.key === "Escape" && !document.querySelector(".scrim")) closeJob(); }
+function closeJob() {
+  flushJobSaves();
+  document.getElementById("drawer")?.remove();
+  document.removeEventListener("keydown", drawerKey);
+  if (location.hash.startsWith("#job/")) history.replaceState(null, "", `#${(BOARDS[state.board] || BOARDS.shop).hash}`);
+}
+async function openJob(id, opts = {}) {
+  await flushJobSaves();
+  let drawer = document.getElementById("drawer");
+  if (!drawer) {
+    drawer = h("aside", { id: "drawer", class: "drawer", role: "dialog", "aria-label": "Job" });
+    document.body.append(drawer);
+    document.addEventListener("keydown", drawerKey);
+  }
+  drawer.replaceChildren(h("div", { class: "dr-load" }, "Loading…"));
+  history.replaceState(null, "", `#job/${id}`);
+  try { drawJob(drawer, await api(`/orders/${encodeURIComponent(id)}`), opts); }
+  catch (e) { drawer.replaceChildren(h("div", { class: "dr-load" }, h("p", {}, "That job couldn't be opened."), h("button", { class: "btn", onclick: closeJob }, "Close"))); }
+}
+
+function fileRow(o, f, redraw) {
+  const ext = extOf(f.name);
+  const href = f.key ? `${API}/files/${f.key}` : null;
+  const thumb = href && /^image\//.test(f.type || "") ? h("a", { href, target: "_blank", rel: "noopener", class: "fthumb" }, h("img", { src: href, alt: "", loading: "lazy" })) : null;
+  let armed = false, timer;
+  const del = h("button", { class: "icon-btn del", "aria-label": `Remove ${f.name}`, title: "Remove", onclick: async () => {
+    if (!armed) { armed = true; del.textContent = "Remove?"; timer = setTimeout(() => { armed = false; del.textContent = "×"; }, 3000); return; }
+    clearTimeout(timer);
+    try {
+      await api(`/orders/${o.id}/files?key=${encodeURIComponent(f.key || f.tt)}`, { method: "DELETE" });
+      o.files = o.files.filter(x => x !== f); redraw(); syncBoard({ id: o.id, parentId: o.parentId, title: o.title, status: o.status, fileCount: o.files.length });
+    } catch (e) { toast(e.message); }
+  } }, "×");
+  const meta = href ? [fmtSize(f.size), f.by, shortDate(f.at)].filter(Boolean).join(" · ") : "In the TickTick backup · file not copied over";
+  return h("li", { class: href ? "" : "legacy" },
+    thumb || h("span", { class: "ft", style: `background:${FILE_COLORS[ext] || "#6b7380"}` }, ext || "FILE"),
+    h("div", { class: "fi" }, href ? h("a", { href, target: "_blank", rel: "noopener" }, f.name) : h("span", {}, f.name), h("small", {}, meta)),
+    href ? h("a", { class: "icon-btn", href: `${href}?dl`, title: "Download", "aria-label": `Download ${f.name}` }, "↓") : null, del);
+}
+
+function drawJob(drawer, { order: o, subtasks, path }, opts = {}) {
+  const isSub = !!o.parentId;
+  const saved = h("span", { class: "dr-saved", "aria-live": "polite" });
+  const say = t => { saved.textContent = t; };
+  const grow = el => { el.style.height = "auto"; el.style.height = el.scrollHeight + 2 + "px"; };
+
+  const title = h("textarea", { class: "dr-title", rows: "1", "aria-label": "Title" });
+  title.value = o.title || "";
+  const note = h("textarea", { class: "dr-note", placeholder: "Add a note…", "aria-label": "Note" });
+  note.value = o.notes || "";
+  title.addEventListener("input", () => { grow(title); if (title.value.trim()) { o.title = title.value.trim(); queueSave(o.id, { title: o.title }, say); } });
+  title.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); note.focus(); } });
+  note.addEventListener("input", () => { grow(note); o.notes = note.value; queueSave(o.id, { notes: note.value }, say); });
+
+  // Where it is: a subtask is just done or not; a job can move anywhere on its board.
+  let where;
+  if (isSub) {
+    const box = h("input", { type: "checkbox", checked: o.status === "done" || null, onchange: () => {
+      o.status = box.checked ? "done" : "open";
+      queueSave(o.id, { status: o.status, statusAt: new Date().toISOString() }, say); flushJobSaves(say);
+    } });
+    where = h("label", { class: "dr-done" }, box, "Done");
+  } else {
+    const places = placesFor(boardOf(o)), here = placeOf(o);
+    const sel = h("select", { "aria-label": "Where it is", onchange: () => {
+      const p = places[+sel.value];
+      Object.assign(o, { status: p.status, dept: p.dept || o.dept, statusAt: new Date().toISOString() });
+      queueSave(o.id, { status: o.status, dept: o.dept, statusAt: o.statusAt }, say); flushJobSaves(say);
+    } }, places.map((p, i) => h("option", { value: i, selected: p.label === here.label || null }, p.label)));
+    where = h("label", { class: "dr-where" }, h("span", {}, "Where it is"), sel);
+  }
+
+  const fileList = h("ul", { class: "dr-files" });
+  const drawFiles = () => fileList.replaceChildren(...(o.files || []).map(f => fileRow(o, f, drawFiles)));
+  drawFiles();
+  async function addFiles(files) {
+    for (const f of files) {
+      const row = h("li", { class: "uploading" }, h("span", { class: "ft", style: "background:#6b7380" }, extOf(f.name) || "FILE"),
+        h("div", { class: "fi" }, h("span", {}, f.name), h("small", {}, `Uploading ${fmtSize(f.size)}…`)));
+      fileList.append(row);
+      try { (o.files ||= []).push(await uploadJobFile(o.id, f)); } catch (e) { toast(`${f.name}: ${e.message}`); }
+      drawFiles();
+    }
+    syncBoard({ id: o.id, parentId: o.parentId, title: o.title, status: o.status, fileCount: (o.files || []).length });
+  }
+  const pick = h("input", { type: "file", multiple: true, hidden: true, onchange: () => { addFiles([...pick.files]); pick.value = ""; } });
+  const drop = h("button", { class: "dr-drop", onclick: () => pick.click() }, "Drop files here, paste, or click to attach");
+
+  const subList = h("ul", { class: "dr-subs" });
+  const subCount = h("span", { class: "n" });
+  const drawSubs = () => {
+    subCount.textContent = subtasks.length ? `${subtasks.filter(x => x.status === "done").length}/${subtasks.length}` : "";
+    subList.replaceChildren(...subtasks.map(x => {
+      const cb = h("input", { type: "checkbox", checked: x.status === "done" || null, "aria-label": `Done: ${x.title}`, onchange: async () => {
+        x.status = cb.checked ? "done" : "open";
+        drawSubs();
+        try { syncBoard((await api(`/orders/${x.id}`, { method: "PUT", body: JSON.stringify({ status: x.status, statusAt: new Date().toISOString() }) })).order); }
+        catch (e) { toast(`Couldn't save: ${e.message}`); }
+      } });
+      return h("li", { class: x.status === "done" ? "done" : "" }, cb,
+        h("button", { class: "sub-t", onclick: () => openJob(x.id) }, h("span", {}, x.title),
+          x.files ? h("span", { class: "n" }, `📎${x.files}`) : null,
+          x.subs?.length ? h("span", { class: "n" }, `☑${x.subs.filter(y => y.status === "done").length}/${x.subs.length}`) : null,
+          h("span", { class: "chev", "aria-hidden": "true" }, "›")));
+    }));
+  };
+  drawSubs();
+  const addSub = h("input", { class: "dr-addsub", placeholder: "+ Add a subtask", "aria-label": "Add a subtask", onkeydown: async e => {
+    if (e.key !== "Enter" || !addSub.value.trim()) return;
+    e.preventDefault();
+    const t = addSub.value.trim(), now = new Date().toISOString();
+    addSub.value = "";
+    const sub = { id: newId(t), parentId: o.id, title: t, status: "open", createdAt: now, statusAt: now, sort: Date.now() };
+    try {
+      const r = await api(`/orders/${sub.id}`, { method: "PUT", body: JSON.stringify(sub) });
+      subtasks.push({ id: sub.id, title: t, status: "open", files: 0, subs: [] }); drawSubs(); syncBoard(r.order);
+    } catch (err) { addSub.value = t; toast(`Couldn't add it: ${err.message}`); }
+  } });
+
+  let armed = false;
+  const del = h("button", { class: "btn danger", onclick: async () => {
+    if (!armed) { armed = true; del.textContent = subtasks.length ? `Delete with ${subtasks.length} subtask${subtasks.length > 1 ? "s" : ""}?` : "Click again to delete"; return; }
+    try { await api(`/orders/${o.id}`, { method: "DELETE" }); } catch (e) { toast(e.message); return; }
+    state.orders = (state.orders || []).filter(x => x.id !== o.id);
+    for (const p of state.orders) if (p.subs) p.subs = p.subs.filter(x => x.id !== o.id);
+    if (isSub) openJob(o.parentId); else closeJob();
+    refreshBoard();
+  } }, "Delete");
+  const boardCopy = () => (state.orders || []).find(x => x.id === o.id);
+
+  drawer.replaceChildren(
+    h("div", { class: "dr-top" },
+      h("div", { class: "dr-crumbs" }, path.flatMap(p => [h("button", { class: "linkish", onclick: () => openJob(p.id) }, p.title), h("span", { "aria-hidden": "true" }, " › ")])),
+      saved, h("button", { class: "icon-btn dr-x", "aria-label": "Close", onclick: closeJob }, "×")),
+    where, title, note,
+    h("section", { class: "dr-sec" }, h("h4", {}, "Files", h("span", { class: "n" }, (o.files || []).length || "")), fileList, drop, pick),
+    h("section", { class: "dr-sec" }, h("h4", {}, "Subtasks", subCount), subList, addSub),
+    h("div", { class: "dr-foot" },
+      h("small", {}, [o.createdBy ? `Added by ${o.createdBy}` : o.source === "ticktick-import" ? "From TickTick" : "", shortDate(o.createdAt)].filter(Boolean).join(" · ")),
+      h("span", { style: "flex:1" }),
+      !isSub && boardCopy() ? h("button", { class: "btn ghost", onclick: () => openOrderEditor(boardCopy()) }, "More details") : null,
+      del));
+  // Drop or paste files anywhere on the panel.
+  drawer.ondragover = e => { e.preventDefault(); drawer.classList.add("drag"); };
+  drawer.ondragleave = e => { if (e.target === drawer) drawer.classList.remove("drag"); };
+  drawer.ondrop = e => { e.preventDefault(); drawer.classList.remove("drag"); if (e.dataTransfer.files.length) addFiles([...e.dataTransfer.files]); };
+  drawer.onpaste = e => { const fs = [...(e.clipboardData?.files || [])]; if (fs.length) { e.preventDefault(); addFiles(fs); } };
+  requestAnimationFrame(() => { grow(title); grow(note); (opts.focus === "note" ? note : null)?.focus(); });
+}
+
+// ---------- search every job ----------
+function jobSearch() {
+  const input = h("input", { class: "job-q", type: "search", placeholder: "Search every job, note and file, finished ones too", "aria-label": "Search jobs" });
+  input.value = state.taskQuery;
+  let t;
+  input.addEventListener("input", () => { state.taskQuery = input.value; clearTimeout(t); t = setTimeout(() => state.redrawJobs?.(), 250); });
+  return h("div", { class: "job-search" }, input);
+}
+async function renderSearchResults(area) {
+  const q = state.taskQuery.trim();
+  if (!area.querySelector(".results")) area.replaceChildren(h("p", { class: "hint" }, "Searching…"));
+  let results;
+  try { results = (await api(`/tasks/search?q=${encodeURIComponent(q)}`)).results; }
+  catch (e) { area.replaceChildren(h("p", { class: "hint" }, `Search failed: ${e.message}`)); return; }
+  if (state.taskQuery.trim() !== q) return;
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  area.replaceChildren(h("div", { class: "results" },
+    h("div", { class: "res-h" }, results.length >= 80 ? "Newest 80 matches" : `${results.length} match${results.length === 1 ? "" : "es"}`),
+    results.map(t => resultRow(t, words))));
+}
+function resultRow(t, words) {
+  const files = (t.files || []).filter(f => words.some(w => f.name.toLowerCase().includes(w)));
+  const where = t.parentId ? (t.status === "done" ? "Done" : "Open") : placeOf(t).label;
+  let snippet = "";
+  const n = (t.notes || "").replace(/\s+/g, " "), at = words.map(w => n.toLowerCase().indexOf(w)).filter(i => i >= 0).sort((a, b) => a - b)[0];
+  if (at != null) snippet = (at > 50 ? "…" : "") + n.slice(Math.max(0, at - 50), at + 110) + (at + 110 < n.length ? "…" : "");
+  return h("button", { class: "res", onclick: () => openJob(t.id) },
+    h("div", { class: "res-t" }, h("b", {}, t.title), h("span", { class: "chip" }, where), h("span", { class: "res-d" }, shortDate(t.statusAt || t.createdAt))),
+    t.parentTitle ? h("div", { class: "res-p" }, `in ${t.parentTitle}`) : null,
+    snippet ? h("div", { class: "res-n" }, snippet) : null,
+    files.length ? h("div", { class: "res-f" }, files.slice(0, 4).map(f => h("span", {}, "📎 ", f.name))) : null);
+}
+
+// ---------- TickTick backup import ----------
+// TickTick: Settings → Backup → Generate backup gives a CSV of every task, finished ones included. It's read here in
+// the browser and sent up in batches. Finished tasks go into the history (search finds them); open ones land in the
+// first column. The CSV only names attached files, so they're listed by name without the file itself.
+function parseCsv(text) {
+  const rows = [];
+  let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+const ttHash = s => { let a = 0x811c9dc5, b = 0x9e3779b9; for (const ch of s) { const c = ch.codePointAt(0); a = Math.imul(a ^ c, 16777619) >>> 0; b = Math.imul(b ^ c, 2246822519) >>> 0; } return a.toString(36) + b.toString(36); };
+const ttDate = s => { if (!s) return ""; const d = new Date(s.replace(/([+-]\d\d)(\d\d)$/, "$1:$2")); return isNaN(d) ? "" : d.toISOString(); };
+function ttRows(text) {
+  const all = parseCsv(text.replace(/^﻿/, ""));
+  const hi = all.findIndex(r => r[0] === "Folder Name" && r.includes("Title") && r.includes("taskId"));
+  if (hi < 0) throw new Error("That doesn't look like a TickTick backup file.");
+  const head = all[hi];
+  return all.slice(hi + 1).filter(r => r.length >= head.length - 3).map(r => Object.fromEntries(head.map((k, i) => [k, r[i] ?? ""])));
+}
+function ttSplit(content) {
+  const files = [];
+  const notes = content.replace(/!\[(file|image)\]\(([0-9a-f]{24})\/([^)]*)\)/g, (_, kind, tt, raw) => {
+    let name = raw.replace(/\+/g, " ");
+    try { name = decodeURIComponent(name); } catch {}
+    files.push({ tt, name, kind });
+    return "\n";
+  }).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return { notes, files };
+}
+function ttTasks(rows) {
+  const live = new Map((state.orders || []).filter(o => o.source === "ticktick" && o.status !== "out").map(o => [o.title.trim().toLowerCase(), o.id]));
+  const kids = new Map();
+  for (const r of rows) if (r.parentId) { if (!kids.has(r.parentId)) kids.set(r.parentId, []); kids.get(r.parentId).push(r); }
+  const openBelow = (id, d = 0) => d < 6 && (kids.get(id) || []).some(k => k.Status === "0" || openBelow(k.taskId, d + 1));
+  const known = new Set(rows.map(r => r.taskId));
+  const ids = new Map(), merge = new Map(), used = new Set();
+  for (const r of rows) {
+    let id = "tt-" + ttHash([r["List Name"], r["Created Time"], r.Title, r.Content.slice(0, 120)].join("|"));
+    while (used.has(id)) id += "x";
+    used.add(id);
+    const top = !r.parentId || !known.has(r.parentId);
+    const liveId = top && (r.Status === "0" || openBelow(r.taskId)) && live.get(r.Title.trim().toLowerCase());
+    if (liveId) { id = liveId; merge.set(r.taskId, liveId); }
+    ids.set(r.taskId, id);
+  }
+  const depth = r => { let d = 0; for (let p = r.parentId; p && known.has(p) && d < 8; d++) p = rows.find(x => x.taskId === p)?.parentId; return d; };
+  const out = [];
+  for (const r of rows) {
+    const id = ids.get(r.taskId), top = !r.parentId || !known.has(r.parentId);
+    let { notes, files } = ttSplit(r.Content || "");
+    const created = ttDate(r["Created Time"]) || ttDate(r["Start Date"]) || new Date(0).toISOString();
+    const finished = ttDate(r["Completed Time"]);
+    const checklist = [];
+    if (r.Kind === "CHECKLIST") {
+      const keep = [];
+      for (const line of notes.split("\n")) {
+        const m = line.match(/^([▪▫])\s*-?\s*(.+)$/);
+        if (m) checklist.push({ done: m[1] === "▪", title: m[2].trim() }); else keep.push(line);
+      }
+      notes = keep.join("\n").trim();
+    }
+    const t = { id, title: r.Title.trim() || "(untitled)", notes, files, createdAt: created, list: r["List Name"], sort: Number(r.Order) || 0,
+      tags: r.Tags ? r.Tags.split(",").map(s => s.trim()).filter(Boolean) : [] };
+    if (!top) Object.assign(t, { parentId: ids.get(r.parentId), status: r.Status === "0" ? "open" : "done", statusAt: finished || created });
+    else {
+      const open = r.Status === "0" || openBelow(r.taskId);
+      Object.assign(t, { dept: "CNC", status: open ? "in-progress" : "out", statusAt: open ? created : finished || created });
+    }
+    if (merge.has(r.taskId)) t.mergeInto = merge.get(r.taskId);
+    t._depth = top ? 0 : depth(r);
+    out.push(t);
+    checklist.forEach((c, i) => out.push({ id: `${id}-c${i}`, parentId: id, title: c.title, notes: "", files: [], createdAt: created, sort: i,
+      status: c.done ? "done" : "open", statusAt: finished || created, _depth: t._depth + 1 }));
+  }
+  return out.sort((a, b) => a._depth - b._depth).map(({ _depth, ...t }) => t);
+}
+
+function importTicktick() {
+  const pick = h("input", { type: "file", accept: ".csv,text/csv" });
+  pick.onchange = async () => {
+    const file = pick.files[0];
+    if (!file) return;
+    let rows;
+    try { rows = ttRows(await file.text()); } catch (e) { toast(e.message); return; }
+    const lists = [...new Set(rows.map(r => r["List Name"]))];
+    const count = name => rows.filter(r => r["List Name"] === name).length;
+    const checks = lists.map(name => h("input", { type: "checkbox", value: name, checked: (lists.length === 1 || /cnc/i.test(name)) || null }));
+    const status = h("p", { class: "hint" });
+    const go = h("button", { class: "btn primary" }, "Import");
+    const form = h("form", { class: "panel editor", onsubmit: async e => {
+      e.preventDefault();
+      const chosen = new Set(checks.filter(c => c.checked).map(c => c.value));
+      const picked = rows.filter(r => chosen.has(r["List Name"]));
+      if (!picked.length) { status.textContent = "Pick at least one list."; return; }
+      const tasks = ttTasks(picked);
+      go.disabled = true;
+      let done = 0;
+      try {
+        for (let i = 0; i < tasks.length; i += 400) {
+          await api("/tasks/import", { method: "POST", body: JSON.stringify({ tasks: tasks.slice(i, i + 400) }) });
+          done = Math.min(tasks.length, i + 400);
+          status.textContent = `Imported ${done.toLocaleString()} of ${tasks.length.toLocaleString()}…`;
+        }
+      } catch (err) { status.textContent = `Stopped after ${done.toLocaleString()}: ${err.message}. Importing again picks up where it left off.`; go.disabled = false; return; }
+      const open = tasks.filter(t => !t.parentId && t.status === "in-progress").length;
+      close();
+      await loadOrders(); render();
+      toast(`Imported ${tasks.length.toLocaleString()} tasks · ${open} open on the board`);
+    } },
+      h("h3", {}, "Import TickTick backup"),
+      h("p", {}, `${rows.length.toLocaleString()} tasks in ${file.name}. Finished ones go into the job history, where search finds them. Open ones go on the ${BOARDS.shop.cols[0].title} column. Attached files come in by name only, since the backup doesn't include the files themselves. Importing a newer backup later is safe: it updates tasks nobody has changed here.`),
+      h("div", { class: "lists" }, lists.map((name, i) => h("label", { class: "check" }, checks[i], ` ${name} · ${count(name).toLocaleString()}`))),
+      status,
+      h("div", { class: "foot" }, h("span"), h("div", { class: "r" }, h("button", { class: "btn", type: "button", onclick: () => close() }, "Cancel"), go)));
+    const close = overlay(form);
+  };
+  pick.click();
+}
+
 // ---------- boot ----------
 document.getElementById("galBtn").addEventListener("click", () => openGallery());
 document.getElementById("archBtn").addEventListener("click", () => openArchive());
@@ -2132,13 +2635,15 @@ loadHub().then(() => Promise.all([loadOrders(), loadMe()])).then(() => {
   const fromHash = location.hash.slice(1);
   const boardHash = Object.entries(BOARDS).find(([, b]) => b.hash === fromHash || b.tvHash === fromHash);
   if (boardHash) state.board = boardHash[0];
+  const jobHash = fromHash.match(/^job\/([\w-]+)$/);
   const album = fromHash.match(/^gallery(?:\/(.+))?$/);
-  state.current = album ? "gallery" : fromHash === "archive" ? "archive" : boardHash ? "pickup"
+  state.current = album ? "gallery" : fromHash === "archive" ? "archive" : boardHash || jobHash ? "pickup"
     : state.hub.projects.some(p => p.id === fromHash) ? fromHash : (state.hub.projects.find(p => !p.archived) || state.hub.projects[0])?.id;
   if (album) openGallery(album[1] ? decodeURIComponent(album[1]) : null); else if (fromHash === "archive") openArchive(); else render();
   if (boardHash && boardHash[1].tvHash === fromHash) enterTv(boardHash[0]);
+  if (jobHash && state.mode === "live") openJob(jobHash[1]);
   // Keep the Pickup count fresh for anyone leaving the hub open.
-  setInterval(async () => { if (!document.body.classList.contains("tv")) { await loadOrders(); if (state.current === "pickup" && !document.querySelector(".scrim")) render(); } }, 60000);
+  setInterval(async () => { if (!document.body.classList.contains("tv")) { await loadOrders(); if (state.current === "pickup" && !document.querySelector(".scrim") && !document.activeElement?.closest?.("#main input, #main textarea")) render(); } }, 60000);
 });
 </script>
 <!--/BUILD:BODY-->

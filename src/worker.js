@@ -2,10 +2,8 @@
 // Serves the static site from /public and a small JSON API:
 //   GET  /api/hub                     -> hub document (projects, sections, links, viewers)
 //   PUT  /api/hub                     -> replace hub document
-//   GET  /api/orders                  -> shop orders (stored one KV key each, read from one combined copy; see orders.js)
-//   PUT  /api/orders/:id
-//   DELETE /api/orders/:id
-//   GET  /api/ticktick/connect | /callback | /status, POST /api/ticktick/sync -> TickTick "CNC HUB" list feeds CNC orders (see ticktick.js)
+//   /api/orders, /api/tasks/..., /api/files/... -> shop jobs with subtasks, notes and files, plus search and the
+//                                        TickTick backup import (D1 + R2; see tasks.js). Replaces the old TickTick sync.
 //   GET/PUT /api/me                   -> who's signed in (Cloudflare Access) and their display name (see auth.js)
 //   GET/POST/DELETE /api/comments     -> comments on project items (see comments.js)
 //   GET/POST/DELETE /api/photos       -> job photos in R2, per project, plus the Gallery (see photos.js)
@@ -26,13 +24,12 @@
 
 import seed from "../data/seed.json";
 import additions from "../data/additions.json";
-import { ticktickRoute, syncTicktick } from "./ticktick.js";
 import { meRoute } from "./auth.js";
 import { commentsRoute } from "./comments.js";
 import { photosRoute } from "./photos.js";
 import { sharesRoute, sharePage } from "./shares.js";
 import { vaultRoute, vaultPage } from "./vault.js";
-import { listOrders, putOrder, deleteOrder } from "./orders.js";
+import { tasksRoute } from "./tasks.js";
 
 // One-time changes to the live hub document, applied on the next read and remembered in hub.migrations.
 const MIGRATIONS = [
@@ -71,18 +68,14 @@ export default {
       return json({ error: err.message || String(err) }, err.status || 500);
     }
   },
-  // Cron trigger (wrangler.toml): pull the TickTick CNC list every few minutes.
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(syncTicktick(env));
-  },
 };
 
 async function route(request, env, url) {
   const { pathname } = url;
   const method = request.method;
 
-  if (pathname.startsWith("/api/ticktick/")) {
-    const res = await ticktickRoute(request, env, url);
+  if (pathname === "/api/orders" || pathname.startsWith("/api/orders/") || pathname.startsWith("/api/tasks/") || pathname.startsWith("/api/files/")) {
+    const res = await tasksRoute(request, env, url);
     if (res) return res;
   }
 
@@ -125,22 +118,6 @@ async function route(request, env, url) {
     hub.updatedAt = new Date().toISOString();
     await env.HUB.put(HUB_KEY, JSON.stringify(hub));
     return json({ ok: true, updatedAt: hub.updatedAt });
-  }
-
-  if (pathname === "/api/orders" && method === "GET") {
-    return json({ orders: await listOrders(env) });
-  }
-  const om = pathname.match(/^\/api\/orders\/([\w-]+)$/);
-  if (om && method === "PUT") {
-    const order = await request.json();
-    if (!order?.title) throw httpError(400, "order.title required");
-    order.id = om[1];
-    await putOrder(env, order);
-    return json({ ok: true });
-  }
-  if (om && method === "DELETE") {
-    await deleteOrder(env, om[1]);
-    return json({ ok: true });
   }
 
   if (pathname === "/api/vault" || pathname.startsWith("/api/vault/")) {
