@@ -1174,7 +1174,12 @@ function openSectionEditor(p, s, opts = {}) {
     if (!draft.refs.length) delete draft.refs;
     if (!draft.materials.length) delete draft.materials;
     if (draft.qty === 1) delete draft.qty;
-    if (isNew) { draft.id = uid(draft.title); (p.sections ||= []).push(draft); } else Object.assign(s, draft);
+    if (isNew) { draft.id = uid(draft.title); (p.sections ||= []).push(draft); } else {
+      // Fields the editor cleared (last reference image removed, paint notes emptied, qty back to 1…) were
+      // dropped from the draft, so drop them from the piece too; a plain merge would keep the old values.
+      for (const k of Object.keys(s)) if (!(k in draft)) delete s[k];
+      Object.assign(s, draft);
+    }
     saveHub(); close(); render();
   } },
     h("h3", {}, isNew ? "New piece" : "Edit piece"),
