@@ -1696,7 +1696,20 @@ async function uploadPhoto(file, project, item, caption, progress) {
 }
 
 // Reference images for a piece (e.g. a screenshot from the packet). Kept sharp: up to 2,400 px.
+// GIFs go up untouched so they keep animating (and autoplay on the card); the canvas would flatten them to a still.
 async function uploadRef(file, pid) {
+  const gif = file.type === "image/gif";
+  if (gif) {
+    if (file.size > 30 * 1024 * 1024) throw new Error("GIF too large (30 MB max)");
+    const { w, h: ht } = await gifSize(file);
+    if (state.mode !== "live") return { url: await dataUrl(file), w, h: ht };
+    const form = new FormData();
+    form.append("full", file, "ref.gif");
+    form.append("project", pid);
+    const res = await fetch(`${API}/refs`, { method: "POST", body: form });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Upload failed");
+    return { url: (await res.json()).url, w, h: ht };
+  }
   if (state.mode === "live") {
     const full = await shrink(file, 2400, .88);
     const form = new FormData();
@@ -1708,6 +1721,15 @@ async function uploadRef(file, pid) {
   }
   const full = await shrink(file, 1200, .75);
   return { url: await dataUrl(full.blob), w: full.w, h: full.h };
+}
+
+function gifSize(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { URL.revokeObjectURL(url); res({ w: img.naturalWidth, h: img.naturalHeight }); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error(`Can't read ${file.name}`)); };
+    img.src = url;
+  });
 }
 
 function openRefs(s, i) {
