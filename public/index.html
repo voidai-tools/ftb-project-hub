@@ -908,7 +908,12 @@ function move(p, s, d) {
 // ---------- overlays ----------
 function overlay(panel) {
   const host = document.getElementById("overlay");
-  const scrim = h("div", { class: "scrim", onclick: e => { if (e.target === scrim) close(); } }, panel);
+  // Close only on a click that both starts and ends on the backdrop. Selecting text inside the panel and letting
+  // go outside it fires a click on the backdrop too, which used to close the editor and lose the edits.
+  let downOnScrim = false;
+  const scrim = h("div", { class: "scrim",
+    onmousedown: e => { downOnScrim = e.target === scrim; },
+    onclick: e => { if (e.target === scrim && downOnScrim) close(); downOnScrim = false; } }, panel);
   function close() { host.replaceChildren(); document.removeEventListener("keydown", esc); panel.onclose?.(); }
   function esc(e) { if (e.key === "Escape") close(); }
   document.addEventListener("keydown", esc);
